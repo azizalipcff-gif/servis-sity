@@ -10,6 +10,7 @@ import { localizedName, type Locale } from "@/lib/translations";
 import { MOROCCAN_CITIES } from "@/lib/constants";
 import type { BusinessDetail } from "@/lib/queries";
 import type { Category } from "@/lib/supabase/database.types";
+import { Stagger, StaggerItem } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -35,6 +37,17 @@ type Props = {
   userId: string;
   locale: Locale;
 };
+
+function SectionHeading({ title, hint }: { title: string; hint: string }) {
+  return (
+    <div className="space-y-1">
+      <h3 className="text-sm font-semibold uppercase tracking-wide">
+        {title}
+      </h3>
+      <p className="text-xs text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
 
 export function BusinessForm({ business, categories, userId, locale }: Props) {
   const t = useTranslations("dashboard");
@@ -106,12 +119,7 @@ export function BusinessForm({ business, categories, userId, locale }: Props) {
             .insert({ ...payload, owner_id: userId });
 
       if (saveError) {
-        setError(
-          saveError.message.toLowerCase().includes("duplicate") ||
-            saveError.code === "23505"
-            ? tCommon("error")
-            : tCommon("error"),
-        );
+        setError(tCommon("error"));
         return;
       }
 
@@ -132,125 +140,152 @@ export function BusinessForm({ business, categories, userId, locale }: Props) {
         <CardDescription>{t("createBusinessTitle")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="businessName">{t("businessName")}</Label>
-              <Input
-                id="businessName"
-                value={name}
-                onChange={(e) => onNameChange(e.target.value)}
-                required
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Stagger className="space-y-6">
+            <StaggerItem className="space-y-4">
+              <SectionHeading
+                title={t("sectionBasic")}
+                hint={t("sectionBasicHint")}
               />
-            </div>
 
-            <div className="space-y-2">
-              <Label>{t("businessCategory")}</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {localizedName(c, locale)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="businessName">{t("businessName")}</Label>
+                  <Input
+                    id="businessName"
+                    value={name}
+                    onChange={(e) => onNameChange(e.target.value)}
+                    required
+                  />
+                </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="slug">{t("slug")}</Label>
-            <Input
-              id="slug"
-              dir="ltr"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              placeholder="mon-boutique"
-              required
-            />
-          </div>
+                <div className="space-y-2">
+                  <Label>{t("businessCategory")}</Label>
+                  <Select value={categoryId} onValueChange={setCategoryId}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {localizedName(c, locale)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">{t("description")}</Label>
-            <textarea
-              id="description"
-              rows={4}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("descriptionPlaceholder")}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="slug">{t("slug")}</Label>
+                <Input
+                  id="slug"
+                  dir="ltr"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  placeholder="mon-boutique"
+                  required
+                />
+              </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="phone">{t("phone")}</Label>
-              <Input
-                id="phone"
-                type="tel"
-                dir="ltr"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+              <div className="space-y-2">
+                <Label htmlFor="description">{t("description")}</Label>
+                <textarea
+                  id="description"
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={t("descriptionPlaceholder")}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                />
+              </div>
+            </StaggerItem>
+
+            <Separator />
+
+            <StaggerItem className="space-y-4">
+              <SectionHeading
+                title={t("sectionContact")}
+                hint={t("sectionContactHint")}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="whatsapp">{t("whatsapp")}</Label>
-              <Input
-                id="whatsapp"
-                type="tel"
-                dir="ltr"
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-              />
-            </div>
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="address">{t("address")}</Label>
-              <Input
-                id="address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="city">{t("city")}</Label>
-              <Input
-                id="city"
-                list="moroccan-cities-dash"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-              />
-              <datalist id="moroccan-cities-dash">
-                {MOROCCAN_CITIES.map((c) => (
-                  <option key={c} value={c} />
-                ))}
-              </datalist>
-            </div>
-          </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">{t("phone")}</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    dir="ltr"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp">{t("whatsapp")}</Label>
+                  <Input
+                    id="whatsapp"
+                    type="tel"
+                    dir="ltr"
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                  />
+                </div>
+              </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <ImageUploadField
-              label={t("logo")}
-              hint={t("uploadHint")}
-              userId={userId}
-              bucket="business-logos"
-              value={logoUrl}
-              onChange={setLogoUrl}
-            />
-            <ImageUploadField
-              label={t("cover")}
-              hint={t("uploadHint")}
-              userId={userId}
-              bucket="business-covers"
-              value={coverUrl}
-              onChange={setCoverUrl}
-            />
-          </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="address">{t("address")}</Label>
+                  <Input
+                    id="address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="city">{t("city")}</Label>
+                  <Input
+                    id="city"
+                    list="moroccan-cities-dash"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                  />
+                  <datalist id="moroccan-cities-dash">
+                    {MOROCCAN_CITIES.map((c) => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+            </StaggerItem>
+
+            <Separator />
+
+            <StaggerItem className="space-y-4">
+              <SectionHeading
+                title={t("sectionMedia")}
+                hint={t("sectionMediaHint")}
+              />
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <ImageUploadField
+                  label={t("logo")}
+                  hint={t("uploadHint")}
+                  userId={userId}
+                  bucket="business-logos"
+                  value={logoUrl}
+                  onChange={setLogoUrl}
+                />
+                <ImageUploadField
+                  label={t("cover")}
+                  hint={t("uploadHint")}
+                  userId={userId}
+                  bucket="business-covers"
+                  value={coverUrl}
+                  onChange={setCoverUrl}
+                />
+              </div>
+            </StaggerItem>
+          </Stagger>
 
           {error && (
             <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">

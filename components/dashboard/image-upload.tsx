@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { ImagePlus, Link2, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import type { StorageImageBucket } from "@/lib/supabase/storage";
 import { uploadImage, deleteStoredUrl } from "@/lib/uploads";
 import { uploadErrorMessageKey } from "@/lib/uploads/errors";
@@ -28,9 +29,11 @@ export function ImageUploadField({
   onChange,
 }: Props) {
   const tCommon = useTranslations("common");
-  const tUp = useTranslations("uploadError");
+  const tUpload = useTranslations("common.uploadError");
+  const tDash = useTranslations("dashboard");
   const [uploading, setUploading] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [showUrl, setShowUrl] = useState(false);
   const [urlDraft, setUrlDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -76,11 +79,12 @@ export function ImageUploadField({
     onChange(trimmed);
     setUrlDraft("");
     setError(null);
+    setShowUrl(false);
   }
 
   function translatedError(error: string): string {
     const key = uploadErrorMessageKey(error);
-    return key ? tUp(key) : tCommon("error");
+    return key ? tUpload(key) : tCommon("error");
   }
 
   return (
@@ -91,34 +95,103 @@ export function ImageUploadField({
         <div className="relative overflow-hidden rounded-md border">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={value} alt="" className="h-32 w-full object-cover" />
-          <button
-            type="button"
-            onClick={handleRemove}
-            disabled={clearing}
-            aria-label="remove"
-            className="absolute end-2 top-2 flex size-6 items-center justify-center rounded-full bg-background/80 text-foreground hover:bg-background disabled:opacity-50"
-          >
-            {clearing ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <X className="size-4" />
-            )}
-          </button>
+          <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black/70 to-transparent p-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading || clearing}
+            >
+              {uploading ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="size-3.5" />
+              )}
+              {tDash("changeImage")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={handleRemove}
+              disabled={uploading || clearing}
+            >
+              {clearing ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="size-3.5" />
+              )}
+              {tDash("removeImage")}
+            </Button>
+          </div>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-          className="flex h-32 w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
-        >
-          {uploading ? (
-            <Loader2 className="size-5 animate-spin" />
-          ) : (
-            <ImagePlus className="size-5" />
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="flex h-32 w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
+          >
+            {uploading ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : (
+              <ImagePlus className="size-5" />
+            )}
+            <span className="text-xs">
+              {uploading ? tDash("uploading") : hint}
+            </span>
+          </button>
+
+          {uploading && (
+            <div className="space-y-1">
+              <div className="relative h-1 w-full overflow-hidden rounded-full bg-muted">
+                <motion.div
+                  className="absolute inset-y-0 w-2/5 rounded-full bg-primary"
+                  animate={{ x: ["-110%", "260%"] }}
+                  transition={{
+                    duration: 1.1,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {tDash("uploadProgress")}
+              </p>
+            </div>
           )}
-          <span className="text-xs">{hint}</span>
-        </button>
+
+          <button
+            type="button"
+            onClick={() => setShowUrl((v) => !v)}
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Link2 className="size-3" />
+            {tDash("orPasteUrl")}
+          </button>
+
+          {showUrl && (
+            <div className="flex gap-2">
+              <Input
+                dir="ltr"
+                aria-label={tDash("pasteUrlLabel")}
+                placeholder="https://..."
+                value={urlDraft}
+                onChange={(e) => setUrlDraft(e.target.value)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleUrl}
+              >
+                {tCommon("save")}
+              </Button>
+            </div>
+          )}
+        </div>
       )}
 
       <input
@@ -128,18 +201,6 @@ export function ImageUploadField({
         className="hidden"
         onChange={(e) => handleFile(e.target.files?.[0])}
       />
-
-      <div className="flex gap-2">
-        <Input
-          dir="ltr"
-          placeholder="https://..."
-          value={urlDraft}
-          onChange={(e) => setUrlDraft(e.target.value)}
-        />
-        <Button type="button" variant="outline" size="sm" onClick={handleUrl}>
-          {tCommon("save")}
-        </Button>
-      </div>
 
       {error && (
         <p className="rounded-md bg-destructive/10 px-3 py-1.5 text-xs text-destructive">

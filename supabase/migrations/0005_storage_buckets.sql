@@ -52,7 +52,7 @@ begin
 
     -- Admins can manage any object in these buckets (site curation).
     execute format(
-      'create policy %I on storage.objects for all using (public.is_admin() and bucket_id = %I)',
+      'create policy %I on storage.objects for all using (public.is_admin() and bucket_id = %L)',
       b || '_admin_all', b
     );
   end loop;

@@ -15,7 +15,7 @@ export type ImageBucketConfig = {
 export const IMAGE_BUCKET_CONFIG: Record<StorageImageBucket, ImageBucketConfig> = {
   "business-logos": {
     bucket: "business-logos",
-    folder: "business-logos",
+    folder: "logo",
     maxBytes: 3 * 1024 * 1024,
     maxDimension: 1024,
     quality: 82,
@@ -24,7 +24,7 @@ export const IMAGE_BUCKET_CONFIG: Record<StorageImageBucket, ImageBucketConfig> 
   },
   "business-covers": {
     bucket: "business-covers",
-    folder: "business-covers",
+    folder: "cover",
     maxBytes: 6 * 1024 * 1024,
     maxDimension: 2048,
     quality: 80,
@@ -33,7 +33,7 @@ export const IMAGE_BUCKET_CONFIG: Record<StorageImageBucket, ImageBucketConfig> 
   },
   "business-gallery": {
     bucket: "business-gallery",
-    folder: "business-gallery",
+    folder: "gallery",
     maxBytes: 6 * 1024 * 1024,
     maxDimension: 2048,
     quality: 80,
@@ -42,7 +42,7 @@ export const IMAGE_BUCKET_CONFIG: Record<StorageImageBucket, ImageBucketConfig> 
   },
   "user-avatars": {
     bucket: "user-avatars",
-    folder: "user-avatars",
+    folder: "avatar",
     maxBytes: 2 * 1024 * 1024,
     maxDimension: 512,
     quality: 80,
@@ -51,7 +51,7 @@ export const IMAGE_BUCKET_CONFIG: Record<StorageImageBucket, ImageBucketConfig> 
   },
   "category-images": {
     bucket: "category-images",
-    folder: "category-images",
+    folder: "category",
     maxBytes: 4 * 1024 * 1024,
     maxDimension: 1024,
     quality: 80,

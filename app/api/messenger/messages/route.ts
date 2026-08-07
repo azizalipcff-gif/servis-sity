@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/user";
+import { parseStoredUrl } from "@/lib/supabase/storage";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
@@ -229,6 +230,14 @@ export async function PATCH(req: NextRequest) {
       }
       case "unsend": {
         if (msg.sender_id !== user.id) return jsonError(403, "forbidden");
+
+        // Capture attachment URLs first so we can clean up Storage objects
+        // after the DB records are gone.
+        const { data: attachments } = await supabase
+          .from("message_attachments")
+          .select("url")
+          .eq("message_id", id);
+
         const { error } = await supabase
           .from("messages")
           .update({ deleted_at: new Date().toISOString(), body: "" })
@@ -239,6 +248,17 @@ export async function PATCH(req: NextRequest) {
           .from("message_attachments")
           .delete()
           .eq("message_id", id);
+
+        // Best-effort Storage cleanup: only our own objects (first path
+        // segment must be the caller). External URLs are skipped by
+        // parseStoredUrl; another user's objects are skipped by the segment
+        // check + owner-scoped RLS. Matches the media route's cleanup pattern.
+        for (const a of attachments ?? []) {
+          const stored = parseStoredUrl(a.url);
+          if (stored && stored.key.split("/")[0] === user.id) {
+            await supabase.storage.from(stored.bucket).remove([stored.key]);
+          }
+        }
         return jsonOk({ ok: true });
       }
       case "react": {

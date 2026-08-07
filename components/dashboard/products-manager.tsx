@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import type { Product } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
-import { uploadImage } from "@/lib/uploads";
+import { uploadImage, deleteStoredUrl } from "@/lib/uploads";
 import { slugify } from "@/lib/slug";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,13 +142,21 @@ export function ProductsManager({
     setBusy(null);
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, images: string[]) {
     if (!confirm(t("confirmDelete"))) return;
     const supabase = createClient();
     const { error } = await supabase.from("products").delete().eq("id", id);
     if (!error) {
+      await Promise.all(images.map((u) => deleteStoredUrl(u)));
       setProducts((prev) => prev.filter((p) => p.id !== id));
       if (editingId === id) resetForm();
+    }
+  }
+
+  async function handleRemoveImage(url: string) {
+    const result = await deleteStoredUrl(url);
+    if (result.ok) {
+      setImages((prev) => prev.filter((u) => u !== url));
     }
   }
 
@@ -245,7 +253,7 @@ export function ProductsManager({
                   <button
                     type="button"
                     aria-label="remove"
-                    onClick={() => setImages((prev) => prev.filter((u) => u !== url))}
+                    onClick={() => handleRemoveImage(url)}
                     className="absolute end-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background/80 text-foreground hover:bg-background"
                   >
                     <X className="h-3 w-3" />
@@ -350,7 +358,7 @@ export function ProductsManager({
                         variant="ghost"
                         size="iconSm"
                         disabled={busy === p.id}
-                        onClick={() => handleDelete(p.id)}
+                        onClick={() => handleDelete(p.id, p.images ?? [])}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

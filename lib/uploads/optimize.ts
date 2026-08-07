@@ -79,6 +79,7 @@ export async function optimizeImageFile(
     );
   });
 
+  // Prefer the resized WebP when the browser produced it.
   if (blob && blob.type === "image/webp") {
     return {
       blob,
@@ -89,7 +90,20 @@ export async function optimizeImageFile(
     };
   }
 
-  // WebP unsupported — fall back to the payload original.
+  // WebP unsupported, but the canvas still produced a resized image — keep it.
+  if (blob) {
+    const mime = blob.type || "image/jpeg";
+    const extension = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
+    return {
+      blob,
+      mime,
+      width: targetW,
+      height: targetH,
+      extension,
+    };
+  }
+
+  // Conversion genuinely failed — fall back to the payload original.
   return { blob: file, mime: file.type, width, height, extension: extOf(file) };
 }
 

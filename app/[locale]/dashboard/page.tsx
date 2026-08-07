@@ -6,10 +6,12 @@ import {
   getMyBusiness,
   getOwnerAnalytics,
   getBookingsForOwner,
+  getProductsForBusiness,
 } from "@/lib/queries";
 import type { Locale } from "@/lib/translations";
 import { BusinessForm } from "@/components/dashboard/business-form";
 import { ServicesManager } from "@/components/dashboard/services-manager";
+import { ProductsManager } from "@/components/dashboard/products-manager";
 import { OwnerDashboard } from "@/components/dashboard/owner-dashboard";
 
 export const dynamic = "force-dynamic";
@@ -53,9 +55,10 @@ export default async function DashboardPage({ params }: Props) {
     );
   }
 
-  const [analytics, bookings] = await Promise.all([
+  const [analytics, bookings, products] = await Promise.all([
     getOwnerAnalytics(business.id),
     getBookingsForOwner(business.id),
+    getProductsForBusiness(business.id),
   ]);
 
   return (
@@ -73,6 +76,13 @@ export default async function DashboardPage({ params }: Props) {
         bookings={bookings}
         servicesEditor={
           <ServicesManager business={business} />
+        }
+        productsEditor={
+          <ProductsManager
+            businessId={business.id}
+            ownerId={business.owner_id}
+            initial={products}
+          />
         }
         businessEditor={
           <BusinessForm

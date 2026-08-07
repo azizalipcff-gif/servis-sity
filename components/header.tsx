@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { MobileNav } from "@/components/mobile-nav";
 import { LogoutButton } from "@/components/logout-button";
+import { NotificationsBell } from "@/components/notifications-bell";
+import { MessengerLink } from "@/components/messenger-link";
 
 export async function Header() {
   const t = await getTranslations("nav");
   const user = await getCurrentUser();
   const profile = user ? await getCurrentProfile() : null;
-  const isAdmin = profile?.role === "admin";
 
   const items = [
     { href: "/", label: t("home") },
@@ -20,15 +21,18 @@ export async function Header() {
   ];
 
   if (user) {
-    items.push({ href: "/dashboard", label: t("dashboard") });
-  }
-  if (isAdmin) {
-    items.push({ href: "/admin", label: t("admin") });
+    items.push({ href: "/profile", label: t("profile") });
   }
 
   const cta = user
     ? { href: "/dashboard", label: t("dashboard") }
     : { href: "/register", label: t("register") };
+
+  const initials = (profile?.full_name || user?.email || "?")
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase())
+    .join("");
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/90 backdrop-blur">
@@ -53,6 +57,29 @@ export async function Header() {
           <LocaleSwitcher />
           {user ? (
             <>
+              <NotificationsBell userId={user.id} />
+              <MessengerLink userId={user.id} />
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-muted max-md:hidden"
+              >
+                <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xs font-bold text-primary ring-1 ring-border">
+                  {profile?.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profile.avatar_url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    initials
+                  )}
+                </span>
+                <span className="max-w-32 truncate text-sm font-medium">
+                  {profile?.full_name || user.email}
+                </span>
+              </Link>
               <Link href="/dashboard" className="hidden md:block">
                 <Button size="sm">{t("dashboard")}</Button>
               </Link>

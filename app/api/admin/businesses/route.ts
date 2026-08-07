@@ -41,6 +41,24 @@ export async function PATCH(request: Request) {
     const { error } = await guard.supabase.from("businesses").update(patch).eq("id", id);
     if (error) return jsonError(500, "update_failed");
 
+    // Notify the business owner when their listing is verified.
+    if (verification_status === "verified") {
+      const { data: business } = await guard.supabase
+        .from("businesses")
+        .select("id,name,owner_id")
+        .eq("id", id)
+        .maybeSingle();
+      if (business?.owner_id) {
+        await guard.supabase.from("notifications").insert({
+          recipient_id: business.owner_id,
+          type: "verification",
+          title: business.name ?? "",
+          body: "VERIFIED",
+          link: `/dashboard?tab=verification`,
+        });
+      }
+    }
+
     let action: AuditAction;
     if (status) action = "business.status_change";
     else if (verification_status === "verified") action = "business.verify";

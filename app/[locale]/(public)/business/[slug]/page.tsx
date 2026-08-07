@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { BusinessHero } from "@/components/business/business-hero";
 import { BusinessInfo } from "@/components/business/business-info";
 import { ServicesSection } from "@/components/business/services-section";
+import { BusinessProducts } from "@/components/business/products";
 import { OpeningHoursSection } from "@/components/business/opening-hours-section";
 import { Gallery } from "@/components/business/gallery";
 import { ReviewsSection } from "@/components/business/reviews-section";
@@ -19,6 +20,7 @@ import { toJsonLd } from "@/lib/security/sanitize";
 import {
   getBusinessBySlug,
   getRelatedBusinesses,
+  getProductsForBusiness,
   type BusinessDetail,
 } from "@/lib/queries";
 import { localizedName, type Locale } from "@/lib/translations";
@@ -86,6 +88,7 @@ export default async function BusinessPage({ params }: Props) {
   if (!business) notFound();
 
   const related = await getRelatedBusinesses(business);
+  const products = await getProductsForBusiness(business.id);
   const hasMap = Boolean((business.lat && business.lng) || business.address);
   const images = business.media.filter((m) => m.type === "image");
 
@@ -136,6 +139,10 @@ export default async function BusinessPage({ params }: Props) {
 
           <FadeIn>
             <ServicesSection business={business} locale={locale as Locale} />
+          </FadeIn>
+
+          <FadeIn>
+            <BusinessProducts products={products} />
           </FadeIn>
 
           <FadeIn>

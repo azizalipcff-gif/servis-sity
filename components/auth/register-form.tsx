@@ -94,7 +94,7 @@ export function RegisterForm() {
       }
 
       if (data.session) {
-        router.push("/dashboard");
+        router.push("/");
         router.refresh();
         return;
       }

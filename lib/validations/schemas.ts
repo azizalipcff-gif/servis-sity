@@ -107,7 +107,13 @@ export const reportSchema = z.object({
 
 export const bookingPatchSchema = z.object({
   booking_id: z.string().uuid(),
-  status: z.enum(["confirmed", "cancelled"]),
+  status: z.enum([
+    "confirmed",
+    "accepted",
+    "rejected",
+    "completed",
+    "cancelled",
+  ]),
 });
 
 export const mediaCreateSchema = z.object({

@@ -21,11 +21,14 @@ type Props = {
   bookings: BookingRow[];
 };
 
-const STATUSES: BookingStatus[] = ["pending", "confirmed", "cancelled"];
+const STATUSES: BookingStatus[] = ["pending", "confirmed", "accepted", "completed", "rejected", "cancelled"];
 
 const STATUS_VARIANT: Record<BookingStatus, "warning" | "success" | "destructive"> = {
   pending: "warning",
   confirmed: "success",
+  accepted: "success",
+  rejected: "destructive",
+  completed: "success",
   cancelled: "destructive",
 };
 

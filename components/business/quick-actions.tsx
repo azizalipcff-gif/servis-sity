@@ -12,6 +12,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { BusinessDetail } from "@/lib/queries";
+import { FollowButton } from "@/components/follow-button";
 
 type Action = {
   key: string;
@@ -183,6 +184,7 @@ export function QuickActions({
         </motion.a>
       );
     })}
+      <FollowButton targetType="business" targetId={business.id} />
     </motion.div>
   );
 }

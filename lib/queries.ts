@@ -5,6 +5,7 @@ import type {
   Business,
   Category,
   City,
+  Product,
   Profile,
   Report,
   Review,
@@ -39,6 +40,19 @@ export const getCategories = cache(async (): Promise<Category[]> => {
   if (error || !data) return [];
   return data;
 });
+
+export const getCityBySlug = cache(
+  async (slug: string): Promise<City | null> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("cities")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data;
+  },
+);
 
 export const getCategoryBySlug = cache(
   async (slug: string): Promise<Category | null> => {
@@ -150,7 +164,7 @@ export const getBusinessBySlug = cache(
     const [services, media, reviews, hours] = await Promise.all([
     supabase
       .from("services")
-      .select("id, business_id, name, price, duration_minutes, description, photo_url")
+      .select("id, business_id, name, price, duration_minutes, description, photo_url, status, gallery, featured, updated_at")
       .eq("business_id", business.id)
       .order("created_at", { ascending: true }),
       supabase
@@ -241,7 +255,7 @@ export async function getMyBusiness(ownerId: string): Promise<BusinessDetail | n
   const [services, media, hours, reviews] = await Promise.all([
       supabase
         .from("services")
-        .select("id, business_id, name, price, duration_minutes, description, photo_url")
+.select("id, business_id, name, price, duration_minutes, description, photo_url, status, gallery, featured, updated_at")
         .eq("business_id", business.id)
         .order("created_at", { ascending: true }),
       supabase
@@ -271,6 +285,64 @@ export async function getMyBusiness(ownerId: string): Promise<BusinessDetail | n
 }
 
 export { SORT_ORDER };
+
+export const getProductsForBusiness = cache(
+  async (businessId: string): Promise<Product[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return data ?? [];
+  },
+);
+
+export const getFeaturedProducts = cache(
+  async (limit = 8): Promise<Product[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select("*, business:businesses(id, name, slug, logo_url)")
+      .eq("status", "published")
+      .eq("featured", true)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) return [];
+    return data ?? [];
+  },
+);
+
+export const getProductsByCategory = cache(
+  async (categoryId: string, limit = 12): Promise<Product[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("category_id", categoryId)
+      .eq("status", "published")
+      .order("views", { ascending: false })
+      .limit(limit);
+    if (error) return [];
+    return data ?? [];
+  },
+);
+
+export const searchProducts = cache(
+  async (query: string, limit = 24): Promise<Product[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("status", "published")
+      .ilike("name", `%${query}%`)
+      .order("featured", { ascending: false })
+      .limit(limit);
+    if (error) return [];
+    return data ?? [];
+  },
+);
 
 export type AdminBusiness = Business & {
   categories: Pick<Category, "name_ar" | "name_fr" | "name_en"> | null;

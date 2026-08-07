@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useTranslations } from "next-intl";
 import {
@@ -7,6 +7,7 @@ import {
   Building2,
   CalendarDays,
   ChevronRight,
+  CreditCard,
   Flag,
   LayoutDashboard,
   MapPin,
@@ -36,6 +37,7 @@ export function AdminNav() {
       label: t("title"),
       items: [
         { href: "/admin/businesses", label: t("businesses"), icon: Building2 },
+        { href: "/admin/billing", label: t("billing"), icon: CreditCard },
         { href: "/admin/users", label: t("users"), icon: UserRound },
         { href: "/admin/categories", label: t("categories"), icon: Tags },
         { href: "/admin/cities", label: t("cities"), icon: MapPin },

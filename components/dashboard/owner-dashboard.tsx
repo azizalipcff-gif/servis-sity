@@ -9,6 +9,7 @@ import {
   Gem,
   MessageSquareQuote,
   ShieldCheck,
+  ShoppingBag,
   Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -35,12 +36,14 @@ export function OwnerDashboard({
   bookings,
   servicesEditor,
   businessEditor,
+  productsEditor,
 }: {
   business: BusinessDetail;
   analytics: Parameters<typeof AnalyticsPanel>[0]["analytics"];
   bookings: BookingRow[];
   servicesEditor: React.ReactNode;
   businessEditor: React.ReactNode;
+  productsEditor?: React.ReactNode;
 }) {
   const t = useTranslations("dashboard.dash");
   const [tab, setTab] = useState("analytics");
@@ -51,6 +54,7 @@ export function OwnerDashboard({
     { key: "reviews", label: t("reviews"), icon: MessageSquareQuote },
     { key: "gallery", label: t("gallery"), icon: GalleryHorizontal },
     { key: "services", label: t("services"), icon: Wrench },
+    { key: "products", label: t("products"), icon: ShoppingBag },
     { key: "plan", label: t("plan"), icon: Gem },
     { key: "verification", label: t("verification"), icon: ShieldCheck },
   ];
@@ -85,6 +89,7 @@ export function OwnerDashboard({
       {tab === "reviews" && <ReviewsManager reviews={business.reviews} />}
       {tab === "gallery" && <GalleryManager business={business} />}
       {tab === "services" && servicesEditor}
+      {tab === "products" && productsEditor}
       {tab === "plan" && (
         <div className="grid gap-4 lg:grid-cols-2">
           <PlanPanel plan={business.plan} />

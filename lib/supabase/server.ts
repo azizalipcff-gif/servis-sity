@@ -1,13 +1,24 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "./database.types";
+import { isValidHttpUrl, isValidSupabaseKey } from "./validate";
 
 export async function createClient() {
   const cookieStore = await cookies();
 
+  // createServerClient throws synchronously for a malformed (non-empty) URL,
+  // which crashes every page render. Fall back to a throwaway URL so the
+  // defensive query helpers degrade to empty results instead of 500-ing.
+  const url = isValidHttpUrl(process.env.NEXT_PUBLIC_SUPABASE_URL)
+    ? process.env.NEXT_PUBLIC_SUPABASE_URL
+    : "https://unset.supabase.co";
+  const anonKey = isValidSupabaseKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    : "unset";
+
   return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     {
       cookies: {
         getAll() {

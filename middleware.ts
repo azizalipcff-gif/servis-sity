@@ -40,7 +40,7 @@ export default async function middleware(request: NextRequest) {
             cookiesToSet.forEach(({ name, value, options }) =>
               response.cookies.set(name, value, {
                 ...options,
-                httpOnly: true,
+                httpOnly: options.httpOnly ?? true,
                 sameSite: "lax",
                 secure:
                   options.secure ??

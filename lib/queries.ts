@@ -73,7 +73,7 @@ export const getFeaturedBusinesses = cache(
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("businesses")
-      .select("*, categories(*)")
+      .select("*, categories!businesses_category_id_fkey(*)")
       .eq("status", "approved")
       .order("plan", { ascending: true })
       .order("rating_avg", { ascending: false })
@@ -90,7 +90,7 @@ export const getBusinessesByCategory = cache(
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("businesses")
-      .select("*, categories!inner(*)")
+      .select("*, categories!businesses_category_id_fkey!inner(*)")
       .eq("status", "approved")
       .eq("categories.slug", categorySlug)
       .order("plan", { ascending: true })
@@ -106,7 +106,7 @@ export const getBusinessesByCity = cache(
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("businesses")
-      .select("*, categories(*)")
+      .select("*, categories!businesses_category_id_fkey(*)")
       .eq("status", "approved")
       .ilike("city", `%${city}%`)
       .order("plan", { ascending: true })
@@ -122,7 +122,7 @@ export const searchBusinesses = cache(
     const supabase = await createClient();
     let builder = supabase
       .from("businesses")
-      .select("*, categories(*)")
+      .select("*, categories!businesses_category_id_fkey(*)")
       .eq("status", "approved")
       .or(`name.ilike.%${query}%,description.ilike.%${query}%`);
 
@@ -150,7 +150,7 @@ export const getBusinessBySlug = cache(
 
     const businessResult = (await supabase
       .from("businesses")
-      .select("*, categories(slug, name_ar, name_fr, name_en)")
+      .select("*, categories!businesses_category_id_fkey(slug, name_ar, name_fr, name_en)")
       .eq("slug", slug)
       .eq("status", "approved")
       .maybeSingle()) as unknown as {
@@ -199,7 +199,7 @@ export const getRelatedBusinesses = cache(
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("businesses")
-      .select("*, categories(*)")
+      .select("*, categories!businesses_category_id_fkey(*)")
       .eq("category_id", business.category_id)
       .eq("status", "approved")
       .neq("id", business.id)
@@ -242,7 +242,7 @@ export async function getMyBusiness(ownerId: string): Promise<BusinessDetail | n
 
   const businessResult = (await supabase
     .from("businesses")
-    .select("*, categories(slug, name_ar, name_fr, name_en)")
+    .select("*, categories!businesses_category_id_fkey(slug, name_ar, name_fr, name_en)")
     .eq("owner_id", ownerId)
     .maybeSingle()) as unknown as {
     data: JoinedBusiness | null;
@@ -353,7 +353,7 @@ export async function getAdminBusinesses(): Promise<AdminBusiness[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("businesses")
-    .select("*, categories(name_ar, name_fr, name_en), profiles(full_name)")
+    .select("*, categories!businesses_category_id_fkey(name_ar, name_fr, name_en), profiles(full_name)")
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];

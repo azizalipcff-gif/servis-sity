@@ -38,7 +38,7 @@ async function handleSearch(request: Request): Promise<NextResponse> {
 
   let builder = supabase
     .from("businesses")
-    .select("*, categories(slug, icon, name_ar, name_fr, name_en)")
+    .select("*, categories!businesses_category_id_fkey(slug, icon, name_ar, name_fr, name_en)")
     .eq("status", "approved")
     .limit(RANK_POOL_CAP);
 

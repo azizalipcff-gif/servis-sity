@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Images, X, ZoomIn } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, ZoomIn } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { SmartImage } from "@/components/smart-image";
@@ -49,10 +49,9 @@ export function Gallery({
 
   return (
     <section aria-label={t("gallery")}>
-      <div className="flex items-center gap-2">
-        <Images className="size-4 text-primary" />
-        <h2 className="text-xl font-bold tracking-tight">{t("gallery")}</h2>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+      <div className="flex items-baseline gap-2.5">
+        <h2 className="text-lg font-semibold tracking-tight">{t("gallery")}</h2>
+        <span className="text-sm text-muted-foreground">
           {t("photos", { count: images.length })}
         </span>
       </div>
@@ -65,9 +64,7 @@ export function Gallery({
             onClick={() => setSelected(index)}
             className={cn(
               "group relative overflow-hidden rounded-2xl bg-muted",
-              index === 0
-                ? "col-span-2 row-span-2 hidden sm:block"
-                : "aspect-square",
+              index === 0 ? "aspect-square sm:col-span-2 sm:row-span-2" : "aspect-square",
             )}
           >
             <SmartImage
@@ -76,7 +73,9 @@ export function Gallery({
               sizes="(min-width: 640px) 33vw, 50vw"
               className={cn(
                 "h-full w-full",
-                index === 0 ? "block h-full min-h-48 sm:min-h-full" : "aspect-square",
+                index === 0
+                  ? "sm:h-full sm:min-h-full"
+                  : "aspect-square",
               )}
               imgClassName="object-cover transition-transform duration-500 group-hover:scale-105"
             />
@@ -93,7 +92,7 @@ export function Gallery({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 p-4"
             onClick={() => setSelected(null)}
           >
             <motion.div

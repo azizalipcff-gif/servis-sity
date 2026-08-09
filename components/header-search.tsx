@@ -25,11 +25,11 @@ export function HeaderSearch() {
   return (
     <form
       onSubmit={submit}
-      className="flex h-12 w-full max-w-2xl items-center overflow-hidden rounded-lg border border-border bg-white shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20"
+      className="flex h-10 w-full max-w-2xl items-center overflow-hidden rounded-lg border border-border bg-card shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20"
       role="search"
     >
-      <span className="grid size-12 shrink-0 place-items-center text-muted-foreground">
-        <Search className="size-5" />
+      <span className="grid w-10 shrink-0 place-items-center text-muted-foreground">
+        <Search className="size-[18px]" />
       </span>
       <input
         value={q}
@@ -37,7 +37,7 @@ export function HeaderSearch() {
         type="search"
         placeholder={tH("marketSearchPlaceholder")}
         aria-label={tH("marketSearchPlaceholder")}
-        className="h-full flex-1 border-none bg-transparent text-[15px] outline-none placeholder:text-muted-foreground/60 [&::-webkit-search-cancel-button]:hidden"
+        className="h-full flex-1 border-none bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/60 [&::-webkit-search-cancel-button]:hidden"
       />
 <SelectCity
         value={city}
@@ -66,7 +66,7 @@ function SelectCity({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="relative hidden h-full items-center border-s border-s-border px-3 md:flex">
+    <div className="relative hidden h-full items-center border-s border-border px-3 md:flex">
       <MapPin className="size-4 shrink-0 text-muted-foreground" />
       <button
         type="button"

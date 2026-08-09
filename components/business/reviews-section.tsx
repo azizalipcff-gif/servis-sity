@@ -6,8 +6,6 @@ import {
   Building2,
   Loader2,
   Star,
-  ThumbsDown,
-  ThumbsUp,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -80,26 +78,26 @@ export function ReviewsSection({ business }: { business: BusinessDetail }) {
   return (
     <section aria-label={t("reviews")}>
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold tracking-tight">{t("reviews")}</h2>
+        <div className="flex items-baseline gap-2.5">
+          <h2 className="text-lg font-semibold tracking-tight">{t("reviews")}</h2>
           {total > 0 && (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               {dt("countReviews", { count: total })}
             </span>
           )}
         </div>
         {reviews.length > 0 && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 rounded-lg border border-border p-0.5">
             {(["newest", "highest", "lowest"] as SortKey[]).map((k) => (
               <button
                 key={k}
                 type="button"
                 onClick={() => setSort(k)}
                 className={cn(
-                  "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                  "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
                   sort === k
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/70",
+                    ? "bg-secondary text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {dt(k)}
@@ -111,49 +109,71 @@ export function ReviewsSection({ business }: { business: BusinessDetail }) {
 
       {/* Summary */}
       {total > 0 && (
-        <div className="mt-4 rounded-3xl border bg-card p-5 sm:p-6">
-          <div className="flex flex-col gap-6 sm:flex-row">
-            <div className="flex shrink-0 items-center gap-4">
-              <div className="text-6xl font-black tracking-tight">
-                {business.rating_avg.toFixed(1)}
-              </div>
-              <div>
-                <RatingStars rating={business.rating_avg} size="size-5" />
-                <p className="mt-1.5 text-sm text-muted-foreground">
-                  {dt("overallRating")} · {total}
-                </p>
-              </div>
+        <div className="mt-5 grid gap-6 rounded-2xl border bg-card p-6 sm:grid-cols-[auto_1fr]">
+          <div className="flex items-center gap-4">
+            <div className="text-5xl font-bold tracking-tight">
+              {business.rating_avg.toFixed(1)}
             </div>
+            <div>
+              <RatingStars rating={business.rating_avg} size="size-4" />
+              <p className="mt-1 text-sm text-muted-foreground">
+                {dt("overallRating")} · {total}
+              </p>
+            </div>
+          </div>
 
-            <div className="grid flex-1 gap-1.5">
-              {distribution.map((d) => (
-                <div key={d.stars} className="flex items-center gap-3 text-xs">
-                  <span className="flex w-10 items-center gap-0.5 text-muted-foreground">
-                    {d.stars}
-                    <Star className="size-3 fill-warning text-warning" />
-                  </span>
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      whileInView={{ width: `${(d.count / total) * 100}%` }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.6, ease: "easeOut" }}
-                      className="h-full rounded-full bg-warning"
-                    />
-                  </div>
-                  <span className="w-8 text-end text-xs text-muted-foreground">
-                    {d.count}
-                  </span>
+          <div className="grid flex-1 gap-1.5">
+            {distribution.map((d) => (
+              <div key={d.stars} className="flex items-center gap-3 text-xs">
+                <span className="flex w-10 items-center gap-0.5 text-muted-foreground">
+                  {d.stars}
+                  <Star className="size-3 fill-warning text-warning" />
+                </span>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${(d.count / total) * 100}%` }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className="h-full rounded-full bg-warning"
+                  />
                 </div>
-              ))}
-            </div>
+                <span className="w-8 text-end text-xs text-muted-foreground">
+                  {d.count}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
       {/* Write review */}
-      <div className="mt-4 rounded-3xl border bg-card p-5">
-        <p className="text-sm font-semibold">{t("writeReview")}</p>
+      <div className="mt-4 rounded-2xl border bg-card p-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-[15px] font-semibold">{t("writeReview")}</p>
+
+          <div className="flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => setRating(star)}
+                onMouseEnter={() => setHover(star)}
+                onMouseLeave={() => setHover(0)}
+                aria-label={`${star} stars`}
+              >
+                <Star
+                  className={cn(
+                    "size-5 transition-colors",
+                    star <= (hover || rating)
+                      ? "fill-warning text-warning"
+                      : "fill-muted text-muted",
+                  )}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
 
         <AnimatePresence>
           {formOpen && (
@@ -164,34 +184,12 @@ export function ReviewsSection({ business }: { business: BusinessDetail }) {
               onSubmit={submit}
               className="overflow-hidden"
             >
-              <div className="mt-4 flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    onMouseEnter={() => setHover(star)}
-                    onMouseLeave={() => setHover(0)}
-                    aria-label={`${star} stars`}
-                  >
-                    <Star
-                      className={cn(
-                        "size-7 transition-colors",
-                        star <= (hover || rating)
-                          ? "fill-warning text-warning"
-                          : "fill-muted text-muted",
-                      )}
-                    />
-                  </button>
-                ))}
-              </div>
-
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder={t("yourReview")}
                 rows={3}
-                className="mt-3 w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="mt-4 w-full rounded-lg border bg-background px-3.5 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
 
               {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
@@ -215,9 +213,11 @@ export function ReviewsSection({ business }: { business: BusinessDetail }) {
 
       {/* List */}
       {total === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">
-          {t("noReviews")} — {t("noReviewsHint")}
-        </p>
+        <div className="mt-6 rounded-xl border border-dashed px-4 py-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            {t("noReviews")} — {t("noReviewsHint")}
+          </p>
+        </div>
       ) : (
         <div className="mt-4 space-y-3">
           {sorted.map((review) => (
@@ -226,11 +226,11 @@ export function ReviewsSection({ business }: { business: BusinessDetail }) {
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="rounded-3xl border bg-card p-5"
+              className="rounded-2xl border bg-card p-5"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="grid size-10 place-items-center bg-primary text-sm font-bold text-primary-foreground">
+                  <span className="grid size-10 place-items-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground">
                     {(review.profile?.full_name ?? "س").charAt(0)}
                   </span>
                   <div>
@@ -239,7 +239,7 @@ export function ReviewsSection({ business }: { business: BusinessDetail }) {
                         {review.profile?.full_name ?? "—"}
                       </p>
                       {review.rating >= 4 && (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success">
+                        <span className="inline-flex items-center gap-0.5 rounded-md bg-success/10 px-1.5 py-0.5 text-[10px] font-medium text-success">
                           <BadgeCheck className="size-3" />
                           {dt("verifiedReview")}
                         </span>
@@ -260,7 +260,7 @@ export function ReviewsSection({ business }: { business: BusinessDetail }) {
               )}
 
               {review.reply && (
-                <div className="mt-3 flex gap-3 rounded-2xl bg-muted/60 p-4">
+                <div className="mt-3 flex gap-3 rounded-xl bg-muted/60 p-3.5">
                   <span className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-accent-foreground">
                     <Building2 className="size-4" />
                   </span>
@@ -272,16 +272,6 @@ export function ReviewsSection({ business }: { business: BusinessDetail }) {
                   </div>
                 </div>
               )}
-
-              <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
-                <button className="inline-flex items-center gap-1 transition-colors hover:text-primary">
-                  <ThumbsUp className="size-3.5" />
-                  Helpful
-                </button>
-                <button className="inline-flex items-center gap-1 transition-colors hover:text-primary">
-                  <ThumbsDown className="size-3.5" />
-                </button>
-              </div>
             </motion.article>
           ))}
         </div>

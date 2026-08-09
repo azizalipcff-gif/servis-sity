@@ -48,7 +48,7 @@ export async function CategoryStrip({
                 </span>
                 {n > 0 && (
                   <span className="text-[11px] text-muted-foreground">
-                    {n} {t("businesses")}
+                    {t("businesses", { count: n })}
                   </span>
                 )}
               </Link>

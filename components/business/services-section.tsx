@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { Clock, Sparkles } from "lucide-react";
-import { Stagger, StaggerItem } from "@/components/motion";
+import { Clock } from "lucide-react";
 import { SmartImage } from "@/components/smart-image";
 import { DEFAULT_PLACEHOLDER_IMAGES } from "@/lib/constants";
 import { formatPrice, type Locale } from "@/lib/translations";
@@ -18,13 +17,10 @@ export async function ServicesSection({
   if (business.services.length === 0) {
     return (
       <section>
-        <div className="flex items-center gap-2">
-          <Sparkles className="size-4 text-primary" />
-          <h2 className="text-xl font-bold tracking-tight">
-            {t("services")}
-          </h2>
-        </div>
-        <p className="mt-3 text-sm text-muted-foreground">
+        <h2 className="text-lg font-semibold tracking-tight">
+          {t("services")}
+        </h2>
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
           {t("servicesEmpty")}
         </p>
       </section>
@@ -33,28 +29,25 @@ export async function ServicesSection({
 
   return (
     <section>
-      <div className="flex items-center gap-2">
-        <Sparkles className="size-4 text-primary" />
-        <h2 className="text-xl font-bold tracking-tight">
+      <div className="flex items-baseline gap-2.5">
+        <h2 className="text-lg font-semibold tracking-tight">
           {t("services")}
         </h2>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+        <span className="text-sm text-muted-foreground">
           {business.services.length}
         </span>
       </div>
 
-      <Stagger className="mt-5 grid gap-4 sm:grid-cols-2">
+      <div className="mt-4 divide-y divide-border rounded-xl border bg-card">
         {business.services.map((service) => (
-          <StaggerItem key={service.id} className="h-full">
-            <ServiceCard service={service} locale={locale} />
-          </StaggerItem>
+          <ServiceRow key={service.id} service={service} locale={locale} />
         ))}
-      </Stagger>
+      </div>
     </section>
   );
 }
 
-async function ServiceCard({
+async function ServiceRow({
   service,
   locale,
 }: {
@@ -63,49 +56,47 @@ async function ServiceCard({
 }) {
   const t = await getTranslations("business");
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-3xl border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 hover:ring-1 hover:ring-primary/20">
+    <article className="flex flex-col gap-3 px-4 py-4 transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:gap-5">
       {service.photo_url && (
-        <div className="relative aspect-[16/9] overflow-hidden">
+        <div className="relative h-24 w-full shrink-0 overflow-hidden rounded-lg sm:w-28">
           <SmartImage
             src={service.photo_url}
             alt={service.name}
             fallback={DEFAULT_PLACEHOLDER_IMAGES.business}
-            sizes="(min-width: 640px) 50vw, 100vw"
-            imgClassName="transition-transform duration-500 group-hover:scale-105"
+            sizes="160px"
+            imgClassName="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-          {service.price != null && (
-            <span className="absolute bottom-3 start-3 rounded-full bg-white/95 px-3 py-1 text-sm font-bold text-foreground shadow-sm">
-              {formatPrice(service.price, locale)}
-            </span>
-          )}
         </div>
       )}
 
-      <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-lg font-semibold tracking-tight">
+      <div className="min-w-0 flex-1">
+        <h3 className="text-[15px] font-semibold tracking-tight">
           {service.name}
         </h3>
         {service.description && (
-          <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
+          <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
             {service.description}
           </p>
         )}
-        <div className="mt-auto flex items-center justify-between gap-3 pt-4">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
+          {service.price != null && (
+            <span className="font-semibold text-foreground">
+              {formatPrice(service.price, locale)}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1">
             <Clock className="size-3.5" />
-            {service.duration_minutes
-              ? `${service.duration_minutes} ${t("minutes")}`
-              : "—"}
+            {service.duration_minutes ? `${service.duration_minutes} ${t("minutes")}` : "—"}
           </span>
-          <a
-            href="#book"
-            className="inline-flex items-center rounded-full bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-inset ring-primary/20 transition-all hover:bg-primary hover:text-primary-foreground"
-          >
-            {t("bookNow")}
-          </a>
         </div>
       </div>
+
+      <a
+        href="#book"
+        className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary/10 px-3.5 py-2 text-xs font-semibold text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+      >
+        {t("bookNow")}
+      </a>
     </article>
   );
 }

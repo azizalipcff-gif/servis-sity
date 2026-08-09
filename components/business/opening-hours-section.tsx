@@ -1,5 +1,4 @@
 import { getTranslations } from "next-intl/server";
-import { CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   formatTime,
@@ -28,20 +27,19 @@ export async function OpeningHoursSection({
 
   return (
     <section aria-label={t("hours")}>
-      <div className="flex items-center gap-2">
-        <CalendarClock className="size-4 text-primary" />
-        <h2 className="text-xl font-bold tracking-tight">{t("hours")}</h2>
+      <div className="flex items-baseline gap-2.5">
+        <h2 className="text-lg font-semibold tracking-tight">{t("hours")}</h2>
       </div>
 
       <div
         className={cn(
-          "mt-4 overflow-hidden rounded-3xl border",
+          "mt-4 overflow-hidden rounded-2xl border",
           open ? "border-success/30" : "border-border",
         )}
       >
         <div
           className={cn(
-            "flex items-center justify-between gap-3 px-5 py-3.5",
+            "flex items-center justify-between gap-3 px-5 py-3",
             open
               ? "bg-success/10 text-success"
               : "bg-muted/40 text-muted-foreground",
@@ -76,7 +74,7 @@ export async function OpeningHoursSection({
               <div
                 key={day}
                 className={cn(
-                  "flex items-center justify-between px-5 py-3 text-sm",
+                  "flex items-center justify-between px-5 py-2.5 text-sm",
                   isToday ? "bg-primary/5 font-semibold" : "bg-background",
                 )}
               >
@@ -88,7 +86,7 @@ export async function OpeningHoursSection({
                 >
                   {weekdayName(day, locale)}
                   {isToday && (
-                    <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase text-primary-foreground">
+                    <span className="rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary-foreground">
                       {t("today")}
                     </span>
                   )}

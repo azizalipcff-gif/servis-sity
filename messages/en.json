@@ -273,6 +273,7 @@
   "business": {
     "call": "Call",
     "whatsapp": "WhatsApp",
+    "chat": "Chat",
     "directions": "Directions",
     "website": "Website",
     "description": "About",

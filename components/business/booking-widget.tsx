@@ -83,9 +83,9 @@ export function BookingWidget({ business }: { business: BusinessDetail }) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="bg-primary text-primary-foreground">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <CalendarDays className="size-4" />
+      <CardHeader className="bg-secondary/60 p-4">
+        <CardTitle className="flex items-center gap-2 text-[15px] font-semibold">
+          <CalendarDays className="size-4 text-primary" />
           {t("booking")}
         </CardTitle>
       </CardHeader>

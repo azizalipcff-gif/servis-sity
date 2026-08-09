@@ -12,10 +12,18 @@ export function peerOf(c: ConversationSummary, me: string) {
   return c.participants.find((p) => p.id !== me);
 }
 
-export function MessengerClient({ userId }: { userId: string }) {
+export function MessengerClient({
+  userId,
+  initialConversationId,
+}: {
+  userId: string;
+  initialConversationId?: string;
+}) {
   const t = useTranslations("messenger");
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(
+    initialConversationId ?? null,
+  );
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
 

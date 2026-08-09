@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { GoogleIcon } from "@/components/auth/google-icon";
 import { Button } from "@/components/ui/button";
 
-export function GoogleSignInButton() {
+export function GoogleSignInButton({ returnTo }: { returnTo?: string }) {
   const t = useTranslations("auth");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +16,13 @@ export function GoogleSignInButton() {
     setError(null);
     try {
       const supabase = createClient();
-      const redirectTo = `${window.location.origin}/auth/callback`;
+      const safeReturnTo =
+        returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")
+          ? returnTo
+          : undefined;
+      const redirectTo = `${window.location.origin}/auth/callback${
+        safeReturnTo ? `?next=${encodeURIComponent(safeReturnTo)}` : ""
+      }`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {

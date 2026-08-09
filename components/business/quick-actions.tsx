@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import {
   Bookmark,
   MessageCircle,
+  MessageSquare,
   Navigation,
   Phone,
   Share,
@@ -13,16 +14,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { BusinessDetail } from "@/lib/queries";
 import { FollowButton } from "@/components/follow-button";
-
-type Action = {
-  key: string;
-  label: string;
-  icon: typeof Phone;
-  enabled: boolean;
-  href?: string;
-  external?: boolean;
-  onClick?: () => void;
-};
+import { useBusinessChat } from "./use-business-chat";
 
 export function QuickActions({
   business,
@@ -33,6 +25,7 @@ export function QuickActions({
 }) {
   const t = useTranslations("business");
   const dt = useTranslations("business.detail");
+  const { startChat, isOwner } = useBusinessChat(business.id, business.owner_id, business.slug);
 
   const waNumber = business.whatsapp?.replace(/\D/g, "");
   const directionsHref = (() => {
@@ -77,6 +70,17 @@ export function QuickActions({
     }
   }
 
+  type Action = {
+    key: string;
+    label: string;
+    icon: typeof Phone;
+    enabled: boolean;
+    href?: string;
+    external?: boolean;
+    onClick?: () => void;
+    priority: "primary" | "secondary" | "tertiary";
+  };
+
   const actions: Action[] = [
     {
       key: "call",
@@ -85,6 +89,7 @@ export function QuickActions({
       enabled: Boolean(business.phone),
       href: business.phone ? `tel:${business.phone}` : undefined,
       external: false,
+      priority: "primary",
     },
     {
       key: "whatsapp",
@@ -93,6 +98,15 @@ export function QuickActions({
       enabled: Boolean(waNumber),
       href: waNumber ? `https://wa.me/${waNumber}` : undefined,
       external: true,
+      priority: "secondary",
+    },
+    {
+      key: "chat",
+      label: t("chat"),
+      icon: MessageSquare,
+      enabled: !isOwner,
+      onClick: () => void startChat(),
+      priority: "secondary",
     },
     {
       key: "directions",
@@ -101,6 +115,7 @@ export function QuickActions({
       enabled: Boolean(directionsHref),
       href: directionsHref,
       external: true,
+      priority: "secondary",
     },
     {
       key: "save",
@@ -108,15 +123,26 @@ export function QuickActions({
       icon: Bookmark,
       enabled: true,
       onClick: toggleSave,
+      priority: "tertiary",
     },
-{
+    {
       key: "share",
       label: dt("share"),
       icon: Share,
       enabled: true,
       onClick: onShare,
+      priority: "tertiary",
     },
   ];
+
+  const actionClasses = {
+    primary:
+      "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
+    secondary:
+      "border border-border/80 bg-background text-foreground shadow-sm hover:border-primary/50 hover:bg-primary/5 hover:text-primary",
+    tertiary:
+      "border border-transparent text-muted-foreground hover:bg-primary/10 hover:text-primary",
+  };
 
   return (
     <motion.div
@@ -124,7 +150,6 @@ export function QuickActions({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
       className="flex flex-wrap items-center gap-2"
-      style={{ direction: locale === "ar" ? "rtl" : "ltr" }}
     >
       {actions.map((a, i) => {
         const Icon = a.icon;
@@ -136,54 +161,54 @@ export function QuickActions({
                 saved && a.key === "save" && "fill-primary text-primary",
               )}
             />
-            {a.key !== "call" && a.key !== "whatsapp" && (
-              <span className="hidden text-xs font-medium sm:inline">
-                {a.label}
-              </span>
-            )}
+            <span>{a.label}</span>
           </>
         );
-        return (
+        const shared = cn(
+          "group inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-4 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          actionClasses[a.priority],
+          !a.enabled &&
+            "pointer-events-none border border-border bg-muted text-muted-foreground/60",
+        );
+        return a.href ? (
           <motion.a
             key={a.key}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.22 + i * 0.05 }}
             href={a.enabled ? a.href : undefined}
-            onClick={(e) => {
-              if (!a.enabled) {
-                e.preventDefault();
-                return;
-              }
-              if (a.onClick) {
-                e.preventDefault();
-                a.onClick();
-              }
+            target={a.enabled && a.external ? "_blank" : undefined}
+            rel={a.enabled && a.external ? "noopener noreferrer" : undefined}
+            aria-disabled={!a.enabled}
+            onClick={() =>
               window.dispatchEvent(
-                new CustomEvent("tt:lead", {
-                  detail: { type: a.key },
-                }),
+                new CustomEvent("tt:lead", { detail: { type: a.key } }),
+              )
+            }
+            className={shared}
+          >
+            {inner}
+          </motion.a>
+        ) : (
+          <motion.button
+            key={a.key}
+            type="button"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.22 + i * 0.05 }}
+            onClick={() => {
+              a.onClick?.();
+              window.dispatchEvent(
+                new CustomEvent("tt:lead", { detail: { type: a.key } }),
               );
             }}
-            target={a.external ? "_blank" : undefined}
-            rel={a.external ? "noopener noreferrer" : undefined}
             aria-label={a.label}
-            title={a.label}
-            className={cn(
-              "group relative inline-flex h-11 items-center justify-center gap-2 px-4 font-medium transition-colors",
-              a.enabled
-                ? "border border-foreground text-foreground hover:bg-foreground hover:text-background"
-                : "cursor-not-allowed border border-transparent bg-muted text-muted-foreground",
-              a.key === "call" &&
-                "border-foreground bg-foreground text-background hover:border-primary hover:bg-primary hover:text-primary-foreground",
-              a.key === "whatsapp" &&
-                "border-[#128C7E] bg-transparent text-[#128C7E] hover:bg-[#128C7E] hover:text-white",
-            )}
+            className={shared}
           >
-{inner}
-        </motion.a>
-      );
-    })}
+            {inner}
+          </motion.button>
+        );
+      })}
       <FollowButton targetType="business" targetId={business.id} />
     </motion.div>
   );

@@ -1,15 +1,25 @@
 "use client";
 
-import { Globe, MapPin, MessageCircle, Phone } from "lucide-react";
+import { MapPin, MessageCircle, MessageSquare, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { BusinessDetail } from "@/lib/queries";
+import { useBusinessChat } from "./use-business-chat";
 
 export function StickyActionBar({ business }: { business: BusinessDetail }) {
   const t = useTranslations("business");
+  const { startChat, isOwner } = useBusinessChat(business.id, business.owner_id, business.slug);
   const waNumber = business.whatsapp?.replace(/\D/g, "");
 
-  const actions = [
+  type MobileAction = {
+    icon: typeof Phone;
+    label: string;
+    href?: string;
+    onClick?: () => void;
+    enabled: boolean;
+  };
+
+  const actions: MobileAction[] = [
     {
       icon: Phone,
       label: t("call"),
@@ -19,10 +29,14 @@ export function StickyActionBar({ business }: { business: BusinessDetail }) {
     {
       icon: MessageCircle,
       label: t("whatsapp"),
-      href: waNumber
-        ? `https://wa.me/${waNumber}`
-        : undefined,
+      href: waNumber ? `https://wa.me/${waNumber}` : undefined,
       enabled: Boolean(waNumber),
+    },
+    {
+      icon: MessageSquare,
+      label: t("chat"),
+      onClick: () => void startChat(),
+      enabled: !isOwner,
     },
     {
       icon: MapPin,
@@ -39,39 +53,48 @@ export function StickyActionBar({ business }: { business: BusinessDetail }) {
         (business.lat && business.lng) || business.address,
       ),
     },
-    {
-      icon: Globe,
-      label: t("website"),
-      href: undefined,
-      enabled: false,
-    },
   ];
 
   return (
-    <div className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 rounded-2xl border bg-card/90 p-2 shadow-lift backdrop-blur lg:hidden">
-      <div className="grid grid-cols-4 gap-1.5">
-        {actions.map((action) => (
-          <Button
-            key={action.label}
-            variant={action.enabled ? "outline" : "ghost"}
-            size="sm"
-            className="flex-col gap-0.5 h-auto py-2 text-[11px]"
-            disabled={!action.enabled}
-            asChild={action.enabled}
-          >
-            {action.enabled && action.href ? (
-              <a href={action.href} target="_blank" rel="noopener noreferrer">
-                <action.icon className="size-4" />
-                {action.label}
-              </a>
-            ) : (
-              <>
-                <action.icon className="size-4" />
-                {action.label}
-              </>
-            )}
-          </Button>
-        ))}
+    <div className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 rounded-xl border bg-card/95 p-1.5 shadow-lift backdrop-blur lg:hidden">
+      <div className="grid grid-cols-4 gap-1">
+        {actions.map((action) =>
+          action.onClick ? (
+            <Button
+              key={action.label}
+              type="button"
+              variant={action.enabled ? "outline" : "ghost"}
+              size="sm"
+              className="flex-col gap-0.5 h-auto py-2 text-[11px]"
+              disabled={!action.enabled}
+              onClick={() => action.onClick?.()}
+            >
+              <action.icon className="size-4" />
+              {action.label}
+            </Button>
+          ) : (
+            <Button
+              key={action.label}
+              variant={action.enabled ? "outline" : "ghost"}
+              size="sm"
+              className="flex-col gap-0.5 h-auto py-2 text-[11px]"
+              disabled={!action.enabled}
+              asChild={action.enabled}
+            >
+              {action.enabled && action.href ? (
+                <a href={action.href} target="_blank" rel="noopener noreferrer">
+                  <action.icon className="size-4" />
+                  {action.label}
+                </a>
+              ) : (
+                <>
+                  <action.icon className="size-4" />
+                  {action.label}
+                </>
+              )}
+            </Button>
+          ),
+        )}
       </div>
     </div>
   );

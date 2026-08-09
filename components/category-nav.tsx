@@ -22,7 +22,7 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
 
   return (
     <div className="border-b border-border bg-background">
-      <div className="container-site flex items-stretch overflow-x-auto scrollbar-thin">
+      <div className="container-site flex items-stretch gap-1 overflow-x-auto scrollbar-none">
         {visible.map((c) => {
           const Icon = getCategoryIcon(c.icon);
           const href = `/category/${c.slug}`;
@@ -37,9 +37,9 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
               key={c.id}
               href={href}
               className={cn(
-                "flex shrink-0 items-center gap-2 border-e border-border px-4 py-2.5 text-[13px] font-medium transition-colors",
+                "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-[13px] font-medium transition-colors",
                 active
-                  ? "bg-primary/5 text-primary"
+                  ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
@@ -51,10 +51,7 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
 
         <Link
           href="/search"
-          className={cn(
-            "flex shrink-0 items-center gap-1 px-4 py-2.5 text-[13px] font-semibold text-primary transition-colors hover:bg-primary/5",
-            (pathname === "/search" || rest.length > 0) && undefined,
-          )}
+          className="flex shrink-0 items-center gap-1 px-3 py-2 text-[13px] font-semibold text-primary transition-colors hover:bg-primary/5"
         >
           {t("more")}
           {rest.length > 0 && <ChevronDown className="size-3.5" />}

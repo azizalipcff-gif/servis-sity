@@ -101,43 +101,47 @@ export default async function BusinessPage({ params }: Props) {
     <div className="pb-24 lg:pb-8">
       <BusinessHero business={business} />
 
-      {/* Breadcrumb */}
+      {/* Breadcrumbs */}
       <nav
         aria-label="Breadcrumb"
-        className="container-site mt-6 flex items-center gap-1.5 text-xs text-muted-foreground"
+        className="container-site mt-5 flex items-center gap-2 text-[13px] text-muted-foreground"
       >
         <Link
           href="/"
-          className="inline-flex items-center gap-1 transition-colors hover:text-primary"
+          className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
         >
           <Home className="size-3.5" />
-          {t("home")}
+          <span>{t("home")}</span>
         </Link>
-        <ChevronRight className="size-3.5 rtl:rotate-180" />
+        <ChevronRight
+          className="size-3.5 shrink-0 text-muted-foreground/60 rtl:rotate-180"
+          aria-hidden
+        />
         {business.categories ? (
           <Link
             href={`/category/${business.categories?.slug}`}
-            className="transition-colors hover:text-primary"
+            className="max-w-40 truncate transition-colors hover:text-foreground"
           >
-            {business.categories
-              ? localizedName(business.categories, locale as Locale)
-              : business.city}
+            {localizedName(business.categories, locale as Locale)}
           </Link>
         ) : (
           business.city && (
-            <Link href="/" className="transition-colors hover:text-primary">
+            <Link href="/" className="transition-colors hover:text-foreground">
               {business.city}
             </Link>
           )
         )}
-        <ChevronRight className="size-3.5 rtl:rotate-180" />
+        <ChevronRight
+          className="size-3.5 shrink-0 text-muted-foreground/60 rtl:rotate-180"
+          aria-hidden
+        />
         <span className="truncate font-medium text-foreground">
           {business.name}
         </span>
       </nav>
 
-      <div className="container-site mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-10">
-        <div className="min-w-0 space-y-12">
+      <div className="container-site mt-6 grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
+        <div className="min-w-0 space-y-12 lg:space-y-14">
           <FadeIn>
             <BusinessInfo business={business} locale={locale as Locale} />
           </FadeIn>
@@ -165,9 +169,9 @@ export default async function BusinessPage({ params }: Props) {
           </FadeIn>
         </div>
 
-        <aside className="space-y-6">
+        <aside className="space-y-6 lg:sticky lg:top-36 lg:self-start">
           <ContactCard business={business} />
-          <div id="book">
+          <div id="book" className="scroll-mt-40">
             <BookingWidget business={business} />
           </div>
           {hasMap && <MapSection business={business} />}

@@ -19,38 +19,37 @@ export async function MapSection({ business }: { business: BusinessDetail }) {
 
   return (
     <section aria-label={t("addressTitle")}>
-      <div className="flex items-center gap-2">
-        <MapPin className="size-4 text-primary" />
-        <h2 className="text-xl font-bold tracking-tight">
-          {t("addressTitle")}
-        </h2>
-      </div>
+      <h2 className="text-lg font-semibold tracking-tight">
+        {t("addressTitle")}
+      </h2>
 
-      <div className="mt-4 overflow-hidden rounded-3xl border bg-card">
-        <div className="relative">
-          <iframe
-            title={business.name}
-            src={`https://maps.google.com/maps?q=${query}&z=15&output=embed`}
-            className="h-64 w-full border-0"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
+      <div className="mt-4 overflow-hidden rounded-2xl border bg-card">
+        <iframe
+          title={business.name}
+          src={`https://maps.google.com/maps?q=${query}&z=15&output=embed`}
+          className="h-60 w-full border-0"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+
+        {business.address && (
+          <p className="flex items-center gap-2 border-t border-border px-5 py-3 text-sm text-muted-foreground">
+            <MapPin className="size-4 shrink-0 text-primary" />
+            <span className="min-w-0 truncate">{business.address}</span>
+          </p>
+        )}
+
+        <div className="border-t border-border p-3">
           <a
             href={dirHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="absolute bottom-3 start-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-2 text-xs font-semibold text-foreground shadow-md transition-transform hover:scale-105"
+            className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-border/80 bg-background px-4 text-sm font-semibold text-foreground shadow-sm transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            <Navigation className="size-3.5 text-primary" />
+            <Navigation className="size-4 text-primary" />
             {dt("getDirections")}
           </a>
         </div>
-        {business.address && (
-          <p className="flex items-center gap-2 px-5 py-3.5 text-sm text-muted-foreground">
-            <MapPin className="size-4 shrink-0 text-primary" />
-            {business.address}
-          </p>
-        )}
       </div>
     </section>
   );

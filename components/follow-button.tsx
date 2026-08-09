@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { UserPlus, UserCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type Props = {
   targetType: "business" | "user";
   targetId: string;
   initialFollowers?: number;
   initialFollowing?: boolean;
+  variant?: "default" | "dark";
 };
 
 export function FollowButton({
@@ -17,6 +19,7 @@ export function FollowButton({
   targetId,
   initialFollowers = 0,
   initialFollowing = false,
+  variant = "default",
 }: Props) {
   const t = useTranslations("follow");
   const [count, setCount] = useState(initialFollowers);
@@ -56,11 +59,17 @@ export function FollowButton({
 
   return (
     <Button
-      variant={following ? "outline" : "default"}
+      variant="outline"
       size="sm"
       disabled={loading || !ready}
       onClick={toggle}
-      className="gap-1.5"
+      className={cn(
+        "gap-1.5",
+        variant === "dark" &&
+          (following
+            ? "border-white/60 bg-white/15 text-white hover:bg-white/25 hover:text-white"
+            : "border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"),
+      )}
     >
       {loading ? (
         <Loader2 className="h-4 w-4 animate-spin" />

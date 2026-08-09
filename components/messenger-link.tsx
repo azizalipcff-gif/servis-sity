@@ -47,9 +47,9 @@ export function MessengerLink({ userId }: { userId: string }) {
     <Link
       href="/messenger"
       aria-label="messages"
-      className="relative rounded-full p-2 text-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
+      className="relative grid size-9 place-items-center rounded-lg text-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
     >
-      <MessageSquare className="h-5 w-5" />
+      <MessageSquare className="size-[18px]" />
       {unread > 0 && (
         <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-background">
           {unread > 99 ? "99+" : unread}

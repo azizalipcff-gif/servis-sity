@@ -21,7 +21,7 @@ const fieldVariants = {
   }),
 };
 
-export function LoginForm() {
+export function LoginForm({ returnTo }: { returnTo?: string }) {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
   const router = useRouter();
@@ -33,6 +33,11 @@ export function LoginForm() {
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
+
+  const safeReturnTo =
+    returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")
+      ? returnTo
+      : undefined;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,7 +67,7 @@ export function LoginForm() {
         return;
       }
 
-      router.push("/");
+      router.push(safeReturnTo ?? "/");
       router.refresh();
     } catch {
       setError(t("errorGeneric"));
@@ -115,7 +120,7 @@ export function LoginForm() {
         initial="hidden"
         animate="visible"
       >
-        <GoogleSignInButton />
+        <GoogleSignInButton returnTo={safeReturnTo} />
       </motion.div>
 
       <motion.div

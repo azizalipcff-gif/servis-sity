@@ -8,13 +8,13 @@ export async function BusinessProducts({ products }: { products: Product[] }) {
   if (published.length === 0) return null;
 
   return (
-    <section className="space-y-5">
-      <h2 className="text-xl font-bold tracking-tight">{t("title")}</h2>
+    <section className="space-y-4">
+      <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {published.map((product) => (
           <div
             key={product.id}
-            className="group overflow-hidden rounded-2xl border bg-card"
+            className="group overflow-hidden rounded-xl border bg-card"
           >
             <div className="aspect-square w-full overflow-hidden bg-muted">
               {product.images?.[0] ? (

@@ -62,16 +62,16 @@ export async function Header() {
 
         {/* Tier 2 — main bar: logo + search + actions */}
         <HeaderBar>
-          <div className="container-site flex h-16 items-center gap-3 lg:h-[72px]">
+          <div className="container-site flex h-14 items-center gap-3 lg:h-16">
             <Link
               href="/"
               className="flex shrink-0 items-center lg:hidden"
               aria-label={t("home")}
             >
-              <BrandLogo className="h-8 w-auto" priority />
+              <BrandLogo className="h-7 w-auto" priority />
             </Link>
             <Link href="/" className="hidden shrink-0 items-center lg:flex">
-              <BrandLogo className="h-9 w-auto" priority />
+              <BrandLogo className="h-8 w-auto" priority />
             </Link>
 
             <div className="min-w-0 flex-1">
@@ -85,9 +85,9 @@ export async function Header() {
                     href="/profile/favorites"
                     aria-label={t("favorites")}
                     title={t("favorites")}
-                    className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
-                    <HeartIcon />
+                    <HeartIcon className="size-[18px]" />
                   </Link>
                   <div className="max-lg:hidden">
                     <MessengerLink userId={user.id} />
@@ -114,9 +114,9 @@ export async function Header() {
               <Link
                 href={user ? "/profile" : "/login"}
                 aria-label={user ? t("profile") : t("login")}
-                className="flex h-10 items-center gap-2 rounded-full border-s border-border ps-3 lg:ps-2"
+                className="flex size-9 items-center justify-center rounded-lg border-s border-border ps-2 ms-0.5 lg:ps-2"
               >
-                <span className="grid size-8 place-items-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground ring-1 ring-border">
+                <span className="grid size-7 place-items-center overflow-hidden rounded-full bg-secondary text-xs font-bold text-secondary-foreground ring-1 ring-border">
                   {profile?.avatar_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -126,7 +126,7 @@ export async function Header() {
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    initials || <UserIcon className="size-4" />
+                    initials || <UserIcon className="size-3.5" />
                   )}
                 </span>
               </Link>
@@ -160,7 +160,7 @@ function UserIcon({ className }: { className?: string }) {
 
 function HeartIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className ?? "size-5"}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className ?? "size-[18px]"}>
       <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
     </svg>
   );

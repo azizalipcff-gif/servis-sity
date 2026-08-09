@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles, Loader2, Wand2, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import type { ParsedFilters } from "@/lib/search/types";
 
 type Chip = { key: string; label: string };
@@ -63,28 +63,42 @@ export function AiSearchBar({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex h-12 items-center gap-2 rounded-2xl border bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 px-4 shadow-sm transition-all focus-within:ring-4 focus-within:ring-primary/10">
-        <Sparkles className="size-5 shrink-0 text-primary" />
+    <div className="border border-border bg-background p-5">
+      <div className="flex items-center justify-between gap-3">
+        <label
+          htmlFor="ai-query"
+          className="text-sm font-medium text-foreground"
+        >
+          {t("aiHeading")}
+        </label>
+        <button
+          type="button"
+          onClick={collapse}
+          aria-label={t("cancel")}
+          className="grid size-7 place-items-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <X className="size-4" />
+        </button>
+      </div>
+      <p className="mb-4 mt-1 text-xs text-muted-foreground">{t("aiExample")}</p>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <input
+          id="ai-query"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && run()}
           aria-label={t("aiSearchPlaceholder")}
           placeholder={t("aiSearchPlaceholder")}
-          className="h-full flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/70"
+          className="h-11 flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary/20"
         />
         <button
           type="button"
           onClick={run}
           disabled={loading}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground transition-transform hover:scale-105 active:scale-95"
+          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
         >
-          {loading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Wand2 className="size-4" />
-          )}
+          {loading && <Loader2 className="size-4 animate-spin" />}
           {t("aiSearchButton")}
         </button>
       </div>
@@ -106,7 +120,7 @@ export function AiSearchBar({
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-3 shadow-lg"
+            className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4"
           >
             <span className="text-xs font-medium text-muted-foreground">
               {t("aiDetected")}
@@ -118,15 +132,14 @@ export function AiSearchBar({
               <button
                 type="button"
                 onClick={collapse}
-                className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted"
+                className="px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
               >
-                <X className="size-3.5" />
                 {t("cancel")}
               </button>
               <button
                 type="button"
                 onClick={apply}
-                className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                className="bg-foreground px-4 py-1.5 text-xs font-semibold text-background transition-colors hover:bg-primary"
               >
                 {t("applyFilters")}
               </button>
@@ -140,7 +153,7 @@ export function AiSearchBar({
 
 function Chip({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border bg-muted/40 px-2.5 py-1 text-xs font-medium">
+    <span className="inline-flex items-center gap-1 border-b border-border px-2 py-0.5 text-xs font-medium">
       {label}
     </span>
   );

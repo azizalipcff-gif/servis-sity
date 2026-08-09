@@ -1,46 +1,52 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf6f0;
-  --foreground: #2b221c;
+  --background: #fffdf9;
+  --foreground: #1f2933;
   --card: #ffffff;
-  --card-foreground: #2b221c;
+  --card-foreground: #1f2933;
   --popover: #ffffff;
-  --popover-foreground: #2b221c;
-  --primary: #bf5b32;
+  --popover-foreground: #1f2933;
+  --primary: #e07a2d;
   --primary-foreground: #ffffff;
-  --secondary: #f1e7d8;
-  --secondary-foreground: #4a3b2f;
-  --muted: #f1e7d8;
-  --muted-foreground: #7a6a5c;
-  --accent: #45489b;
+  --secondary: #f4e7d5;
+  --secondary-foreground: #7a3d00;
+  --muted: #f6f2ea;
+  --muted-foreground: #66707c;
+  --accent: #d94f4f;
   --accent-foreground: #ffffff;
-  --destructive: #b3362e;
+  --destructive: #d94f4f;
   --destructive-foreground: #ffffff;
-  --success: #2f7d46;
-  --warning: #c98a1b;
-  --border: #e7dccb;
-  --input: #e7dccb;
-  --ring: #bf5b32;
-  --radius: 0.75rem;
+  --success: #18864b;
+  --warning: #e07a2d;
+  --border: #e9e2d6;
+  --input: #ddd3c2;
+  --ring: #e07a2d;
+  --radius: 0.375rem;
 }
 
 .dark {
-  --background: #191512;
-  --foreground: #f3ece3;
-  --card: #221c17;
-  --card-foreground: #f3ece3;
-  --popover: #221c17;
-  --popover-foreground: #f3ece3;
-  --primary: #d97a4c;
+  --background: #15181c;
+  --foreground: #f4f1ea;
+  --card: #1d2228;
+  --card-foreground: #f4f1ea;
+  --popover: #1d2228;
+  --popover-foreground: #f4f1ea;
+  --primary: #f08842;
   --primary-foreground: #ffffff;
-  --secondary: #332a22;
-  --secondary-foreground: #e9dccc;
-  --muted: #2a221b;
-  --muted-foreground: #a79485;
-  --accent: #5a5eb8;
-  --border: #3a3028;
-  --input: #3a3028;
+  --secondary: #2a2418;
+  --secondary-foreground: #f0b06d;
+  --muted: #262b32;
+  --muted-foreground: #a2a9b3;
+  --accent: #e26a62;
+  --accent-foreground: #ffffff;
+  --destructive: #e26a62;
+  --destructive-foreground: #ffffff;
+  --success: #3aa86e;
+  --warning: #f08842;
+  --border: #30363e;
+  --input: #3a4149;
+  --ring: #f08842;
 }
 
 @theme inline {
@@ -65,19 +71,44 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Noto Sans", "Noto Kufi Arabic", "Tajawal",
+  --radius-sm: calc(var(--radius) - 3px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 3px);
+  --radius-xl: calc(var(--radius) + 7px);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+    "Noto Kufi Arabic", "Tajawal", sans-serif;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+    "Noto Kufi Arabic", "Tajawal", sans-serif;
+}
+
+/* Arabic locale: prefer the loaded Tajawal webfont */
+html[lang="ar"] {
+  --font-sans: var(--font-tajawal), var(--font-inter), "Noto Kufi Arabic",
+    "Tajawal", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     sans-serif;
+  --font-display: var(--font-tajawal), var(--font-inter), "Noto Kufi Arabic",
+    "Tajawal", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+}
+
+/* Arabic glyphs connect — avoid negative tracking that cramps headings */
+[dir="rtl"] .tracking-tight,
+[dir="rtl"] .tracking-tighter {
+  letter-spacing: 0;
+}
+
+/* Arabic headings — taller line-height & no negative tracking so ascenders/diacritics never clip */
+[dir="rtl"] .text-editorial {
+  line-height: 1.3;
+  letter-spacing: 0;
 }
 
 @layer base {
   * {
     border-color: var(--border);
-    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+    outline-color: color-mix(in oklab, var(--ring) 45%, transparent);
   }
 
   html {
@@ -90,17 +121,26 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   ::selection {
-    background-color: color-mix(in oklab, var(--primary) 25%, transparent);
+    background-color: color-mix(in oklab, var(--primary) 22%, transparent);
   }
 
   /* Keyboard-first focus indicator that stays out of the way for mouse users */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
-    border-radius: 4px;
+  }
+
+  /* Headings — confident, tight, editorial */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
   }
 
   /* Respect reduced-motion preferences */
@@ -120,8 +160,15 @@
   .container-site {
     width: 100%;
     margin-inline: auto;
-    padding-inline: 1rem;
+    padding-inline: 1.25rem;
     max-width: 80rem;
+  }
+
+  .container-wide {
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+    max-width: 90rem;
   }
 
   .line-clamp-2 {
@@ -148,61 +195,83 @@
     border-radius: 999px;
   }
 
+  /* Utility text styles */
+  .text-editorial {
+    text-wrap: balance;
+    font-family: var(--font-display);
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+  }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--muted-foreground);
+  }
+
   .input-field {
-    height: 2.5rem;
+    height: 3rem;
     width: 100%;
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
     border: 1px solid var(--input);
     background-color: var(--card);
-    padding-inline: 0.75rem;
-    font-size: 0.875rem;
+    padding-inline: 0.875rem;
+    font-size: 0.9375rem;
     outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
 
   .input-field:focus {
     border-color: var(--ring);
-    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 25%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 15%, transparent);
   }
 
   .select-field {
-    height: 2.5rem;
+    height: 3rem;
     width: 100%;
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
     border: 1px solid var(--input);
     background-color: var(--card);
-    padding-inline: 0.75rem;
-    font-size: 0.875rem;
+    padding-inline: 0.875rem;
+    font-size: 0.9375rem;
     outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
 
   .select-field:focus {
     border-color: var(--ring);
-    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 25%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 15%, transparent);
   }
 
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background-color: var(--card);
-    padding-inline: 0.625rem;
-    height: 2rem;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--muted-foreground);
-    transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+  /* Restrained elevation — editorial, not glossy */
+  .shadow-soft {
+    box-shadow:
+      0 1px 2px rgb(26 28 26 / 0.04),
+      0 6px 20px rgb(26 28 26 / 0.05);
   }
 
-  .chip:hover {
-    color: var(--foreground);
+  .shadow-lift {
+    box-shadow:
+      0 2px 4px rgb(26 28 26 / 0.04),
+      0 18px 44px rgb(26 28 26 / 0.09);
   }
 
-  .chip-active {
-    border-color: transparent;
-    background-color: color-mix(in oklab, var(--primary) 12%, transparent);
-    color: var(--primary);
+  /* Divider rule */
+  .rule {
+    height: 1px;
+    width: 100%;
+    background-color: var(--border);
+  }
+
+  /* Compact eyebrow divider used in editorial sections */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem;
   }
 
   @keyframes shimmer {
@@ -225,9 +294,46 @@
     background-image: linear-gradient(
       90deg,
       transparent,
-      rgb(255 255 255 / 0.5),
+      rgb(255 255 255 / 0.45),
       transparent
     );
     animation: shimmer 1.5s infinite;
+  }
+
+  /* Horizontal scroll rail (desktop-adjacent on mobile) */
+  .rail {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none;
+  }
+
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .rail > * {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+
+  .fade-edge {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      black 24px,
+      black calc(100% - 24px),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      black 24px,
+      black calc(100% - 24px),
+      transparent 100%
+    );
   }
 }

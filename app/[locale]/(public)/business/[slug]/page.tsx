@@ -17,6 +17,7 @@ import { StickyActionBar } from "@/components/business/sticky-action-bar";
 import { FadeIn } from "@/components/motion";
 import { RelatedSection } from "@/components/business/related-section";
 import { toJsonLd } from "@/lib/security/sanitize";
+import { siteUrl, absoluteUrl, imageUrl, localizedLanguages } from "@/lib/seo";
 import {
   getBusinessBySlug,
   getRelatedBusinesses,
@@ -30,8 +31,6 @@ export const dynamic = "force-dynamic";
 type Props = {
   params: Promise<{ locale: string; slug: string }>;
 };
-
-const SITE_URL = "https://servis-sity.com";
 
 export async function generateMetadata({
   params,
@@ -51,30 +50,36 @@ export async function generateMetadata({
     : `${category} in ${business.city ?? "Morocco"} — ${business.rating_avg.toFixed(1)} stars.`;
 
   const title = `${business.name} — ${category} in ${business.city ?? "Morocco"}`;
+  const url = absoluteUrl(`/${locale}/business/${slug}`);
+  const ogImage = imageUrl(business.cover_url) || imageUrl(business.logo_url) || absoluteUrl("/branding/servis-sity-logo.png");
 
   return {
     title,
     description,
-    alternates: { canonical: `${SITE_URL}/${locale}/business/${slug}` },
+    alternates: {
+      canonical: url,
+      languages: localizedLanguages(`/business/${slug}`),
+    },
     openGraph: {
       title: `${business.name} · Servis Sity`,
       description,
       type: "website",
-      url: `${SITE_URL}/${locale}/business/${slug}`,
+      url,
       siteName: "Servis Sity",
-images: [
-      {
-        url: business.cover_url ?? "",
-        width: 1200,
-        height: 630,
-        alt: business.name,
-      },
-    ],
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: business.name,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: business.name,
       description,
+      images: [ogImage],
     },
   };
 }
@@ -176,15 +181,15 @@ export default async function BusinessPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: toJsonLd(schema(business)),
+          __html: toJsonLd(schema(business, locale)),
         }}
       />
     </div>
   );
 }
 
-function schema(business: BusinessDetail) {
-  const base = `https://servis-sity.com/business/${business.slug}`;
+function schema(business: BusinessDetail, locale: string) {
+  const base = `${siteUrl()}/${locale}/business/${business.slug}`;
   const offers =
     business.services.length > 0
       ? {

@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { BadgeCheck, Gem, Minus, RotateCcw, Sparkles, Star, Store } from "lucide-react";
+import { BadgeCheck, ChevronDown, Gem, RotateCcw, Sparkles, Star, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MOROCCAN_CITIES, TRENDING_CATEGORIES } from "@/lib/constants";
 import { SORT_KEYS, type SortKey } from "@/lib/search/types";
 import type { Category } from "@/lib/supabase/database.types";
 import type { SearchFilterState } from "./use-search";
+
+const MAX_VISIBLE_CATEGORIES = 8;
 
 export function FilterControls({
   filters,
@@ -25,6 +28,7 @@ export function FilterControls({
   activeCount: number;
 }) {
   const t = useTranslations("search");
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   const categoryOptions =
     categories.length > 0
@@ -40,6 +44,11 @@ export function FilterControls({
           name: c.label.en,
           icon: c.icon,
         }));
+
+  const visibleCategories = showAllCategories
+    ? categoryOptions
+    : categoryOptions.slice(0, MAX_VISIBLE_CATEGORIES);
+  const hiddenCount = categoryOptions.length - MAX_VISIBLE_CATEGORIES;
 
   return (
     <div className="space-y-5">
@@ -75,41 +84,66 @@ export function FilterControls({
 
       {/* Category */}
       <Field label={t("categoryLabel")}>
-        <div className="space-y-1">
+        <div className="grid gap-0.5">
           <button
             type="button"
             onClick={() => setFilter("category", "")}
             className={cn(
-              "chip",
-              filters.category === "" && "chip-active",
+              "flex items-center gap-2 py-1.5 text-sm transition-colors",
+              filters.category === ""
+                ? "font-semibold text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             <Store className="size-3.5" />
             {t("allCategories")}
           </button>
-          <div className="grid grid-cols-2 gap-1.5">
-            {categoryOptions.map((c) => {
-              const active = filters.category === c.slug;
-              return (
-                <button
-                  key={c.slug}
-                  type="button"
-                  onClick={() => setFilter("category", active ? "" : c.slug)}
-                  className={cn("chip", active && "chip-active")}
-                >
-                  <Store className="size-3.5" />
-                  <span className="line-clamp-1">{c.name}</span>
-                </button>
-              );
-            })}
-          </div>
+          {visibleCategories.map((c) => {
+            const active = filters.category === c.slug;
+            return (
+              <button
+                key={c.slug}
+                type="button"
+                onClick={() => setFilter("category", active ? "" : c.slug)}
+                className={cn(
+                  "flex min-w-0 items-center gap-2 py-1.5 text-start text-sm transition-colors",
+                  active
+                    ? "font-medium text-primary"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <span
+                  className={cn(
+                    "size-1.5 shrink-0 rounded-full transition-colors",
+                    active ? "bg-primary" : "bg-transparent",
+                  )}
+                />
+                <span className="line-clamp-1">{c.name}</span>
+              </button>
+            );
+          })}
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowAllCategories((v) => !v)}
+              className="flex items-center gap-1.5 py-1.5 text-start text-sm font-medium text-primary underline-offset-4 transition-colors hover:underline"
+            >
+              <ChevronDown
+                className={cn(
+                  "size-3.5 transition-transform",
+                  showAllCategories && "rotate-180 rtl:-rotate-180",
+                )}
+              />
+              {showAllCategories ? t("showLess") : t("showMore", { count: hiddenCount })}
+            </button>
+          )}
         </div>
       </Field>
 
       {/* Min rating */}
       <Field label={t("minimumRating")}>
-        <div className="flex flex-wrap gap-1.5">
-          <RatingPill
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
+          <RatingLink
             label={t("any")}
             active={filters.minRating === 0}
             onClick={() => setFilter("minRating", 0)}
@@ -119,7 +153,12 @@ export function FilterControls({
               key={r}
               type="button"
               onClick={() => setFilter("minRating", r)}
-              className={cn("chip", filters.minRating === r && "chip-active")}
+              className={cn(
+                "flex items-center gap-1.5 py-1 text-sm transition-colors",
+                filters.minRating === r
+                  ? "font-medium text-primary"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
             >
               <Star className={cn("size-3.5", filters.minRating >= r ? "fill-warning text-warning" : "")} />
               {r}+
@@ -231,16 +270,16 @@ function ToggleRow({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2 rounded-xl border bg-card px-3 py-2.5 text-sm transition-colors hover:bg-muted/50">
+    <label className="flex cursor-pointer items-center gap-2 border-b border-border py-2.5 text-sm last:border-0">
       {icon}
       <span className="flex-1 font-medium">{label}</span>
       <span
         className={cn(
-          "flex h-5 w-9 items-center rounded-full p-0.5 transition-colors",
-          checked ? "justify-end bg-primary" : "bg-input",
+          "flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors",
+          checked ? "justify-end bg-foreground" : "bg-input",
         )}
       >
-        <span className="block size-4 rounded-full bg-white shadow" />
+        <span className="block size-4 rounded-full bg-background shadow" />
       </span>
       <input
         type="checkbox"
@@ -252,7 +291,7 @@ function ToggleRow({
   );
 }
 
-function RatingPill({
+function RatingLink({
   label,
   active,
   onClick,
@@ -265,9 +304,13 @@ function RatingPill({
     <button
       type="button"
       onClick={onClick}
-      className={cn("chip", active && "chip-active")}
+      className={cn(
+        "py-1 text-sm transition-colors",
+        active
+          ? "font-medium text-primary"
+          : "text-muted-foreground hover:text-foreground",
+      )}
     >
-      <Minus className="size-3.5" />
       {label}
     </button>
   );

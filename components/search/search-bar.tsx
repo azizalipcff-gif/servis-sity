@@ -5,7 +5,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
-  Clock,
   History,
   Search,
   Store,
@@ -140,13 +139,11 @@ export function SearchBar({
     <div className="relative">
       <div
         className={cn(
-          "group flex h-12 items-center gap-2 rounded-2xl border bg-card/80 px-4 shadow-sm backdrop-blur-xl transition-all",
-          focused
-            ? "border-primary/50 ring-4 ring-primary/10 shadow-lg"
-            : "border-transparent shadow-md hover:shadow-lg",
+          "group flex h-12 items-center gap-2 overflow-hidden rounded-lg border border-border bg-card transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20",
+          focused ? "border-primary" : "hover:border-foreground/30",
         )}
       >
-        <Search className="size-5 shrink-0 text-muted-foreground" />
+        <Search className="ms-3 size-5 shrink-0 text-muted-foreground" />
         <input
           ref={inputRef}
           value={q}
@@ -157,89 +154,77 @@ export function SearchBar({
           type="search"
           aria-label={t("aiSearchPlaceholder")}
           placeholder={t("searchPlaceholder")}
-          className="h-full flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/70 [&::-webkit-search-cancel-button]:hidden"
+          className="h-full flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground/50 [&::-webkit-search-cancel-button]:hidden"
         />
         <button
           type="button"
           onClick={submit}
           aria-label={t("searchButton")}
-          className="inline-flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-transform hover:scale-105 active:scale-95"
+          className="inline-flex h-full w-12 shrink-0 items-center justify-center bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          <ArrowRight className="size-4 rtl:rotate-180" />
+          <ArrowRight className="size-5 rtl:rotate-180" />
         </button>
       </div>
 
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 6, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6, scale: 0.98 }}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
             transition={{ duration: 0.14, ease: "easeOut" }}
-            className="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border bg-card/95 shadow-xl backdrop-blur-2xl"
+            className="absolute inset-x-0 top-full z-50 mt-2 border border-border bg-background shadow-lift"
             role="listbox"
           >
-            <div className="px-3 py-2">
-              <p className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <Clock className="size-3.5" />
-                {t("suggestions")}
-              </p>
+            <ul className="max-h-80 overflow-y-auto py-1">
+              {list.map((item, i) => {
+                const Icon = item.icon;
+                return (
+                  <li key={`${item.kind}-${item.label}`}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={i === active}
+                      onMouseEnter={() => setActive(i)}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        onPick(item);
+                      }}
+                      className={cn(
+                        "flex w-full items-center gap-3 px-4 py-3 text-sm transition-colors",
+                        i === active ? "bg-muted" : "text-foreground",
+                      )}
+                    >
+                      <Icon className="size-4 shrink-0 text-muted-foreground" />
+                      <span className="line-clamp-1">{item.label}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
 
-              <ul className="max-h-80 overflow-y-auto pb-1">
-                {list.map((item, i) => {
-                  const Icon = item.icon;
+            <div className="border-t border-border px-4 py-3">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {t("trending")}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {TRENDING_CATEGORIES.map((c) => {
+                  const Icon = getCategoryIcon(c.icon);
                   return (
-                    <li key={`${item.kind}-${item.label}`}>
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={i === active}
-                        onMouseEnter={() => setActive(i)}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          onPick(item);
-                        }}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
-                          i === active
-                            ? "bg-primary/10 text-primary"
-                            : "text-foreground",
-                        )}
-                      >
-                        <span className="flex size-8 items-center justify-center rounded-lg bg-muted">
-                          <Icon className="size-4" />
-                        </span>
-                        <span className="line-clamp-1">{item.label}</span>
-                      </button>
-                    </li>
+                    <button
+                      key={c.slug}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        onCategory(c.slug);
+                      }}
+                      className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
+                    >
+                      <Icon className="size-3.5" />
+                      {c.label[locale as "ar" | "fr" | "en"]}
+                    </button>
                   );
                 })}
-              </ul>
-
-              <div className="border-t px-2 py-2">
-                <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  <TrendingUp className="size-3.5" />
-                  {t("trending")}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {TRENDING_CATEGORIES.map((c) => {
-                    const Icon = getCategoryIcon(c.icon);
-                    return (
-                      <button
-                        key={c.slug}
-                        type="button"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          onCategory(c.slug);
-                        }}
-                        className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-                      >
-                        <Icon className="size-3.5" />
-                        {c.label[locale as "ar" | "fr" | "en"]}
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
             </div>
           </motion.div>

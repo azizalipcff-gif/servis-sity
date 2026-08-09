@@ -1,39 +1,57 @@
 import type { MetadataRoute } from "next";
+import { routing } from "@/i18n/routing";
 import { siteUrl } from "@/lib/seo";
+import { getCategories, getSitemapBusinesses } from "@/lib/queries";
 
-const locales = ["en", "fr", "ar"] as const;
-const defaultLocale = "ar";
+export const dynamic = "force-dynamic";
 
 function loc(path = ""): string {
   return `${siteUrl()}${path}`;
 }
 
-export const dynamic = "force-dynamic";
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Static routes present across every locale.
-  const staticPaths = ["", "/search", "/dashboard"];
+  const [categories, businesses] = await Promise.all([
+    getCategories(),
+    getSitemapBusinesses(),
+  ]);
 
   const entries: MetadataRoute.Sitemap = [];
 
-  for (const locale of locales) {
-    for (const path of staticPaths) {
+  // Localized homepages.
+  for (const locale of routing.locales) {
+    entries.push({
+      url: loc(`/${locale}`),
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 1,
+    });
+  }
+
+  // Localized category pages (real categories only).
+  for (const category of categories) {
+    for (const locale of routing.locales) {
       entries.push({
-        url: loc(`/${locale}${path}`),
+        url: loc(`/${locale}/category/${category.slug}`),
         lastModified: new Date(),
-        changeFrequency: path === "" ? "weekly" : "daily",
-        priority: path === "" ? 1 : 0.8,
+        changeFrequency: "weekly",
+        priority: 0.8,
       });
     }
   }
 
-  // Fallback root for the default locale (SEO friendly crawl).
-  entries.push({
-    url: loc(`/${defaultLocale}`),
-    lastModified: new Date(),
-    changeFrequency: "weekly",
-    priority: 1,
-  });
+  // Localized approved business pages.
+  for (const business of businesses) {
+    for (const locale of routing.locales) {
+      entries.push({
+        url: loc(`/${locale}/business/${business.slug}`),
+        lastModified: business.last_updated_at
+          ? new Date(business.last_updated_at)
+          : new Date(),
+        changeFrequency: "monthly",
+        priority: 0.6,
+      });
+    }
+  }
 
   return entries;
 }

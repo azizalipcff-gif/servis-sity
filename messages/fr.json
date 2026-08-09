@@ -19,7 +19,9 @@
     "profile": "Profil",
     "notifications": "Notifications",
     "messenger": "Messages",
-    "forBusinesses": "Pour les professionnels"
+    "forBusinesses": "Pour les professionnels",
+    "help": "Centre d'aide",
+    "favorites": "Favoris"
   },
   "messenger": {
     "title": "Messages",
@@ -94,24 +96,40 @@
   },
   "hero": {
     "badge": "La plateforme de services n°1 au Maroc",
-    "title": "Trouvez le meilleur artisan ou service dans votre ville",
-    "subtitle": "Électricien, plombier, restaurant, coiffeur, médecin... Tout est vérifié et noté, réservez en quelques clics.",
-    "searchPlaceholder": "Quel service cherchez-vous ? (ex : électricien, plombier...)",
+    "title": "Trouvez le professionnel dont vous avez besoin",
+    "subtitle": "Découvrez des professionnels et commerces de confiance près de chez vous",
+    "searchPlaceholder": "Quel service recherchez-vous ?",
     "cityPlaceholder": "Ville",
     "searchButton": "Rechercher",
-    "popularLabel": "Les plus demandés :",
-    "autocompleteHint": "Suggestions"
+    "popularLabel": "Tendances :",
+    "allCities": "Partout",
+    "discoveryLabel": "Populaire à :",
+    "viewAll": "Voir la suite",
+    "autocompleteHint": "Suggestions",
+    "marketSearchPlaceholder": "Que recherchez-vous ?"
   },
   "categories": {
-    "title": "Parcourir par catégorie",
+    "eyebrow": "Catégories",
+    "title": "Ce que le Maroc recherche",
     "subtitle": "Choisissez une catégorie et découvrez les meilleurs commerces de votre ville",
-    "viewAll": "Voir toutes les catégories"
+"viewAll": "Voir toutes les catégories",
+    "exploreAll": "Ou cherchez autre chose",
+    "more": "Plus",
+    "browseByCategory": "Parcourir par catégorie",
+    "businesses": "{count, plural, one {# activité} other {# activités}}"
   },
   "featured": {
-    "title": "Activités en vedette",
+    "eyebrow": "Sélection pour vous",
+    "title": "Les commerces à connaître",
     "subtitle": "Des professionnels vérifiés vous attendent — ils se démarquent par la qualité",
+    "leadLabel": "En vedette",
+    "viewBusiness": "Visiter leur page",
+    "reviews": "{count, plural, one {# avis} other {# avis}}",
+    "noReviews": "Aucun avis",
     "viewAll": "Tout voir",
     "empty": "Aucune activité n'est encore enregistrée. Soyez le premier commerçant à vous inscrire !",
+    "emptyTitle": "Aucune activité pour le moment",
+    "registerCta": "Enregistrer votre activité",
     "popularProducts": "Produits populaires"
   },
   "trust": {
@@ -165,6 +183,10 @@
   "search": {
     "title": "Résultats de recherche",
     "subtitle": "Trouvez les meilleures activités locales vérifiées pour votre besoin.",
+    "heroTitle": "Trouvez un service dans votre ville",
+    "heroSubtitle": "Décrivez votre besoin — nous vous mettons en relation avec des commerces locaux de confiance.",
+    "aiHeading": "Dites-nous ce dont vous avez besoin.",
+    "aiExample": "ex. · réparer ma machine à laver à Berkane aujourd'hui · plombier ouvert maintenant à Casablanca",
     "filters": "Filtres",
     "city": "Ville",
     "categoryLabel": "Catégorie",
@@ -220,13 +242,31 @@
     "fromLabel": "à partir de",
     "priceOnRequest": "Prix sur demande",
     "new": "Nouveau",
+    "showMore": "Voir plus ({count})",
+    "showLess": "Voir moins",
     "aiNotConfigured": "La recherche IA n'est pas encore activée, utilisez la recherche classique.",
     "aiFailed": "Une erreur est survenue dans la recherche intelligente, réessayez."
+  },
+  "promo": {
+    "eyebrow": "Pour les professionnels",
+    "title": "Faites découvrir vos services",
+    "subtitle": "Inscrivez votre activité sur Servis Sity et touchez des milliers de clients à Casablanca et dans tout le Maroc.",
+    "cta": "Ajouter mon activité"
+  },
+  "popularCategories": {
+    "eyebrow": "Explorer",
+    "title": "Catégories populaires",
+    "home": "Services à domicile",
+    "auto": "Auto & véhicules",
+    "beauty": "Beauté & bien-être",
+    "food": "Restaurants & cuisine",
+    "seeAll": "Tout voir"
   },
   "category": {
     "title": "{name}",
     "subtitle": "Les meilleurs {name} au Maroc",
-    "empty": "Aucune activité dans cette catégorie pour le moment"
+    "empty": "Aucune activité n'est encore enregistrée dans cette catégorie. Soyez le premier à ajouter la vôtre.",
+    "emptyTitle": "Aucune activité dans cette catégorie"
   },
   "business": {
     "call": "Appeler",
@@ -573,10 +613,12 @@
     "yearly": "Annuel",
     "lifetime": "À vie",
     "getStarted": "Commencer",
+    "mostPopular": "Le plus populaire",
     "currentPlan": "Votre formule",
     "freeDesc": "Pour les commerçants qui veulent commencer",
     "premiumDesc": "Pour les activités qui veulent se démarquer",
     "proDesc": "Pour les commerces qui veulent grandir",
+    "enterpriseDesc": "Pour les entreprises en croissance avec plusieurs sites",
     "features": {
       "free": [
         "Page d'activité professionnelle",
@@ -637,6 +679,14 @@
     "couponPlaceholder": "Saisissez un code promo",
     "couponApply": "Appliquer",
     "coupon_reset": "Code promo retiré",
+    "couponSuccess": "Code promo appliqué",
+    "couponLogin": "Connectez-vous pour appliquer un code promo.",
+    "couponInvalid": "Code promo invalide.",
+    "couponExpired": "Ce code promo a expiré.",
+    "couponError": "Une erreur est survenue lors de l'application de ce code.",
+    "couponHint": "Essayez un code promo comme WELCOME10",
+    "savePct": "Économisez {pct} %",
+    "periodSelector": "Période de facturation",
     "payment": {
       "title": "Paiement",
       "chooseProvider": "Finalisez votre paiement en toute sécurité",

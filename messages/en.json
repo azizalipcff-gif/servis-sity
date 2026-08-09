@@ -19,7 +19,10 @@
     "profile": "Profile",
     "notifications": "Notifications",
     "messenger": "Messages",
-    "forBusinesses": "For businesses"
+    "forBusinesses": "For businesses",
+    "help": "Help center",
+    "favorites": "Favorites",
+    "search": "Search"
   },
   "messenger": {
     "title": "Messages",
@@ -94,24 +97,41 @@
   },
   "hero": {
     "badge": "Morocco's #1 services platform",
-    "title": "Find the best craftsperson or service in your city",
-    "subtitle": "Electrician, plumber, restaurant, barber, doctor... All verified and rated, book in just a few clicks.",
-    "searchPlaceholder": "What service are you looking for? (e.g. electrician, plumber...)",
+    "title": "Find the service professional you need",
+    "subtitle": "Discover trusted, rated professionals and shops near you",
+    "searchPlaceholder": "What service are you looking for?",
     "cityPlaceholder": "City",
     "searchButton": "Search",
-    "popularLabel": "Most popular:",
-    "autocompleteHint": "Suggestions"
+    "popularLabel": "Trending:",
+    "allCities": "Everywhere",
+    "discoveryLabel": "Popular in:",
+    "viewAll": "See what's next",
+    "autocompleteHint": "Suggestions",
+    "marketSearchPlaceholder": "What are you looking for?"
   },
   "categories": {
-    "title": "Browse by category",
+    "eyebrow": "Categories",
+    "title": "Explore what people are looking for",
     "subtitle": "Pick a category and discover the best businesses in your city",
-    "viewAll": "View all categories"
+    "viewAll": "View all categories",
+    "exploreAll": "Or search something else",
+    "more": "More",
+    "browseByCategory": "Browse by category",
+    "businesses": "{count, plural, one {# business} other {# businesses}}"
   },
   "featured": {
-    "title": "Featured businesses",
+    "eyebrow": "Curated for you",
+    "title": "Businesses worth knowing",
     "subtitle": "Verified professionals are waiting for you — they stand out for quality",
+    "views": "Full page",
+    "leadLabel": "Featured",
+    "viewBusiness": "Visit their page",
+    "reviews": "{count, plural, one {# review} other {# reviews}}",
+    "noReviews": "No reviews yet",
     "viewAll": "View all",
     "empty": "No businesses registered yet. Be the first business owner to sign up!",
+    "emptyTitle": "No businesses yet",
+    "registerCta": "Register your business",
     "popularProducts": "Popular products"
   },
   "trust": {
@@ -165,6 +185,10 @@
   "search": {
     "title": "Search results",
     "subtitle": "Find the best verified local businesses for your needs.",
+    "heroTitle": "Find a service in your city",
+    "heroSubtitle": "Describe what you need — we'll match you with local businesses people already trust.",
+    "aiHeading": "Tell us what you need.",
+    "aiExample": "e.g. · repair my washing machine in Berkane today · plumber open now in Casablanca",
     "filters": "Filters",
     "city": "City",
     "categoryLabel": "Category",
@@ -220,13 +244,31 @@
     "fromLabel": "from",
     "priceOnRequest": "Price on request",
     "new": "New",
+    "showMore": "Show more ({count})",
+    "showLess": "Show less",
     "aiNotConfigured": "AI search isn't enabled yet, use regular search.",
     "aiFailed": "Something went wrong with AI search, please try again."
+  },
+  "promo": {
+    "eyebrow": "For businesses",
+    "title": "Let people find your services",
+    "subtitle": "List your business on Servis Sity and reach thousands of customers in Casablanca and across Morocco.",
+    "cta": "Add your business"
+  },
+  "popularCategories": {
+    "eyebrow": "Explore",
+    "title": "Popular categories",
+    "home": "Home services",
+    "auto": "Cars & auto",
+    "beauty": "Beauty & wellness",
+    "food": "Food & dining",
+    "seeAll": "See all"
   },
   "category": {
     "title": "{name}",
     "subtitle": "Best {name} in Morocco",
-    "empty": "No businesses in this category yet"
+    "empty": "No businesses in this category yet",
+    "emptyTitle": "No businesses yet"
   },
   "business": {
     "call": "Call",
@@ -574,10 +616,12 @@
     "yearly": "Yearly",
     "lifetime": "Lifetime",
     "getStarted": "Get started",
+    "mostPopular": "Most popular",
     "currentPlan": "Your current plan",
     "freeDesc": "For businesses just getting started",
     "premiumDesc": "For businesses that want to stand out",
     "proDesc": "For businesses ready to scale",
+    "enterpriseDesc": "For growing businesses with multiple locations",
     "features": {
       "free": [
         "Professional business page",
@@ -638,6 +682,14 @@
     "couponPlaceholder": "Enter promo code",
     "couponApply": "Apply",
     "coupon_reset": "Coupon removed",
+    "couponSuccess": "Coupon applied",
+    "couponLogin": "Sign in to apply a coupon code.",
+    "couponInvalid": "Invalid coupon code.",
+    "couponExpired": "This coupon has expired.",
+    "couponError": "Something went wrong applying this code.",
+    "couponHint": "Try a promo code like WELCOME10",
+    "savePct": "Save {pct}%",
+    "periodSelector": "Billing period",
     "payment": {
       "title": "Payment",
       "chooseProvider": "Complete your payment securely",

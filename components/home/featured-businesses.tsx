@@ -1,62 +1,148 @@
-import { ArrowRight, Building2 } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Building2, MapPin } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { BusinessCard } from "@/components/business-card";
-import { FadeIn, Stagger, StaggerItem } from "@/components/motion";
+import { EmptyState } from "@/components/empty-state";
+import { RatingStars } from "@/components/rating-stars";
+import { SmartImage } from "@/components/smart-image";
+import { DEFAULT_PLACEHOLDER_IMAGES } from "@/lib/constants";
+import { localizedName, type Locale } from "@/lib/translations";
 import type { BusinessWithCategory } from "@/lib/queries";
 
 export async function FeaturedBusinesses({
   businesses,
+  locale,
 }: {
   businesses: BusinessWithCategory[];
+  locale: Locale;
 }) {
   const t = await getTranslations("featured");
 
-  return (
-    <section className="bg-card/50 py-16">
-      <div className="container-site">
-        <FadeIn>
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold md:text-3xl">{t("title")}</h2>
-              <p className="mt-1 text-muted-foreground">{t("subtitle")}</p>
-            </div>
-            {businesses.length > 0 && (
-              <Link
-                href="/search"
-                className="hidden items-center gap-1 text-sm font-medium text-primary hover:underline sm:flex"
-              >
-                {t("viewAll")}
-                <ArrowRight className="size-4 rtl:rotate-180" />
-              </Link>
-            )}
-          </div>
-        </FadeIn>
+  const [lead, ...rest] = businesses;
+  const renderedRest = rest.slice(0, 6);
 
-        {businesses.length === 0 ? (
-          <FadeIn delay={0.1}>
-            <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed bg-background py-16 text-center">
-              <Building2 className="size-10 text-muted-foreground/50" />
-              <p className="max-w-sm text-sm text-muted-foreground">
-                {t("empty")}
-              </p>
-              <Link href="/register" className="mt-2">
-                <span className="text-sm font-semibold text-primary hover:underline">
-                  {t("viewAll")}
-                </span>
-              </Link>
-            </div>
-          </FadeIn>
-        ) : (
-          <Stagger className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {businesses.map((business) => (
-              <StaggerItem key={business.id} className="h-full">
-                <BusinessCard business={business} />
-              </StaggerItem>
-            ))}
-          </Stagger>
+  return (
+    <section className="container-site py-10 md:py-14">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
+        <div>
+          <p className="eyebrow">{t("eyebrow")}</p>
+          <h2 className="mt-1 text-2xl font-bold sm:text-3xl">{t("title")}</h2>
+        </div>
+        {businesses.length > 0 && (
+          <Link
+            href="/search"
+            className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-primary underline-offset-4 transition-colors hover:underline"
+          >
+            {t("viewAll")}
+            <ArrowRight className="size-4 rtl:rotate-180" />
+          </Link>
         )}
       </div>
+
+      {businesses.length === 0 ? (
+        <EmptyState
+          icon={<Building2 className="size-7" />}
+          title={t("emptyTitle")}
+          description={t("empty")}
+          action={
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              {t("registerCta")}
+              <ArrowUpRight className="size-4 rtl:rotate-180" />
+            </Link>
+          }
+        />
+      ) : lead ? (
+        <LeadCard business={lead} locale={locale} />
+      ) : null}
+
+      {renderedRest.length > 0 && (
+        <div className="mt-8">
+          <div className="rail fade-edge -mx-1 gap-4 px-1 pb-1">
+            {renderedRest.map((b) => (
+              <div key={b.id} className="w-[240px] shrink-0 sm:w-[260px]">
+                <BusinessCard business={b} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
+  );
+}
+
+async function LeadCard({
+  business,
+  locale,
+}: {
+  business: BusinessWithCategory;
+  locale: Locale;
+}) {
+  const t = await getTranslations("featured");
+  const categoryName = localizedName(business.categories, locale);
+  const href = `/business/${business.slug}`;
+
+  return (
+    <Link
+      href={href}
+      className="group grid gap-0 border border-border bg-card lg:grid-cols-2"
+    >
+      <div className="relative aspect-[16/10] overflow-hidden bg-muted lg:aspect-auto lg:min-h-[360px]">
+        <SmartImage
+          src={business.cover_url}
+          alt={business.name}
+          fallback={DEFAULT_PLACEHOLDER_IMAGES.cover}
+          className="h-full w-full"
+          imgClassName="object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+        <span className="pointer-events-none absolute end-3 top-3 inline-flex items-center gap-1 rounded-sm bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
+          {t("leadLabel")}
+          <ArrowUpRight className="size-3.5 rtl:rotate-180" />
+        </span>
+      </div>
+
+      <div className="flex flex-col justify-center gap-4 bg-foreground p-6 text-background md:p-10">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-xs font-semibold uppercase tracking-wider text-background/50">
+            {categoryName}
+          </span>
+          {business.city && (
+            <span className="inline-flex items-center gap-1 text-sm text-background/65">
+              <MapPin className="size-3.5" />
+              {business.city}
+            </span>
+          )}
+        </div>
+
+        <h3 className="text-3xl font-bold leading-tight md:text-4xl">
+          {business.name}
+        </h3>
+
+        {business.description && (
+          <p className="line-clamp-3 max-w-md text-[15px] leading-relaxed text-background/70">
+            {business.description}
+          </p>
+        )}
+
+        <div className="mt-2 flex items-center gap-3">
+          <RatingStars rating={business.rating_avg} size="size-4" dark />
+          <span className="text-sm font-semibold">
+            {business.rating_avg > 0 ? business.rating_avg.toFixed(1) : "—"}
+          </span>
+          <span className="text-sm text-background/60">
+            {business.reviews_count > 0
+              ? t("reviews", { count: business.reviews_count })
+              : t("noReviews")}
+          </span>
+        </div>
+
+        <span className="mt-4 inline-flex w-fit items-center gap-2 border border-background/25 px-4 py-2 text-sm font-semibold transition-colors group-hover:border-background group-hover:bg-background group-hover:text-foreground">
+          {t("viewBusiness")}
+          <ArrowUpRight className="size-4 rtl:rotate-180" />
+        </span>
+      </div>
+    </Link>
   );
 }

@@ -170,14 +170,14 @@ export function QuickActions({
             aria-label={a.label}
             title={a.label}
             className={cn(
-              "group relative inline-flex h-11 items-center justify-center gap-2 rounded-2xl px-4 font-medium shadow-sm ring-1 ring-transparent transition-all duration-300",
+              "group relative inline-flex h-11 items-center justify-center gap-2 px-4 font-medium transition-colors",
               a.enabled
-                ? "bg-card ring-border hover:-translate-y-0.5 hover:shadow-md hover:ring-primary/30"
-                : "cursor-not-allowed bg-muted/40 text-muted-foreground",
+                ? "border border-foreground text-foreground hover:bg-foreground hover:text-background"
+                : "cursor-not-allowed border border-transparent bg-muted text-muted-foreground",
               a.key === "call" &&
-                "bg-primary text-primary-foreground hover:shadow-primary/20",
+                "border-foreground bg-foreground text-background hover:border-primary hover:bg-primary hover:text-primary-foreground",
               a.key === "whatsapp" &&
-                "bg-accent text-accent-foreground hover:shadow-accent/20",
+                "border-[#128C7E] bg-transparent text-[#128C7E] hover:bg-[#128C7E] hover:text-white",
             )}
           >
 {inner}

@@ -5,14 +5,17 @@ export function RatingStars({
   rating,
   size = "size-4",
   className,
+  dark,
 }: {
   rating: number;
   size?: string;
   className?: string;
+  dark?: boolean;
 }) {
   return (
     <div
       className={cn("flex items-center gap-0.5", className)}
+      role="img"
       aria-label={`${rating} / 5`}
     >
       {[1, 2, 3, 4, 5].map((i) => (
@@ -22,7 +25,9 @@ export function RatingStars({
             size,
             i <= Math.round(rating)
               ? "fill-warning text-warning"
-              : "fill-muted text-muted",
+              : dark
+                ? "fill-background/25 text-background/25"
+                : "fill-muted text-muted",
           )}
         />
       ))}

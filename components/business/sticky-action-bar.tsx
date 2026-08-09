@@ -48,8 +48,8 @@ export function StickyActionBar({ business }: { business: BusinessDetail }) {
   ];
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 p-3 backdrop-blur lg:hidden">
-      <div className="grid grid-cols-4 gap-2">
+    <div className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 rounded-2xl border bg-card/90 p-2 shadow-lift backdrop-blur lg:hidden">
+      <div className="grid grid-cols-4 gap-1.5">
         {actions.map((action) => (
           <Button
             key={action.label}

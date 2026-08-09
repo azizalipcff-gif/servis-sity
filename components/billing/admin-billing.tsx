@@ -184,7 +184,8 @@ function PlanTable({ plans, onToggle, onDelete }: { plans: Plan[]; onToggle: (id
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-muted-foreground">{["key", "interval", "price", "status", "actions"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
+        <thead><tr className="text-start
+                                                                                text-muted-foreground">{["key", "interval", "price", "status", "actions"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
         <tbody>
           {plans.map((p) => (
             <tr key={p.id} className="border-t">
@@ -209,7 +210,7 @@ function PaymentTable({ payments, onConfirm, onRefund }: { payments: Payment[]; 
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-muted-foreground">{["amount", "provider", "status", "actions"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
+        <thead><tr className="text-start text-muted-foreground">{["amount", "provider", "status", "actions"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
         <tbody>
           {payments.map((p) => (
             <tr key={p.id} className="border-t">
@@ -234,7 +235,7 @@ function VerTable({ items, onAction }: { items: VerReq[]; onAction: (id: string,
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-muted-foreground">{["status", "actions"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
+        <thead><tr className="text-start text-muted-foreground">{["status", "actions"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
         <tbody>
           {items.map((r) => (
             <tr key={r.id} className="border-t">
@@ -258,7 +259,7 @@ function FeaturedTable({ items, onAction }: { items: Featured[]; onAction: (id: 
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-muted-foreground">{["surface", "status", "actions"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
+        <thead><tr className="text-start text-muted-foreground">{["surface", "status", "actions"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
         <tbody>
           {items.map((f) => (
             <tr key={f.id} className="border-t">
@@ -283,7 +284,7 @@ function CouponTable({ coupons, onToggle }: { coupons: Coupon[]; onToggle: (id: 
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-muted-foreground">{["code", "type", "value", "status", "actions"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
+        <thead><tr className="text-start text-muted-foreground">{["code", "type", "value", "status", "actions"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
         <tbody>
           {coupons.map((c) => (
             <tr key={c.id} className="border-t">

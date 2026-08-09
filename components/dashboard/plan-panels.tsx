@@ -19,7 +19,7 @@ export function PlanPanel({ plan }: { plan: PlanType }) {
               "rounded-full px-3 py-1 text-sm font-bold",
               plan === "free" && "bg-muted text-muted-foreground",
               plan === "premium" && "bg-primary text-primary-foreground",
-              plan === "pro" && "bg-[#45489b] text-white",
+              plan === "pro" && "bg-foreground text-background",
             )}
           >
             {plan === "free"

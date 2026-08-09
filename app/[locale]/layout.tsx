@@ -2,14 +2,28 @@ import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { Inter, Tajawal } from "next/font/google";
 import { routing } from "@/i18n/routing";
 import { dirForLocale } from "@/lib/translations";
 import { siteUrl, hreflangLocales } from "@/lib/seo";
 import { Providers } from "@/components/providers";
 import "@/app/globals.css";
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const tajawal = Tajawal({
+  subsets: ["latin", "arabic"],
+  weight: ["400", "500", "700", "800"],
+  variable: "--font-tajawal",
+  display: "swap",
+});
+
 export const viewport: Viewport = {
-  themeColor: "#bf5b32",
+  themeColor: "#e07a2d",
   colorScheme: "light dark",
   width: "device-width",
   initialScale: 1,
@@ -35,7 +49,9 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <html lang={locale} dir={dirForLocale(locale as "ar" | "fr" | "en")}>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body
+        className={`min-h-screen bg-background text-foreground antialiased ${inter.variable} ${tajawal.variable}`}
+      >
         <NextIntlClientProvider>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>
@@ -53,13 +69,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "meta" });
-
-  const alternates = Object.entries(hreflangLocales).reduce<
-    Record<string, string>
-  >((acc, [loc]) => {
-    acc[loc] = absolutePath(loc, "");
-    return acc;
-  }, {});
 
   return {
     metadataBase: new URL(siteUrl()),
@@ -95,17 +104,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: "Servis Sity",
       statusBarStyle: "default",
     },
-    alternates: {
-      canonical: absolutePath(locale, ""),
-      languages: {
-        ...alternates,
-        "x-default": absolutePath("en", ""),
-      },
-    },
     openGraph: {
       type: "website",
       locale: hreflangLocales[locale] ?? locale,
-      url: absolutePath(locale, ""),
       siteName: t("title"),
       title: t("title"),
       description: t("description"),
@@ -135,8 +136,4 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
     },
   };
-}
-
-function absolutePath(locale: string, path: string): string {
-  return `${siteUrl()}/${locale}${path}`;
 }

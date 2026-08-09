@@ -230,7 +230,7 @@ export function ReviewsSection({ business }: { business: BusinessDetail }) {
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-bold text-primary-foreground">
+                  <span className="grid size-10 place-items-center bg-primary text-sm font-bold text-primary-foreground">
                     {(review.profile?.full_name ?? "س").charAt(0)}
                   </span>
                   <div>

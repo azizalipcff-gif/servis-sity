@@ -68,6 +68,22 @@ export const getCategoryBySlug = cache(
   },
 );
 
+/** Map category_id -> approved business count (used by marketplace rails). */
+export const getCategoryCounts = cache(async (): Promise<Record<string, number>> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("businesses")
+    .select("category_id, status")
+    .eq("status", "approved");
+  if (error || !data) return {};
+
+  const counts: Record<string, number> = {};
+  for (const row of data) {
+    counts[row.category_id] = (counts[row.category_id] ?? 0) + 1;
+  }
+  return counts;
+});
+
 export const getFeaturedBusinesses = cache(
   async (): Promise<BusinessWithCategory[]> => {
     const supabase = await createClient();
@@ -221,6 +237,18 @@ export async function getBusinessCount(): Promise<number> {
 
   return error ? 0 : (count ?? 0);
 }
+
+export const getSitemapBusinesses = cache(
+  async (): Promise<Pick<Business, "slug" | "last_updated_at">[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("businesses")
+      .select("slug, last_updated_at")
+      .eq("status", "approved");
+    if (error || !data) return [];
+    return data;
+  },
+);
 
 export async function getBookingsForOwner(businessId: string) {
   const supabase = await createClient();

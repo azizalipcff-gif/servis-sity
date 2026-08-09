@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
-import { SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { categoryLabel } from "@/lib/constants";
 import { SearchBar } from "@/components/search/search-bar";
@@ -57,33 +57,37 @@ export function SearchExplorer({
 
   return (
     <div className="container-site">
-      {/* Hero search */}
-      <div className="pb-6 pt-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {t("title")}
-        </h1>
-        <p className="mx-auto mt-2 max-w-xl text-muted-foreground">
-          {t("subtitle")}
-        </p>
+      {/* Marketplace discovery header */}
+      <div className="flex flex-col gap-3 border-b border-border py-5 md:flex-row md:items-center md:justify-between md:py-6">
+        <div>
+          <h1 className="text-2xl font-bold sm:text-3xl">{t("heroTitle")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("heroSubtitle")}</p>
+        </div>
       </div>
 
-      {/* Search inputs */}
-      <div className="mx-auto max-w-2xl space-y-2">
+      {/* Search + AI */}
+      <div className="max-w-3xl space-y-4 py-6">
         <SearchBar
           q={search.q}
           onQChange={search.setQ}
           onSearch={() => undefined}
           onCategory={(slug) => search.setFilter("category", slug)}
         />
-        <div className="flex justify-end">
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <button
             type="button"
             onClick={() => setAiOpen((v) => !v)}
-            className="flex items-center gap-1.5 rounded-full border border-accent/30 px-3 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/10"
+            className={cn(
+              "inline-flex items-center gap-2 text-sm font-medium transition-colors",
+              aiOpen
+                ? "text-primary"
+                : "text-foreground/80 underline-offset-4 hover:text-primary hover:underline",
+            )}
           >
-            <Sparkles className="size-3.5" />
-            {t("aiSearchTitle")}
+            {t("aiHeading")}
           </button>
+          <span className="text-sm text-muted-foreground">{t("aiExample")}</span>
         </div>
         <AnimatePresence>
           {aiOpen && <AiSearchBar onApply={applyFilters} />}
@@ -91,13 +95,13 @@ export function SearchExplorer({
       </div>
 
       {/* Active filter chips */}
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-border pb-5">
         <FilterChips filters={filter} onRemove={search.setFilter} />
         {hasAnyQuery && (
           <button
             type="button"
             onClick={search.resetAll}
-            className="text-xs font-medium text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
+            className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
           >
             {t("clearAll")}
           </button>
@@ -154,7 +158,7 @@ export function SearchExplorer({
       <button
         type="button"
         onClick={() => setSheetOpen(true)}
-        className="fixed bottom-5 end-5 z-40 flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-xl transition-transform hover:scale-105 active:scale-95 lg:hidden"
+        className="fixed bottom-24 end-5 z-40 flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lift transition-transform hover:scale-105 active:scale-95 lg:hidden"
       >
         <SlidersHorizontal className="size-4" />
         {t("filters")}
@@ -227,14 +231,14 @@ function FilterChips({
       {chips.map((c) => (
         <span
           key={c.key}
-          className="inline-flex items-center gap-1 rounded-full border bg-muted/40 px-3 py-1.5 text-xs font-medium"
+          className="inline-flex items-center gap-1.5 text-sm"
         >
           {c.label}
           <button
             type="button"
             aria-label={t("removeFilter")}
             onClick={c.clear}
-            className="grid size-4 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="grid size-4 place-items-center rounded-full text-muted-foreground/70 hover:bg-muted hover:text-foreground"
           >
             <X className="size-3" />
           </button>

@@ -35,15 +35,15 @@ export default function GlobalError({
           placeItems: "center",
           fontFamily:
             "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
-          background: "#fafaf9",
-          color: "#1c1917",
+          background: "#f7f8fa",
+          color: "#16181d",
         }}
       >
         <main style={{ textAlign: "center", padding: "2rem" }}>
           <p style={{ fontWeight: 700, fontSize: "1.25rem" }}>
             Something went wrong
           </p>
-          <p style={{ color: "#78716c", margin: "0.5rem 0 1.25rem" }}>
+          <p style={{ color: "#667085", margin: "0.5rem 0 1.25rem" }}>
             Please try again.
           </p>
           <button
@@ -53,7 +53,7 @@ export default function GlobalError({
               cursor: "pointer",
               borderRadius: 9999,
               padding: "0.6rem 1.25rem",
-              background: "#bf5b32",
+              background: "#3f5238",
               color: "#fff",
               fontWeight: 600,
             }}

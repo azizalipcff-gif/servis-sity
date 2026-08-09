@@ -127,7 +127,9 @@ export function BusinessesTable({ businesses, locale }: Props) {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">{t("empty")}</p>
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed bg-card/50 py-14 text-center">
+          <p className="text-sm text-muted-foreground">{t("empty")}</p>
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-3xl border bg-card">
           <table className="w-full min-w-[820px] text-sm">

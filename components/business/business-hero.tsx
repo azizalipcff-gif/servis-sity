@@ -68,21 +68,19 @@ export function BusinessHero({ business }: { business: BusinessDetail }) {
                   {business.name}
                 </h1>
                 {business.verified && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-accent-foreground">
+                  <span className="inline-flex items-center gap-1 border border-white/70 bg-white/85 px-2.5 py-0.5 text-xs font-semibold text-primary backdrop-blur">
                     <BadgeCheck className="size-3.5" />
                     {t("verified")}
                   </span>
                 )}
-                {business.plan !== "free" && (
-                  <span
-                    className={cn(
-                      "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white",
-                      business.plan === "premium"
-                        ? "bg-primary"
-                        : "bg-[#45489b]",
-                    )}
-                  >
-                    {business.plan === "pro" ? "Pro" : "Premium"}
+                {business.plan === "premium" && (
+                  <span className="inline-flex items-center rounded-full bg-foreground px-2.5 py-0.5 text-xs font-semibold text-background">
+                    Premium
+                  </span>
+                )}
+                {business.plan === "pro" && (
+                  <span className="inline-flex items-center border border-white/70 bg-white/85 px-2.5 py-0.5 text-xs font-semibold text-accent backdrop-blur">
+                    Pro
                   </span>
                 )}
               </div>
@@ -121,9 +119,6 @@ export function BusinessHero({ business }: { business: BusinessDetail }) {
                     )}
                   >
                     <span className="relative flex size-2">
-                      {open && (
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-75" />
-                      )}
                       <span className="relative inline-flex size-2 rounded-full bg-current" />
                     </span>
                     {open

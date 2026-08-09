@@ -21,7 +21,7 @@ export function FilterSidebar({
   activeCount: number;
 }) {
   return (
-    <div className="h-fit rounded-2xl border bg-card/60 p-4 backdrop-blur lg:sticky lg:top-24">
+    <div className="lg:sticky lg:top-[9.25rem] lg:max-h-[calc(100dvh-9.5rem)] lg:overflow-y-auto lg:border-e lg:border-border lg:pe-8 lg:scrollbar-thin">
       <FilterControls
         filters={filters}
         setFilter={setFilter}

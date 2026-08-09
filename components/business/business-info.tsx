@@ -3,7 +3,6 @@ import {
   ArrowUpRight,
   Languages,
   MapPinned,
-  Sparkles,
 } from "lucide-react";
 import { localizedName, type Locale } from "@/lib/translations";
 import type { BusinessDetail } from "@/lib/queries";
@@ -28,24 +27,18 @@ export async function BusinessInfo({
 
   return (
     <section aria-labelledby="about-title">
-      <div className="flex items-center gap-2">
-        <Sparkles className="size-4 text-primary" />
-        <h2
-          id="about-title"
-          className="text-xl font-bold tracking-tight"
-        >
-          {dt("aboutTitle")}
-        </h2>
+      <div className="border-t border-border pt-8">
+        <p className="eyebrow">{dt("aboutTitle")}</p>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           {summary && (
-            <div className="rounded-2xl border-l-4 border-primary bg-primary/5 p-4 text-foreground/90">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary">
+            <div className="border-s border-primary ps-4">
+              <p className="text-sm font-medium uppercase tracking-wider text-primary">
                 {dt("summary")}
               </p>
-              <p className="mt-1.5 text-lg font-medium leading-relaxed">
+              <p className="mt-1.5 text-xl font-medium leading-relaxed">
                 {summary}
               </p>
             </div>
@@ -62,7 +55,7 @@ export async function BusinessInfo({
           )}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-0">
           <Fact icon={<ArrowUpRight className="size-4 text-primary" />}>
             <dt className="text-xs uppercase tracking-wider text-muted-foreground">
               {dt("languages")}
@@ -105,8 +98,8 @@ function Fact({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-2xl border bg-card p-4">
-      <span className="mt-0.5 text-primary">{icon}</span>
+    <div className="flex items-center gap-3 border-b border-border py-3.5">
+      <span className="text-primary">{icon}</span>
       <dl className="min-w-0 flex-1">{children}</dl>
     </div>
   );

@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { Bell, X } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
+import type { SupabaseClient, RealtimeChannel } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/database.types";
 
 type LiveNotif = {
   id: string;
@@ -27,11 +29,20 @@ export function NotificationsBell({ userId }: { userId: string }) {
   useEffect(() => {
     void refresh();
 
-    let channel: { unsubscribe: () => void } | undefined;
+    // Guard against stale subscriptions leaked by async registration.
+    // Because createBrowserClient memoizes the client (and .channel(name)
+    // returns the same channel for a given name), a second effect run must
+    // never attach postgres_changes to an already-subscribed channel —
+    // that throws "cannot add postgres_changes callbacks after subscribe()".
+    let disposed = false;
+    let supabase: SupabaseClient<Database> | null = null;
+    let channel: RealtimeChannel | null = null;
 
-    import("@/lib/supabase/client").then((mod) => {
-      const client = mod.createClient();
-      channel = client
+    void import("@/lib/supabase/client").then((mod) => {
+      if (disposed) return;
+
+      supabase = mod.createClient();
+      channel = supabase
         .channel(`notifications:${userId}`)
         .on(
           "postgres_changes",
@@ -50,7 +61,10 @@ export function NotificationsBell({ userId }: { userId: string }) {
     });
 
     return () => {
-      channel?.unsubscribe();
+      disposed = true;
+      if (supabase && channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [userId, refresh]);
 

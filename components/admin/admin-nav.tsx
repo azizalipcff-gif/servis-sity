@@ -67,7 +67,7 @@ export function AdminNav() {
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
                   active
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary/10 text-primary ring-1 ring-primary/20"
                     : "text-foreground/75 hover:bg-muted hover:text-foreground",
                 )}
               >

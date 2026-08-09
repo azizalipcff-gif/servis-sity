@@ -28,7 +28,12 @@ function initials(profile: Profile) {
     .join("");
 }
 
-export default async function ProfilePage() {
+export default async function ProfilePage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const t = await getTranslations("profile");
   const profile = await getCurrentProfile();
 
@@ -42,7 +47,7 @@ export default async function ProfilePage() {
   if (profile.whatsapp) socials.push({ label: "WhatsApp", href: profile.whatsapp, icon: MessageCircle });
 
   const joined = profile.created_at
-    ? new Date(profile.created_at).toLocaleDateString(undefined, {
+    ? new Date(profile.created_at).toLocaleDateString(locale, {
         year: "numeric",
         month: "long",
       })
@@ -58,24 +63,26 @@ export default async function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="overflow-hidden rounded-3xl border bg-card shadow-sm">
+      <div className="border-y border-border">
         {/* Cover */}
-        <div className="relative h-40 bg-gradient-to-br from-primary/20 via-primary/5 to-accent/20 sm:h-52">
-          {profile.cover_url && (
+        <div className="relative aspect-[3/1] max-h-64 w-full overflow-hidden bg-muted">
+          {profile.cover_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={profile.cover_url}
               alt=""
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
               referrerPolicy="no-referrer"
             />
+          ) : (
+            <div className="h-full w-full bg-[linear-gradient(135deg,var(--muted),var(--background))]" />
           )}
         </div>
 
         <div className="px-5 pb-6 sm:px-8">
-          {/* Avatar */}
-          <div className="-mt-14 flex flex-wrap items-end gap-4">
-            <div className="flex h-28 w-28 overflow-hidden rounded-2xl bg-muted ring-4 ring-card">
+          {/* Avatar + settings */}
+          <div className="-mt-14 flex items-end gap-4">
+            <div className="relative flex h-24 w-24 shrink-0 overflow-hidden rounded-full bg-muted shadow-md ring-4 ring-white">
               {profile.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -90,50 +97,48 @@ export default async function ProfilePage() {
                 </div>
               )}
             </div>
-            <Link href="/profile/settings" className="ml-auto">
-              <Badge variant="outline" className="gap-1.5 py-1.5">
-                <Pencil className="h-3.5 w-3.5" />
-                {t("tabSettings")}
-              </Badge>
+            <Link
+              href="/profile/settings"
+              className="ms-auto inline-flex items-center gap-1.5 border border-border px-3 py-1.5 text-xs font-semibold transition-colors hover:border-foreground"
+            >
+              <Pencil className="size-3.5" />
+              {t("tabSettings")}
             </Link>
           </div>
 
-          {/* Name */}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <h2 className="text-2xl font-bold tracking-tight">
-              {profile.full_name || "—"}
-            </h2>
-            {profile.role === "admin" && (
-              <Badge className="gap-1">
-                <GraduationCap className="h-3.5 w-3.5" />
-                {t("adminRole")}
-              </Badge>
-            )}
+          {/* Name/role */}
+          <div className="mt-5">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-3xl font-bold tracking-tight">
+                {profile.full_name || "—"}
+              </h2>
+              {profile.role === "admin" && (
+                <Badge className="gap-1">
+                  <GraduationCap className="size-3.5" />
+                  {t("adminRole")}
+                </Badge>
+              )}
+            </div>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              {t(profile.role === "owner" ? "roleOwner" : "roleClient")}
+              {joined ? ` — ${t("joinedSince", { date: joined })}` : ""}
+            </p>
           </div>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t(profile.role === "owner" ? "roleOwner" : "roleClient")}
-            {joined ? ` — ${t("joinedSince", { date: joined })}` : ""}
-          </p>
-
           {/* Bio */}
-          {profile.bio ? (
-            <p className="mt-5 whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
-              {profile.bio}
-            </p>
-          ) : (
-            <p className="mt-5 text-sm text-muted-foreground">{t("noBio")}</p>
-          )}
+          <p className="mt-5 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/80">
+            {profile.bio || t("noBio")}
+          </p>
 
           {/* Info grid */}
           {info.length > 0 && (
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="mt-6 grid gap-0 border-t border-border sm:grid-cols-2">
               {info.map((item, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 rounded-xl bg-muted/50 px-3 py-2.5 text-sm"
+                  className="flex items-center gap-3 border-b border-border py-3 text-sm sm:odd:pe-4 sm:even:ps-4"
                 >
-                  <item.icon className="h-4 w-4 shrink-0 text-primary" />
+                  <item.icon className="size-4 shrink-0 text-primary" />
                   <span className="truncate text-foreground/80">{item.text}</span>
                 </div>
               ))}
@@ -149,9 +154,9 @@ export default async function ProfilePage() {
                   href={s.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                  className="inline-flex items-center gap-1.5 border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
                 >
-                  <s.icon className="h-3.5 w-3.5" />
+                  <s.icon className="size-3.5" />
                   {s.label}
                 </a>
               ))}

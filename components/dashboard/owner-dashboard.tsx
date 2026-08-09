@@ -61,7 +61,7 @@ export function OwnerDashboard({
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-1.5 overflow-x-auto border-b border-border pb-px">
+      <div className="flex gap-1 overflow-x-auto rounded-2xl border bg-card p-1">
         {tabs.map((item) => {
           const Icon = item.icon;
           const active = tab === item.key;
@@ -70,11 +70,12 @@ export function OwnerDashboard({
               key={item.key}
               type="button"
               onClick={() => setTab(item.key)}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 rounded-t-xl border-b-2 px-3.5 py-2.5 text-sm font-medium transition-colors",
+                "inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors",
                 active
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
               <Icon className="size-4" />

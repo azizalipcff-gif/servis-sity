@@ -56,14 +56,14 @@ export function ContactCard({ business }: { business: BusinessDetail }) {
       className="h-fit space-y-4 lg:sticky lg:top-24"
     >
       {/* Verification / status card */}
-      <div className="rounded-3xl border bg-card p-5 shadow-sm">
+      <div className="border border-border bg-card p-5">
         <div className="flex items-center gap-2.5">
           <span
             className={cn(
-              "grid size-10 place-items-center rounded-2xl",
+              "grid size-10 place-items-center border",
               business.verified
-                ? "bg-success/10 text-success"
-                : "bg-muted text-muted-foreground",
+                ? "border-success/30 text-success"
+                : "border-border text-muted-foreground",
             )}
           >
             <ShieldCheck className="size-5" />
@@ -85,7 +85,7 @@ export function ContactCard({ business }: { business: BusinessDetail }) {
 
         {/* Today hours */}
         {business.hours.length > 0 && (
-          <div className="mt-4 flex items-center justify-between rounded-2xl bg-muted/40 px-4 py-3">
+          <div className="mt-4 flex items-center justify-between border border-border px-4 py-3">
             <span className="flex items-center gap-1.5 text-sm">
               <Clock className="size-4 text-muted-foreground" />
               {weekdayName(new Date().getDay(), "en")}
@@ -105,18 +105,14 @@ export function ContactCard({ business }: { business: BusinessDetail }) {
 
         {/* Primary actions */}
         <div className="mt-4 grid gap-2.5">
-          <Button asChild className="w-full gap-2 rounded-2xl">
+          <Button asChild className="w-full gap-2">
             <a href={`tel:${business.phone}`}>
               <Phone className="size-4" />
               {t("call")}
             </a>
           </Button>
           {waNumber && (
-            <Button
-              asChild
-              variant="outline"
-              className="w-full gap-2 rounded-2xl"
-            >
+            <Button asChild variant="outline" className="w-full gap-2">
               <a
                 href={`https://wa.me/${waNumber}`}
                 target="_blank"

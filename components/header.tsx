@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { MobileNav } from "@/components/mobile-nav";
 import { LogoutButton } from "@/components/logout-button";
+import { AccountMenu } from "@/components/account-menu";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { MessengerLink } from "@/components/messenger-link";
 import { HeaderBar } from "@/components/layout/header-bar";
@@ -98,6 +99,30 @@ export async function Header() {
                   <div className="hidden lg:block">
                     <LogoutButton />
                   </div>
+
+                  {/* Desktop account chip — unchanged link behavior */}
+                  <Link
+                    href="/profile"
+                    aria-label={t("profile")}
+                    className="hidden size-9 items-center justify-center rounded-lg border-s border-border ps-2 ms-0.5 lg:flex lg:ps-2"
+                  >
+                    <span className="grid size-7 place-items-center overflow-hidden rounded-full bg-secondary text-xs font-bold text-secondary-foreground ring-1 ring-border">
+                      {profile?.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={profile.avatar_url}
+                          alt=""
+                          className="h-full w-full rounded-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        initials || <UserIcon className="size-3.5" />
+                      )}
+                    </span>
+                  </Link>
+
+                  {/* Mobile account menu — Profile / Dashboard / Favorites / Messenger / Sign out */}
+                  <AccountMenu profile={profile} initials={initials} />
                 </>
               ) : (
                 <div className="hidden items-center gap-1 lg:flex">
@@ -110,26 +135,29 @@ export async function Header() {
                 </div>
               )}
 
-              {/* Account chip */}
-              <Link
-                href={user ? "/profile" : "/login"}
-                aria-label={user ? t("profile") : t("login")}
-                className="flex size-9 items-center justify-center rounded-lg border-s border-border ps-2 ms-0.5 lg:ps-2"
-              >
-                <span className="grid size-7 place-items-center overflow-hidden rounded-full bg-secondary text-xs font-bold text-secondary-foreground ring-1 ring-border">
-                  {profile?.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={profile.avatar_url}
-                      alt=""
-                      className="h-full w-full rounded-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    initials || <UserIcon className="size-3.5" />
-                  )}
-                </span>
-              </Link>
+              {/* Logged-out mobile account chip */}
+              {!user && (
+                <Link
+                  href="/login"
+                  aria-label={t("login")}
+                  className="flex size-9 items-center justify-center rounded-lg border-s border-border ps-2 ms-0.5 lg:hidden"
+                >
+                  <UserIcon className="size-4" />
+                </Link>
+              )}
+
+              {/* Logged-out desktop account chip — unchanged behavior */}
+              {!user && (
+                <Link
+                  href="/login"
+                  aria-label={t("login")}
+                  className="hidden size-9 items-center justify-center rounded-lg border-s border-border ps-2 ms-0.5 lg:flex lg:ps-2"
+                >
+                  <span className="grid size-7 place-items-center rounded-full bg-secondary ring-1 ring-border">
+                    <UserIcon className="size-3.5" />
+                  </span>
+                </Link>
+              )}
             </div>
           </div>
         </HeaderBar>

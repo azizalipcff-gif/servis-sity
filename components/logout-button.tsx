@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 
-export function LogoutButton() {
+export function LogoutButton({ className }: { className?: string }) {
   const t = useTranslations("nav");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -26,6 +26,7 @@ export function LogoutButton() {
       size="sm"
       onClick={handleLogout}
       disabled={loading}
+      className={className}
     >
       {loading ? <Loader2 className="size-4 animate-spin" /> : <LogOut className="size-4" />}
       {t("logout")}

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import {
   Bookmark,
+  Loader2,
   MessageCircle,
   MessageSquare,
   Navigation,
@@ -25,7 +26,11 @@ export function QuickActions({
 }) {
   const t = useTranslations("business");
   const dt = useTranslations("business.detail");
-  const { startChat, isOwner } = useBusinessChat(business.id, business.owner_id, business.slug);
+  const { startChat, busy: chatBusy, isOwner } = useBusinessChat(
+    business.id,
+    business.owner_id,
+    business.slug,
+  );
 
   const waNumber = business.whatsapp?.replace(/\D/g, "");
   const directionsHref = (() => {
@@ -78,6 +83,7 @@ export function QuickActions({
     href?: string;
     external?: boolean;
     onClick?: () => void;
+    busy?: boolean;
     priority: "primary" | "secondary" | "tertiary";
   };
 
@@ -105,6 +111,7 @@ export function QuickActions({
       label: t("chat"),
       icon: MessageSquare,
       enabled: !isOwner,
+      busy: chatBusy,
       onClick: () => void startChat(),
       priority: "secondary",
     },
@@ -155,12 +162,16 @@ export function QuickActions({
         const Icon = a.icon;
         const inner = (
           <>
-            <Icon
-              className={cn(
-                "size-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110",
-                saved && a.key === "save" && "fill-primary text-primary",
-              )}
-            />
+            {a.busy ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Icon
+                className={cn(
+                  "size-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110",
+                  saved && a.key === "save" && "fill-primary text-primary",
+                )}
+              />
+            )}
             <span>{a.label}</span>
           </>
         );
@@ -203,6 +214,8 @@ export function QuickActions({
               );
             }}
             aria-label={a.label}
+            aria-busy={a.busy || undefined}
+            disabled={a.busy || undefined}
             className={shared}
           >
             {inner}

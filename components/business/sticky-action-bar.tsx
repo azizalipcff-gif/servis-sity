@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, MessageCircle, MessageSquare, Phone } from "lucide-react";
+import { Loader2, MapPin, MessageCircle, MessageSquare, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { BusinessDetail } from "@/lib/queries";
@@ -8,7 +8,11 @@ import { useBusinessChat } from "./use-business-chat";
 
 export function StickyActionBar({ business }: { business: BusinessDetail }) {
   const t = useTranslations("business");
-  const { startChat, isOwner } = useBusinessChat(business.id, business.owner_id, business.slug);
+  const { startChat, busy: chatBusy, isOwner } = useBusinessChat(
+    business.id,
+    business.owner_id,
+    business.slug,
+  );
   const waNumber = business.whatsapp?.replace(/\D/g, "");
 
   type MobileAction = {
@@ -16,6 +20,7 @@ export function StickyActionBar({ business }: { business: BusinessDetail }) {
     label: string;
     href?: string;
     onClick?: () => void;
+    busy?: boolean;
     enabled: boolean;
   };
 
@@ -36,6 +41,7 @@ export function StickyActionBar({ business }: { business: BusinessDetail }) {
       icon: MessageSquare,
       label: t("chat"),
       onClick: () => void startChat(),
+      busy: chatBusy,
       enabled: !isOwner,
     },
     {
@@ -66,10 +72,17 @@ export function StickyActionBar({ business }: { business: BusinessDetail }) {
               variant={action.enabled ? "outline" : "ghost"}
               size="sm"
               className="flex-col gap-0.5 h-auto py-2 text-[11px]"
-              disabled={!action.enabled}
-              onClick={() => action.onClick?.()}
+              disabled={!action.enabled || action.busy}
+              aria-busy={action.busy || undefined}
+              onClick={() => {
+                action.onClick?.();
+              }}
             >
-              <action.icon className="size-4" />
+              {action.busy ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <action.icon className="size-4" />
+              )}
               {action.label}
             </Button>
           ) : (

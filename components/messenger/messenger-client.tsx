@@ -29,16 +29,20 @@ export function MessengerClient({
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch("/api/messenger/conversations", { cache: "no-store" });
+      // When opening a specific conversation, include archived ones so the
+      // target thread is always available after getOrCreateConversation.
+      const q = initialConversationId ? "?archived=1" : "";
+      const res = await fetch(`/api/messenger/conversations${q}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         setConversations(data.conversations ?? []);
-        setLoading(false);
       }
     } catch {
       /* ignore */
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [initialConversationId]);
 
   useEffect(() => {
     if (!userId) return;

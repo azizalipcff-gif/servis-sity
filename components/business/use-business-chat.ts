@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -19,6 +19,7 @@ export function useBusinessChat(businessId: string, ownerId: string | null, slug
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const busyRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -28,7 +29,7 @@ export function useBusinessChat(businessId: string, ownerId: string | null, slug
         if (mounted) setCurrentUserId(data.user?.id ?? null);
       })
       .catch(() => {
-        /* ignore */
+        /* session lookup is a convenience only — the API is the source of truth */
       });
     return () => {
       mounted = false;
@@ -38,43 +39,53 @@ export function useBusinessChat(businessId: string, ownerId: string | null, slug
   const isOwner = Boolean(currentUserId && ownerId && currentUserId === ownerId);
 
   const openLogin = useCallback(() => {
-    // Locale-relative path: next-intl router + auth callback add the locale prefix.
-    router.push({ pathname: "/login", query: { returnTo: `/business/${slug}` } });
+    router.push(`/login?returnTo=${encodeURIComponent(`/business/${slug}`)}`);
   }, [router, slug]);
 
   const startChat = useCallback(async () => {
-    if (busy) return;
-
-    const supabase = createClient();
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) {
-      openLogin();
-      return;
-    }
-    if (ownerId && data.user.id === ownerId) return;
-
+    if (busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
     try {
+      let uid: string | null = null;
+      try {
+        const { data } = await createClient().auth.getUser();
+        uid = data.user?.id ?? null;
+      } catch {
+        /* ignore — the API decides authentication */
+      }
+      if (ownerId && uid === ownerId) return;
+
       const res = await fetch("/api/messenger/conversations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ businessId }),
       });
+
       if (res.status === 401) {
         openLogin();
         return;
       }
-      if (!res.ok) return;
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as { error?: string } | null;
+        if (json?.error === "cannot_message_self") return;
+        console.error("chat.start failed", res.status, json?.error ?? res.statusText);
+        return;
+      }
 
       const json = (await res.json()) as { id?: string };
-      if (!json.id) return;
-      router.push({ pathname: "/messenger", query: { conversation: json.id } });
-    } catch {
-      /* ignore */
+      if (!json.id) {
+        console.error("chat.start: missing conversation id");
+        return;
+      }
+      router.push(`/messenger?conversation=${encodeURIComponent(json.id)}`);
+    } catch (err) {
+      console.error("chat.start error", err);
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
-  }, [businessId, ownerId, busy, openLogin, router]);
+  }, [businessId, ownerId, openLogin, router]);
 
   return { startChat, busy, isOwner };
 }

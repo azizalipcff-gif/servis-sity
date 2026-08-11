@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import type { SupabaseClient, RealtimeChannel } from "@supabase/supabase-js";
 import type { ConversationSummary } from "@/lib/messenger";
+import type { Database } from "@/lib/supabase/database.types";
 import { formatDayLabel } from "./time";
 import { Avatar } from "./avatar";
 import { MessageBubble, type ThreadMessage, type ReactionGroup } from "./message-bubble";
@@ -113,9 +115,15 @@ export function MessageThread({
 
   // Presence
   useEffect(() => {
-    let presence: { unsubscribe: () => void } | undefined;
+    // Same disposed-guard pattern as the messages effect: never attach
+    // callbacks to a channel instance that a previous effect run already
+    // subscribed (createClient() is memoized, .channel(name) dedupes by name).
+    let disposed = false;
+    let client: SupabaseClient<Database> | null = null;
+    let presence: RealtimeChannel | null = null;
     import("@/lib/supabase/client").then((mod) => {
-      const client = mod.createClient();
+      if (disposed) return;
+      client = mod.createClient();
       presence = client
         .channel(`chat-online:${conversation.id}`)
         .on("presence", { event: "sync" }, () => {
@@ -135,14 +143,20 @@ export function MessageThread({
           }
         });
     });
-    return () => presence?.unsubscribe();
+    return () => {
+      disposed = true;
+      if (client && presence) client.removeChannel(presence);
+    };
   }, [conversation.id]);
 
   // Realtime messages / reactions / reads / typing
   useEffect(() => {
-    let channel: { unsubscribe: () => void } | undefined;
+    let disposed = false;
+    let client: SupabaseClient<Database> | null = null;
+    let channel: RealtimeChannel | null = null;
     import("@/lib/supabase/client").then((mod) => {
-      const client = mod.createClient();
+      if (disposed) return;
+      client = mod.createClient();
       channel = client
         .channel(`chat:${conversation.id}`)
         .on(
@@ -212,7 +226,10 @@ export function MessageThread({
         )
         .subscribe();
     });
-    return () => channel?.unsubscribe();
+    return () => {
+      disposed = true;
+      if (client && channel) client.removeChannel(channel);
+    };
   }, [conversation.id, me, refresh, markAllRead]);
 
   const loadOlder = async () => {

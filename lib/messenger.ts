@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { randomUUID } from "node:crypto";
+import { logError } from "@/lib/security/logger";
 
 export const PROFILE_SELECT = "id,full_name,avatar_url,username,city" as const;
 
@@ -235,6 +237,35 @@ export type CreateConversationResult = {
   error: string | null;
 };
 
+function errorFields(err: unknown): {
+  message: string | null;
+  code: string | null;
+  details: string | null;
+  hint: string | null;
+} {
+  if (!err || typeof err !== "object") {
+    return { message: err ? String(err) : null, code: null, details: null, hint: null };
+  }
+  const e = err as { message?: unknown; code?: unknown; details?: unknown; hint?: unknown };
+  const s = (v: unknown) => (v === null || v === undefined ? null : String(v));
+  return {
+    message: s(e.message),
+    code: s(e.code),
+    details: s(e.details),
+    hint: s(e.hint),
+  };
+}
+
+function logCreateFailed(
+  stage: string,
+  ctx: { me: string; peerId: string | null; businessId: string | null },
+  err: unknown,
+): void {
+  const error = errorFields(err);
+  console.error("[messenger] create conversation failed", { stage, ...ctx, error });
+  logError(`messenger.getOrCreateConversation.${stage}`, err, { stage, ...ctx, error });
+}
+
 /** Get (or create) a private or business conversation. */
 export async function getOrCreateConversation(
   supabase: Sbc,
@@ -267,25 +298,47 @@ export async function getOrCreateConversation(
   const existing = await findExistingConversation(supabase, me, peerId, businessId);
   if (existing) return { id: existing, conversation: null, error: null };
 
-  const { data: conv } = await supabase
-    .from("conversations")
-    .insert({
-      type,
-      business_id: businessId,
-      title,
-      created_by: me,
-    })
-    .select("*")
-    .single();
-  if (!conv) return { id: null, conversation: null, error: "create_failed" };
+  // Generate the id ourselves and insert WITHOUT `.select()`. The RLS SELECT
+  // policy on conversations is `is_conversation_member(id)`, and the creator is
+  // not a member until the membership rows below exist — so a single
+  // `INSERT ... RETURNING` (what `.insert().select()` compiles to) aborts with
+  // 42501 ("new row violates row-level security policy") on the RETURNING row.
+  // Inserting without RETURNING and adding members afterwards sidesteps that.
+  const convId = randomUUID();
+  const { error: convErr } = await supabase.from("conversations").insert({
+    id: convId,
+    type,
+    business_id: businessId,
+    title,
+    created_by: me,
+  });
+  if (convErr) {
+    logCreateFailed("create", { me, peerId, businessId }, convErr);
+    return { id: null, conversation: null, error: "create_failed" };
+  }
 
-  const { error: insErr } = await supabase.from("conversation_members").insert([
-    { conversation_id: conv.id, user_id: me },
-    { conversation_id: conv.id, user_id: peerId },
-  ]);
-  if (insErr) return { id: null, conversation: null, error: "create_failed" };
+  // Insert membership rows one at a time. The RLS policy members_insert_own only
+  // lets a peer in if the creator is already a member; a single multi-row insert
+  // evaluates every row against the statement-start snapshot, so the peer row
+  // always fails. Inserting `me` first (allowed by user_id = auth.uid()) makes
+  // the peer insert pass via the is_conversation_member branch.
+  const { error: meErr } = await supabase
+    .from("conversation_members")
+    .insert({ conversation_id: convId, user_id: me });
+  if (meErr) {
+    logCreateFailed("members.me", { me, peerId, businessId }, meErr);
+    return { id: null, conversation: null, error: "create_failed" };
+  }
 
-  return { id: conv.id, conversation: conv, error: null };
+  const { error: peerErr } = await supabase
+    .from("conversation_members")
+    .insert({ conversation_id: convId, user_id: peerId });
+  if (peerErr) {
+    logCreateFailed("members.peer", { me, peerId, businessId }, peerErr);
+    return { id: null, conversation: null, error: "create_failed" };
+  }
+
+  return { id: convId, conversation: { id: convId } as Record<string, unknown>, error: null };
 }
 
 async function findExistingConversation(

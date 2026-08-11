@@ -23,13 +23,31 @@ export function logWarn(
   void report({ context, level: "warn", err: new Error(message), meta });
 }
 
+/**
+ * PostgREST/Supabase errors are often plain objects (or PostgrestError) whose
+ * useful fields are message/details/hint/code. `String(err)` on such an object
+ * yields "[object Object]" and hides the actionable hint, so normalize them
+ * into a real Error whose message keeps every field.
+ */
+function toError(err: unknown): Error {
+  if (err instanceof Error) return err;
+  if (err && typeof err === "object") {
+    const o = err as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown };
+    const parts = [o.message, o.hint, o.details, o.code]
+      .filter((p) => p !== null && p !== undefined && String(p).length > 0)
+      .map((p) => String(p));
+    if (parts.length) return new Error(parts.join(" | "));
+  }
+  return new Error(String(err ?? "unknown"));
+}
+
 async function report(opts: {
   context: string;
   level: LogLevel;
   err: unknown;
   meta?: Record<string, unknown>;
 }) {
-  const e = opts.err instanceof Error ? opts.err : new Error(String(opts.err ?? "unknown"));
+  const e = toError(opts.err);
   const entry = {
     at: new Date().toISOString(),
     context: opts.context,

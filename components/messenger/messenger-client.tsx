@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Search, MessageCircle, Pin, Volume2 } from "lucide-react";
+import type { SupabaseClient, RealtimeChannel } from "@supabase/supabase-js";
 import type { ConversationSummary } from "@/lib/messenger";
+import type { Database } from "@/lib/supabase/database.types";
 import { Avatar } from "./avatar";
 import { MessageThread } from "./message-thread";
 import { formatListTime } from "./time";
@@ -47,9 +49,19 @@ export function MessengerClient({
   useEffect(() => {
     if (!userId) return;
     void load();
-    let channel: { unsubscribe: () => void } | undefined;
+
+    // Guard against stale subscriptions leaked by async registration.
+    // createClient() memoizes the client and .channel(name) returns the same
+    // channel for a given name; under StrictMode a second effect run must never
+    // attach postgres_changes to an already-subscribed channel, which throws
+    // "cannot add postgres_changes callbacks after subscribe()".
+    let disposed = false;
+    let client: SupabaseClient<Database> | null = null;
+    let channel: RealtimeChannel | null = null;
+
     import("@/lib/supabase/client").then((mod) => {
-      const client = mod.createClient();
+      if (disposed) return;
+      client = mod.createClient();
       channel = client
         .channel(`messenger-list:${userId}`)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () =>
@@ -65,8 +77,10 @@ export function MessengerClient({
         )
         .subscribe();
     });
+
     return () => {
-      channel?.unsubscribe();
+      disposed = true;
+      if (client && channel) client.removeChannel(channel);
     };
   }, [userId, load]);
 

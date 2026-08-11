@@ -47,7 +47,7 @@ export async function FeaturedBusinesses({
           action={
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               {t("registerCta")}
               <ArrowUpRight className="size-4 rtl:rotate-180" />
@@ -87,7 +87,7 @@ async function LeadCard({
   return (
     <Link
       href={href}
-      className="group grid gap-0 border border-border bg-card lg:grid-cols-2"
+      className="group grid gap-0 overflow-hidden rounded-2xl border border-border bg-card lg:grid-cols-2"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-muted lg:aspect-auto lg:min-h-[360px]">
         <SmartImage
@@ -97,7 +97,7 @@ async function LeadCard({
           className="h-full w-full"
           imgClassName="object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        <span className="pointer-events-none absolute end-3 top-3 inline-flex items-center gap-1 rounded-sm bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
+        <span className="pointer-events-none absolute end-3 top-3 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
           {t("leadLabel")}
           <ArrowUpRight className="size-3.5 rtl:rotate-180" />
         </span>
@@ -138,7 +138,7 @@ async function LeadCard({
           </span>
         </div>
 
-        <span className="mt-4 inline-flex w-fit items-center gap-2 border border-background/25 px-4 py-2 text-sm font-semibold transition-colors group-hover:border-background group-hover:bg-background group-hover:text-foreground">
+        <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-lg border border-background/25 px-4 py-2 text-sm font-semibold transition-colors group-hover:border-background group-hover:bg-background group-hover:text-foreground">
           {t("viewBusiness")}
           <ArrowUpRight className="size-4 rtl:rotate-180" />
         </span>

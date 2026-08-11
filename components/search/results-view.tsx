@@ -110,9 +110,9 @@ export function ResultsView({
 
       {/* First-load skeleton */}
       {isLoading && items.length === 0 && (
-        <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="space-y-3 bg-background p-4">
+            <div key={i} className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
               <Skeleton className="aspect-[16/9] w-full" />
               <Skeleton className="h-4 w-2/3" />
               <Skeleton className="h-3 w-1/2" />
@@ -161,15 +161,13 @@ export function ResultsView({
       {items.length > 0 && (
         <AnimatePresence mode="popLayout">
           {view === "grid" ? (
-            <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {items.map((b) => (
-                <div key={b.id} className="min-w-0">
-                  <ResultCard business={b} />
-                </div>
+                <ResultCard key={b.id} business={b} />
               ))}
             </div>
           ) : (
-            <div className="flex flex-col gap-px bg-border">
+            <div className="flex flex-col gap-3">
               {items.map((b) => (
                 <ListRow key={b.id} business={b} />
               ))}
@@ -242,7 +240,7 @@ function ListRow({ business }: { business: SearchBusiness }) {
     <motion.article
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="group flex bg-background p-3 sm:p-4"
+      className="group flex overflow-hidden rounded-2xl border border-border bg-card p-3 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft sm:p-4"
     >
       <Link
         href={pageHref}

@@ -12,17 +12,20 @@
   --secondary: #f4e7d5;
   --secondary-foreground: #7a3d00;
   --muted: #f6f2ea;
-  --muted-foreground: #66707c;
+  --muted-foreground: #5d6673;
   --accent: #d94f4f;
   --accent-foreground: #ffffff;
   --destructive: #d94f4f;
   --destructive-foreground: #ffffff;
   --success: #18864b;
+  --success-foreground: #ffffff;
   --warning: #e07a2d;
   --border: #e9e2d6;
   --input: #ddd3c2;
   --ring: #e07a2d;
-  --radius: 0.375rem;
+  --whatsapp: #128c7e;
+  --gold: #f2a33c;
+  --radius: 0.5rem;
 }
 
 .dark {
@@ -43,10 +46,13 @@
   --destructive: #e26a62;
   --destructive-foreground: #ffffff;
   --success: #3aa86e;
+  --success-foreground: #ffffff;
   --warning: #f08842;
   --border: #30363e;
   --input: #3a4149;
   --ring: #f08842;
+  --whatsapp: #128c7e;
+  --gold: #f4b45a;
 }
 
 @theme inline {
@@ -71,10 +77,15 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 3px);
+  --color-success-foreground: var(--success-foreground);
+  --color-whatsapp: var(--whatsapp);
+  --color-gold: var(--gold);
+  --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 3px);
-  --radius-xl: calc(var(--radius) + 7px);
+  --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
+  --radius-2xl: calc(var(--radius) + 12px);
+  --radius-3xl: calc(var(--radius) + 20px);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
     "Noto Kufi Arabic", "Tajawal", sans-serif;
@@ -209,7 +220,7 @@ html[lang="ar"] {
     text-wrap: balance;
     font-family: var(--font-display);
     line-height: 1.12;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.025em;
     font-weight: 700;
   }
 
@@ -222,13 +233,13 @@ html[lang="ar"] {
   }
 
   .input-field {
-    height: 3rem;
+    height: 2.5rem;
     width: 100%;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-xl);
     border: 1px solid var(--input);
     background-color: var(--card);
     padding-inline: 0.875rem;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
@@ -239,13 +250,13 @@ html[lang="ar"] {
   }
 
   .select-field {
-    height: 3rem;
+    height: 2.5rem;
     width: 100%;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-xl);
     border: 1px solid var(--input);
     background-color: var(--card);
     padding-inline: 0.875rem;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
   }

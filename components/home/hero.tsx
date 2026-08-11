@@ -95,7 +95,7 @@ export function Hero({
               submit();
             }}
           >
-            <div className="flex h-14 items-center gap-2 rounded-lg border border-border bg-white p-1.5 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20">
+            <div className="flex h-14 items-center gap-2 rounded-xl border border-border bg-white p-1.5 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20">
               <Search className="ms-3 size-5 shrink-0 text-muted-foreground" />
               <Input
                 value={query}
@@ -131,7 +131,7 @@ export function Hero({
             </div>
 
             {focused && suggestions.length > 0 && (
-              <ul className="border-x border-b border-border bg-background py-1 shadow-lift">
+              <ul className="overflow-hidden rounded-b-xl border-x border-b border-border bg-background py-1 shadow-lift">
                 {suggestions.map((c) => (
                   <li key={c.id}>
                     <button
@@ -177,7 +177,7 @@ export function Hero({
               <div className="col-span-2">
                 <Link
                   href={`/business/${gallery[0].slug}`}
-                  className="group relative block aspect-[16/8] overflow-hidden"
+                  className="group relative block aspect-[16/8] overflow-hidden rounded-2xl"
                 >
                   <SmartImage
                     src={gallery[0].cover_url}
@@ -192,7 +192,7 @@ export function Hero({
               {gallery[1] && (
                 <Link
                   href={`/business/${gallery[1].slug}`}
-                  className="group relative block aspect-square overflow-hidden"
+                  className="group relative block aspect-square overflow-hidden rounded-2xl"
                 >
                   <SmartImage
                     src={gallery[1].cover_url}
@@ -207,7 +207,7 @@ export function Hero({
               {gallery[2] && (
                 <Link
                   href={`/business/${gallery[2].slug}`}
-                  className="group relative block aspect-square overflow-hidden"
+                  className="group relative block aspect-square overflow-hidden rounded-2xl"
                 >
                   <SmartImage
                     src={gallery[2].cover_url}

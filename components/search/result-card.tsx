@@ -52,7 +52,7 @@ export function ResultCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className="group relative flex flex-col overflow-hidden border border-border bg-card transition-colors duration-300 hover:border-foreground/30"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft"
     >
       <div className="relative aspect-[16/9] overflow-hidden bg-muted">
         <Link href={pageHref} aria-label={business.name}>
@@ -159,7 +159,7 @@ export function ResultCard({
               className={cn(
                 "grid size-8 place-items-center transition-colors",
                 business.whatsapp
-                  ? "text-[#128C7E] hover:bg-muted"
+                  ? "text-whatsapp hover:bg-muted"
                   : "pointer-events-none opacity-40",
               )}
               aria-label={business.name + " — WhatsApp"}

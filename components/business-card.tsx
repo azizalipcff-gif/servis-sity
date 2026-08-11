@@ -23,7 +23,7 @@ export function BusinessCard({
   const pageHref = `/business/${business.slug}`;
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft">
       <Link
         href={pageHref}
         className="relative block aspect-[16/10] overflow-hidden bg-muted"

@@ -36,7 +36,7 @@ export async function PopularProducts({ products }: Props) {
               href={href}
               className="group block"
             >
-              <div className="aspect-square w-full overflow-hidden bg-muted">
+              <div className="aspect-square w-full overflow-hidden rounded-2xl bg-muted">
                 {product.images?.[0] ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img

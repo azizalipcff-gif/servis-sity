@@ -62,7 +62,7 @@ export function StickyActionBar({ business }: { business: BusinessDetail }) {
   ];
 
   return (
-    <div className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 rounded-xl border bg-card/95 p-1.5 shadow-lift backdrop-blur lg:hidden">
+    <div className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 rounded-2xl border bg-card/95 p-1.5 shadow-lift backdrop-blur lg:hidden">
       <div className="grid grid-cols-4 gap-1">
         {actions.map((action) =>
           action.onClick ? (

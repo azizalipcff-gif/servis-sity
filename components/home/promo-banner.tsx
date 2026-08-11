@@ -7,7 +7,7 @@ export async function PromoBanner() {
 
   return (
     <section className="container-site py-10 md:py-14">
-      <div className="relative overflow-hidden bg-foreground px-6 py-12 text-background md:px-12 md:py-16">
+      <div className="relative overflow-hidden rounded-2xl bg-foreground px-6 py-12 text-background md:px-12 md:py-16">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-[0.12]"
@@ -31,7 +31,7 @@ export async function PromoBanner() {
           </div>
           <Link
             href="/dashboard"
-            className="inline-flex w-fit items-center gap-2 bg-primary px-7 py-3.5 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex w-fit items-center gap-2 rounded-lg bg-primary px-7 py-3.5 text-base font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           >
             {t("cta")}
             <ArrowRight className="size-5 rtl:rotate-180" />

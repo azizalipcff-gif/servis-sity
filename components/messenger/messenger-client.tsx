@@ -10,6 +10,12 @@ import { Avatar } from "./avatar";
 import { MessageThread } from "./message-thread";
 import { formatListTime } from "./time";
 
+const LATENCY_DEBUG = process.env.NODE_ENV !== "production";
+function latencyLog(...args: unknown[]) {
+  if (!LATENCY_DEBUG) return;
+  console.log("[latency]", performance.now().toFixed(0), ...args);
+}
+
 export function peerOf(c: ConversationSummary, me: string) {
   return c.participants.find((p) => p.id !== me);
 }
@@ -30,6 +36,7 @@ export function MessengerClient({
   const [query, setQuery] = useState("");
 
   const load = useCallback(async () => {
+    const t0 = performance.now();
     try {
       // When opening a specific conversation, include archived ones so the
       // target thread is always available after getOrCreateConversation.
@@ -42,6 +49,7 @@ export function MessengerClient({
     } catch {
       /* ignore */
     } finally {
+      latencyLog("list.loadMs", `${Math.round(performance.now() - t0)}ms`);
       setLoading(false);
     }
   }, [initialConversationId]);
@@ -64,9 +72,10 @@ export function MessengerClient({
       client = mod.createClient();
       channel = client
         .channel(`messenger-list:${userId}`)
-        .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () =>
-          void load(),
-        )
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+          latencyLog("list.messages.insert");
+          void load();
+        })
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "conversation_members" },

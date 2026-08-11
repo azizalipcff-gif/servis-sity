@@ -86,6 +86,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   return withErrorCapture("messenger.messages.send", async () => {
+    const t0 = Date.now();
     if (!assertSameOrigin(req)) return jsonError(403, "csrf_rejected");
     const limited = rateLimit(req, { key: "message.send", limit: 40, windowMs: 60000 });
     if (!limited.ok) return rateLimitResponse(limited.retryAfter);
@@ -133,6 +134,7 @@ export async function POST(req: NextRequest) {
     }
     if (type === "text" && text.length > MAX_BODY) return jsonError(413, "too_large");
 
+    const t1 = Date.now();
     const { data: msg, error } = await supabase
       .from("messages")
       .insert({
@@ -146,6 +148,22 @@ export async function POST(req: NextRequest) {
       .select("*")
       .single();
     if (error || !msg) return jsonError(500, "send_failed");
+    const t2 = Date.now();
+
+    if (process.env.NODE_ENV !== "production") {
+      try {
+        const { createClient: createLogClient } = await import("@/lib/supabase/server");
+        const logSupabase = await createLogClient();
+        await logSupabase.from("system_logs").insert({
+          context: "latency.message.send",
+          level: "warn",
+          message: `totalMs=${t2 - t0} preMs=${t1 - t0} insertMs=${t2 - t1}`,
+          meta: { conversationId, senderId: user.id, messageId: msg.id },
+        });
+      } catch {
+        // diagnostics must never fail the request
+      }
+    }
 
     const meta = body.attachmentMeta;
     if (meta && msg.attachment_url) {

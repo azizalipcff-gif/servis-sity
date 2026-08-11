@@ -14,6 +14,12 @@ import { Composer, type ComposerPayload } from "./composer";
 type LiveReactions = Record<string, { emoji: string; user_id: string }[]>;
 type LiveReads = Record<string, string[]>;
 
+const LATENCY_DEBUG = process.env.NODE_ENV !== "production";
+function latencyLog(...args: unknown[]) {
+  if (!LATENCY_DEBUG) return;
+  console.log("[latency]", performance.now().toFixed(0), ...args);
+}
+
 function buildMessage(
   m: ThreadMessage,
   reactions: LiveReactions,
@@ -65,15 +71,18 @@ export function MessageThread({
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stopTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sendAtRef = useRef<number>(0);
 
   const peerName = conversation.title ?? "…";
   const peerAvatar = peerUserId ?? null;
 
   const load = useCallback(
     async (before?: string) => {
+      const t0 = performance.now();
       const q = new URLSearchParams({ conversationId: conversation.id, limit: "40" });
       if (before) q.set("before", before);
       const res = await fetch(`/api/messenger/messages?${q}`, { cache: "no-store" });
+      latencyLog("thread.loadMs", `${Math.round(performance.now() - t0)}ms`, conversation.id);
       if (!res.ok) return null;
       return (await res.json()) as {
         messages: ThreadMessage[];
@@ -138,6 +147,7 @@ export function MessageThread({
           setPeerOnline(Object.keys(state).length > 1);
         })
         .subscribe((status) => {
+          latencyLog("presence.sub", status);
           if (status === "SUBSCRIBED") {
             void (presence as unknown as { track?: (p: unknown) => void }).track?.({ v: Date.now() });
           }
@@ -164,13 +174,20 @@ export function MessageThread({
           { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversation.id}` },
           (p) => {
             const row = p.new as ThreadMessage;
+            latencyLog("realtime.messages.insert", row.id, row.sender_id, conversation.id);
             if (row.sender_id !== me) {
+              latencyLog(
+                "peerMsg.realtimeToState",
+                `${Math.round(performance.now() - sendAtRef.current)}ms since last send`,
+                row.id,
+              );
               setMessages((prev) => {
                 if (prev.some((x) => x.id === row.id)) return prev;
                 return [...prev, { ...row, pending: false }];
               });
               void markAllRead();
             } else {
+              latencyLog("ownMsg.realtimeLoopMs", `${Math.round(performance.now() - sendAtRef.current)}ms`, row.id);
               setMessages((prev) =>
                 prev.map((x) => (x.id === row.id ? { ...row, pending: false } : x)),
               );
@@ -224,7 +241,9 @@ export function MessageThread({
             }
           },
         )
-        .subscribe();
+        .subscribe((status) => {
+          latencyLog("chat.sub", status);
+        });
     });
     return () => {
       disposed = true;
@@ -264,6 +283,9 @@ export function MessageThread({
   }
 
   async function handleSend(payload: ComposerPayload) {
+    const sentAt = performance.now();
+    sendAtRef.current = sentAt;
+    latencyLog("send.start", conversation.id);
     const optimistic: ThreadMessage = {
       id: `temp-${Date.now()}`,
       conversation_id: conversation.id,
@@ -294,6 +316,7 @@ export function MessageThread({
         replyTo: payload.replyTo,
       }),
     });
+    latencyLog("send.apiMs", `${Math.round(performance.now() - sentAt)}ms`, conversation.id);
     if (res.ok) {
       const json = await res.json();
       setMessages((prev) =>

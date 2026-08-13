@@ -1,4 +1,4 @@
--- Servis Sity — Phase E: production hardening
+-- Service City — Phase E: production hardening
 -- RLS hardening, least-privilege, audit logging, rate limiting, indexes.
 -- Run after 0001_initial.sql, 0002_storage.sql and 0003_v2.sql.
 

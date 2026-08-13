@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { routing } from "@/i18n/routing";
 import { siteUrl } from "@/lib/seo";
+import { businessHref } from "@/lib/business/url";
 import { getCategories, getSitemapBusinesses } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   for (const business of businesses) {
     for (const locale of routing.locales) {
       entries.push({
-        url: loc(`/${locale}/business/${business.slug}`),
+        url: loc(`/${locale}${businessHref(business)}`),
         lastModified: business.last_updated_at
           ? new Date(business.last_updated_at)
           : new Date(),

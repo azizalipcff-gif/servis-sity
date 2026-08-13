@@ -1,4 +1,4 @@
--- Servis Sity — Phase I: seed full Moroccan category tree + every major city.
+-- Service City — Phase I: seed full Moroccan category tree + every major city.
 -- Run after 0007_marketplace.sql.
 --
 -- Categories: 12 top-level parents + ~40 children (subcategories). Existing
@@ -48,6 +48,6 @@ insert into public.categories (slug, icon, name_ar, name_fr, name_en, parent_id,
 
 -- Re-parent the existing single-level categories + backfill SEO where empty.
 update public.categories
-set seo_title = name_en || ' au Maroc | Servis Sity',
-    seo_description = 'Trouvez ' || lower(name_fr) || ' de confiance au Maroc sur Servis Sity.'
+set seo_title = name_en || ' au Maroc | Service City',
+    seo_description = 'Trouvez ' || lower(name_fr) || ' de confiance au Maroc sur Service City.'
 where seo_title is null;

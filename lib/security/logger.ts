@@ -59,9 +59,9 @@ async function report(opts: {
 
   try {
     if (opts.level === "error") {
-      console.error("[servis-sity]", JSON.stringify(entry));
+      console.error("[service-city]", JSON.stringify(entry));
     } else {
-      console.warn("[servis-sity]", JSON.stringify(entry));
+      console.warn("[service-city]", JSON.stringify(entry));
     }
   } catch {
     // ignore

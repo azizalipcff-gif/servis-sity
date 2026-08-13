@@ -1,4 +1,4 @@
--- Servis Sity — Phase G: production image storage.
+-- Service City — Phase G: production image storage.
 -- Run after 0004_rls.sql in the Supabase SQL editor.
 --
 -- Creates the five production-grade storage buckets with format/size-aware

@@ -584,36 +584,56 @@ export interface Database {
         ];
       };
       favorites: {
-        Row: {
-          id: string;
-          user_id: string;
-          business_id: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          business_id: string;
-          created_at?: string;
-        };
-        Update: Record<string, never>;
-        Relationships: [
-          {
-            foreignKeyName: "favorites_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "favorites_business_id_fkey";
-            columns: ["business_id"];
-            isOneToOne: false;
-            referencedRelation: "businesses";
-            referencedColumns: ["id"];
-          },
-        ];
+      Row: {
+        id: string;
+        user_id: string;
+        business_id: string | null;
+        service_id: string | null;
+        product_id: string | null;
+        item_type: string;
+        created_at: string;
       };
+      Insert: {
+        id?: string;
+        user_id: string;
+        business_id?: string | null;
+        service_id?: string | null;
+        product_id?: string | null;
+        item_type?: string;
+        created_at?: string;
+      };
+      Update: Record<string, never>;
+      Relationships: [
+        {
+          foreignKeyName: "favorites_user_id_fkey";
+          columns: ["user_id"];
+          isOneToOne: false;
+          referencedRelation: "profiles";
+          referencedColumns: ["id"];
+        },
+        {
+          foreignKeyName: "favorites_business_id_fkey";
+          columns: ["business_id"];
+          isOneToOne: false;
+          referencedRelation: "businesses";
+          referencedColumns: ["id"];
+        },
+        {
+          foreignKeyName: "favorites_service_id_fkey";
+          columns: ["service_id"];
+          isOneToOne: false;
+          referencedRelation: "services";
+          referencedColumns: ["id"];
+        },
+        {
+          foreignKeyName: "favorites_product_id_fkey";
+          columns: ["product_id"];
+          isOneToOne: false;
+          referencedRelation: "products";
+          referencedColumns: ["id"];
+        },
+      ];
+    };
       products: {
         Row: {
           id: string;

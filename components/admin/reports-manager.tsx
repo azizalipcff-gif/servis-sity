@@ -7,6 +7,7 @@ import type { AdminReport } from "@/lib/queries";
 import type { ReportStatus } from "@/lib/supabase/database.types";
 import type { Locale } from "@/lib/translations";
 import { Link } from "@/i18n/navigation";
+import { businessHref } from "@/lib/business/url";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -91,7 +92,7 @@ const badge = (s: ReportStatus) => {
                   <td className="px-4 py-3">
                     {r.businesses ? (
                       <Link
-                        href={`/business/${r.businesses.slug}`}
+                        href={businessHref(r.businesses)}
                         target="_blank"
                         className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
                       >

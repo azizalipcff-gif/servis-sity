@@ -17,8 +17,7 @@ export async function BusinessInfo({
     ? sentenceSummary(description)
     : null;
 
-  const langs =
-    locale === "ar" ? ["العربية"] : ["Arabic", "Français"];
+  const langs = business.languages?.trim();
 
   return (
     <section aria-labelledby="about-title">
@@ -54,7 +53,7 @@ export async function BusinessInfo({
         </div>
 
         <div className="space-y-0">
-          <Fact label={dt("languages")}>{langs.join(", ")}</Fact>
+          {langs && <Fact label={dt("languages")}>{langs}</Fact>}
           {(business.city || business.address) && (
             <Fact label={dt("serviceArea")}>
               {business.address || business.city}

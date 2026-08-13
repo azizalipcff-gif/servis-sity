@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "@/lib/supabase/database.types";
+import { safeReturnTo, stripLocalePrefix } from "@/lib/auth/return-to";
 
 const LOCALES = ["ar", "fr", "en"] as const;
 type Locale = (typeof LOCALES)[number];
@@ -46,10 +47,10 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/${locale}/login`);
   }
 
-  const safeNext = next.startsWith("/") ? next : `/${next}`;
+  const safeNext = safeReturnTo(next) ?? sanitizeFallback(next);
   const destination = recovery
     ? `/${locale}/login?recovery=1`
-    : `/${locale}${safeNext}`;
+    : `/${locale}${stripLocalePrefix(safeNext)}`;
 
   return NextResponse.redirect(`${origin}${destination}`);
 }
@@ -58,4 +59,9 @@ function resolveLocale(value: string | undefined): Locale {
   return value && (LOCALES as readonly string[]).includes(value)
     ? (value as Locale)
     : "ar";
+}
+
+function sanitizeFallback(value: string): string {
+  if (value.startsWith("/") && !value.startsWith("//")) return value;
+  return `/${value.replace(/^\/+/, "")}`;
 }

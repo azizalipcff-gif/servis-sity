@@ -42,7 +42,7 @@ export async function PopularCategories({
     <section className="container-site pb-10 md:pb-14">
       <div className="mb-6 border-b border-border pb-4">
         <p className="eyebrow">{t("eyebrow")}</p>
-        <h2 className="mt-1 text-2xl font-bold sm:text-3xl">{t("title")}</h2>
+        <h2 className="mt-1 text-editorial text-2xl sm:text-3xl">{t("title")}</h2>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -68,7 +68,7 @@ export async function PopularCategories({
               ))}
             </ul>
             <Link
-              href="/search"
+              href="/business"
               className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary underline-offset-4 hover:underline"
             >
               {t("seeAll")}

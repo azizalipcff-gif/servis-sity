@@ -1,4 +1,4 @@
--- Servis Sity — Phase I: full marketplace taxonomies, products, services.
+-- Service City — Phase I: full marketplace taxonomies, products, services.
 -- Run after 0006_profile.sql in the Supabase SQL editor.
 --
 --  • categories: parent/child + SEO (Arabic/French/English) + broad Morocco set

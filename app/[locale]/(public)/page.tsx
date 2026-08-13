@@ -1,10 +1,12 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { Hero } from "@/components/home/hero";
+import { MarketplaceTypes } from "@/components/home/marketplace-types";
 import { CategoryStrip } from "@/components/home/category-strip";
 import { FeaturedBusinesses } from "@/components/home/featured-businesses";
+import { FeaturedMarketplace } from "@/components/home/featured-marketplace";
+import { TrustBadges } from "@/components/home/trust-badges";
 import { PopularCategories } from "@/components/home/popular-categories";
-import { PopularProducts } from "@/components/home/popular-products";
 import { PromoBanner } from "@/components/home/promo-banner";
 import { TrustSection } from "@/components/home/trust-section";
 import {
@@ -14,6 +16,9 @@ import {
   getCities,
   getFeaturedBusinesses,
   getFeaturedProducts,
+  getPopularServices,
+  getPublishedProductsCount,
+  getPublishedServicesCount,
 } from "@/lib/queries";
 import type { Locale } from "@/lib/translations";
 import { siteUrl, absoluteUrl, localizedLanguages } from "@/lib/seo";
@@ -41,8 +46,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: t("title"),
       description: t("description"),
       url: absoluteUrl(`/${locale}`),
-      siteName: "Servis Sity",
-      images: [{ url: absoluteUrl("/branding/servis-sity-logo.png") }],
+      siteName: "Service City",
+      images: [{ url: absoluteUrl("/branding/service-city-logo.png") }],
     },
   };
 }
@@ -51,21 +56,34 @@ export default async function HomePage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const [categories, businesses, businessCount, cities, products, counts] = await Promise.all([
+  const [
+    categories,
+    businesses,
+    businessCount,
+    cities,
+    products,
+    counts,
+    services,
+    productsCount,
+    servicesCount,
+  ] = await Promise.all([
     getCategories(),
     getFeaturedBusinesses(),
     getBusinessCount(),
     getCities(),
     getFeaturedProducts(8),
     getCategoryCounts(),
+    getPopularServices(8),
+    getPublishedProductsCount(),
+    getPublishedServicesCount(),
   ]);
 
   const organizationJsonLd = toJsonLd({
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Servis Sity",
+    name: "Service City",
     url: siteUrl(),
-    logo: `${siteUrl()}/branding/servis-sity-logo.png`,
+    logo: `${siteUrl()}/branding/service-city-logo.png`,
     description:
       "The Moroccan platform connecting customers with local businesses and artisans: electrician, plumber, restaurant, barber, doctor and more.",
   });
@@ -76,21 +94,24 @@ export default async function HomePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: organizationJsonLd }}
       />
-      <Hero categories={categories} businesses={businesses} />
+      <Hero
+        businessCount={businessCount}
+        cityCount={cities.length}
+        serviceCount={servicesCount}
+        productCount={productsCount}
+      />
+      <FeaturedMarketplace services={services} products={products} />
       <CategoryStrip
         categories={categories}
         counts={counts}
         locale={locale as Locale}
       />
+      <TrustBadges />
+      <MarketplaceTypes />
       <FeaturedBusinesses businesses={businesses} locale={locale as Locale} />
       <PopularCategories categories={categories} locale={locale as Locale} />
-      <PopularProducts products={products} />
       <PromoBanner />
-      <TrustSection
-        businessCount={businessCount}
-        cityCount={cities.length}
-        bookingCount={0}
-      />
+      <TrustSection businessCount={businessCount} cityCount={cities.length} />
     </>
   );
 }

@@ -3,7 +3,9 @@ import {
   SORT_KEYS,
   SEARCH_LIMIT_DEFAULT,
   SEARCH_LIMIT_MAX,
+  SEARCH_TYPES,
   type SearchParams,
+  type SearchResultType,
   type SortKey,
 } from "./types";
 
@@ -13,6 +15,7 @@ import {
  */
 const searchParamsSchema = z.object({
   q: z.string().max(80).optional(),
+  type: z.string().optional(),
   city: z.string().max(80).optional(),
   category: z.string().max(80).optional(),
   minRating: z.string().optional(),
@@ -47,6 +50,9 @@ export function parseSearchParams(
   const sort = (SORT_KEYS as readonly string[]).includes(use.sort ?? "")
     ? (use.sort as SortKey)
     : "recommended";
+  const type = (SEARCH_TYPES as readonly string[]).includes(use.type ?? "")
+    ? (use.type as SearchResultType)
+    : "all";
   const limitRaw = use.limit ? Number(use.limit) : SEARCH_LIMIT_DEFAULT;
   const limit = Number.isFinite(limitRaw)
     ? Math.min(Math.max(Math.trunc(limitRaw), 1), SEARCH_LIMIT_MAX)
@@ -62,6 +68,7 @@ export function parseSearchParams(
 
   return {
     q: (use.q ?? "").trim(),
+    type,
     city: (use.city ?? "").trim(),
     category: (use.category ?? "").trim(),
     minRating,
@@ -89,6 +96,7 @@ export function buildSearchUrl(params: Partial<SearchParams>): string {
   };
 
   if (p.q) sp.set("q", p.q);
+  if (p.type && p.type !== "all") sp.set("type", p.type);
   if (p.city) sp.set("city", p.city);
   if (p.category) sp.set("category", p.category);
   if (p.minRating > 0) sp.set("minRating", String(p.minRating));
@@ -105,6 +113,7 @@ export function buildSearchUrl(params: Partial<SearchParams>): string {
 export function defaultSearchParams(): SearchParams {
   return {
     q: "",
+    type: "all",
     city: "",
     category: "",
     minRating: 0,

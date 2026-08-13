@@ -112,7 +112,7 @@ export function Gallery({
               <button
                 type="button"
                 onClick={() => setSelected(null)}
-                className="absolute -top-0 end-0 -translate-y-full rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+                className="absolute end-2 top-2 grid size-9 place-items-center rounded-full bg-black/60 text-white backdrop-blur transition-colors hover:bg-black/80"
                 aria-label="Close"
               >
                 <X className="size-5" />

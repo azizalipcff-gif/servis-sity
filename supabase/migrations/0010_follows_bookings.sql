@@ -1,4 +1,4 @@
--- Servis Sity — Phase J: follows + booking lifecycle.
+-- Service City — Phase J: follows + booking lifecycle.
 -- Run after 0009_cities_seed.sql.
 --
 --  • follows:  user -> business or user -> user relationships (follow system)

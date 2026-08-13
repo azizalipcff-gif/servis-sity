@@ -1,4 +1,4 @@
--- Servis Sity — Phase I: complete Moroccan cities with region + geo + population.
+-- Service City — Phase I: complete Moroccan cities with region + geo + population.
 -- Run after 0008_seed.sql. Idempotent: upserts by slug.
 -- Arab names are written in Modern Standard Arabic; French/English as commonly used.
 

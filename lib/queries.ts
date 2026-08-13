@@ -117,42 +117,50 @@ export const getBusinessesByCategory = cache(
   },
 );
 
-export const getBusinessesByCity = cache(
-  async (city: string): Promise<BusinessWithCategory[]> => {
+export type BusinessListFilters = {
+  query?: string;
+  categoryId?: string;
+  city?: string;
+  verifiedOnly?: boolean;
+  sort?: "newest" | "rating" | "reviews";
+  limit?: number;
+  offset?: number;
+};
+
+const BUSINESS_SORT_COLUMNS: Record<
+  NonNullable<BusinessListFilters["sort"]>,
+  { column: string; ascending: boolean }
+> = {
+  newest: { column: "created_at", ascending: false },
+  rating: { column: "rating_avg", ascending: false },
+  reviews: { column: "reviews_count", ascending: false },
+};
+
+/** Approved marketplace businesses with a real total count, for the /business catalog. */
+export const getPublishedBusinesses = cache(
+  async (
+    filters: BusinessListFilters = {},
+  ): Promise<{ items: BusinessWithCategory[]; total: number }> => {
     const supabase = await createClient();
-    const { data, error } = await supabase
+    const limit = filters.limit ?? 24;
+    const offset = filters.offset ?? 0;
+
+    let q = supabase
       .from("businesses")
-      .select("*, categories!businesses_category_id_fkey(*)")
-      .eq("status", "approved")
-      .ilike("city", `%${city}%`)
-      .order("plan", { ascending: true })
-      .order("rating_avg", { ascending: false });
+      .select("*, categories!businesses_category_id_fkey(*)", { count: "exact" })
+      .eq("status", "approved");
+    if (filters.query)
+      q = q.or(`name.ilike.%${filters.query}%,description.ilike.%${filters.query}%`);
+    if (filters.categoryId) q = q.eq("category_id", filters.categoryId);
+    if (filters.city) q = q.eq("city", filters.city);
+    if (filters.verifiedOnly) q = q.eq("verified", true);
 
-    if (error || !data) return [];
-    return data as BusinessWithCategory[];
-  },
-);
+    const sort = BUSINESS_SORT_COLUMNS[filters.sort ?? "newest"];
+    q = q.order(sort.column, { ascending: sort.ascending });
 
-export const searchBusinesses = cache(
-  async (query: string, city?: string): Promise<BusinessWithCategory[]> => {
-    const supabase = await createClient();
-    let builder = supabase
-      .from("businesses")
-      .select("*, categories!businesses_category_id_fkey(*)")
-      .eq("status", "approved")
-      .or(`name.ilike.%${query}%,description.ilike.%${query}%`);
-
-    if (city) {
-      builder = builder.eq("city", city);
-    }
-
-    const { data, error } = await builder
-      .order("plan", { ascending: true })
-      .order("rating_avg", { ascending: false })
-      .limit(30);
-
-    if (error || !data) return [];
-    return data as BusinessWithCategory[];
+    const { data, error, count } = await q.range(offset, offset + limit - 1);
+    if (error || !data) return { items: [], total: 0 };
+    return { items: data as BusinessWithCategory[], total: count ?? 0 };
   },
 );
 
@@ -182,7 +190,7 @@ export const getBusinessBySlug = cache(
       .from("services")
       .select("id, business_id, name, price, duration_minutes, description, photo_url, status, gallery, featured, updated_at")
       .eq("business_id", business.id)
-      .order("created_at", { ascending: true }),
+      .order("updated_at", { ascending: true }),
       supabase
         .from("media")
         .select("id, business_id, type, url, sort_order")
@@ -238,12 +246,32 @@ export async function getBusinessCount(): Promise<number> {
   return error ? 0 : (count ?? 0);
 }
 
+export async function getPublishedServicesCount(): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("services")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "published");
+
+  return error ? 0 : (count ?? 0);
+}
+
+export async function getPublishedProductsCount(): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "published");
+
+  return error ? 0 : (count ?? 0);
+}
+
 export const getSitemapBusinesses = cache(
-  async (): Promise<Pick<Business, "slug" | "last_updated_at">[]> => {
+  async (): Promise<Pick<Business, "slug" | "city" | "last_updated_at">[]> => {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("businesses")
-      .select("slug, last_updated_at")
+      .select("slug, city, last_updated_at")
       .eq("status", "approved");
     if (error || !data) return [];
     return data;
@@ -285,7 +313,7 @@ export async function getMyBusiness(ownerId: string): Promise<BusinessDetail | n
         .from("services")
 .select("id, business_id, name, price, duration_minutes, description, photo_url, status, gallery, featured, updated_at")
         .eq("business_id", business.id)
-        .order("created_at", { ascending: true }),
+        .order("updated_at", { ascending: true }),
       supabase
         .from("media")
         .select("id, business_id, type, url, sort_order")
@@ -315,45 +343,34 @@ export async function getMyBusiness(ownerId: string): Promise<BusinessDetail | n
 export { SORT_ORDER };
 
 export const getProductsForBusiness = cache(
-  async (businessId: string): Promise<Product[]> => {
+  async (businessId: string): Promise<ProductWithBusiness[]> => {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("products")
-      .select("*")
+      .select(
+        `*, business:businesses(id, name, slug, logo_url, cover_url, city, verified, whatsapp, phone, owner_id, rating_avg, reviews_count, plan)`,
+      )
       .eq("business_id", businessId)
       .order("created_at", { ascending: false });
     if (error) return [];
-    return data ?? [];
+    return (data ?? []) as ProductWithBusiness[];
   },
 );
 
 export const getFeaturedProducts = cache(
-  async (limit = 8): Promise<Product[]> => {
+  async (limit = 8): Promise<ProductWithBusiness[]> => {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("products")
-      .select("*, business:businesses(id, name, slug, logo_url)")
+      .select(
+        `*, business:businesses(${PRODUCT_BUSINESS_SELECT})`,
+      )
       .eq("status", "published")
       .eq("featured", true)
       .order("created_at", { ascending: false })
       .limit(limit);
     if (error) return [];
-    return data ?? [];
-  },
-);
-
-export const getProductsByCategory = cache(
-  async (categoryId: string, limit = 12): Promise<Product[]> => {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .eq("category_id", categoryId)
-      .eq("status", "published")
-      .order("views", { ascending: false })
-      .limit(limit);
-    if (error) return [];
-    return data ?? [];
+    return (data ?? []) as ProductWithBusiness[];
   },
 );
 
@@ -376,6 +393,326 @@ export type AdminBusiness = Business & {
   categories: Pick<Category, "name_ar" | "name_fr" | "name_en"> | null;
   profiles: Pick<Profile, "full_name"> | null;
 };
+
+/* ==========================================================================
+ * Product discovery
+ * ========================================================================== */
+
+/** Seller projection joined to product rows (fields proven on `businesses`). */
+export type ProductBusiness = Pick<
+  Business,
+  | "id"
+  | "name"
+  | "slug"
+  | "logo_url"
+  | "cover_url"
+  | "city"
+  | "verified"
+  | "whatsapp"
+  | "phone"
+  | "owner_id"
+  | "rating_avg"
+  | "reviews_count"
+  | "plan"
+>;
+
+export type ProductWithBusiness = Product & {
+  business: ProductBusiness | null;
+};
+
+export type ProductDetail = ProductWithBusiness & {
+  categories: Pick<Category, "slug" | "name_ar" | "name_fr" | "name_en"> | null;
+};
+
+export type ProductListFilters = {
+  query?: string;
+  categoryId?: string;
+  inStock?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: "newest" | "price_asc" | "price_desc" | "popular";
+  limit?: number;
+  offset?: number;
+};
+
+const PRODUCT_BUSINESS_SELECT =
+  "id, name, slug, logo_url, cover_url, city, verified, whatsapp, phone, owner_id, rating_avg, reviews_count, plan";
+
+/** Single published product by slug, with its seller (and category resolved separately). */
+export const getProductBySlug = cache(
+  async (slug: string): Promise<ProductDetail | null> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select(`*, business:businesses(${PRODUCT_BUSINESS_SELECT})`)
+      .eq("slug", slug)
+      .eq("status", "published")
+      .maybeSingle();
+    if (error || !data) return null;
+
+    const base = data as ProductWithBusiness;
+    let categories: ProductDetail["categories"] = null;
+    if (base.category_id) {
+      const { data: cat } = await supabase
+        .from("categories")
+        .select("slug, name_ar, name_fr, name_en")
+        .eq("id", base.category_id)
+        .maybeSingle();
+      if (cat) categories = cat as ProductDetail["categories"];
+    }
+    return { ...base, categories };
+  },
+);
+
+/** Same-category published products (deterministic, by real view counts). */
+export const getSimilarProducts = cache(
+  async (
+    categoryId: string | null,
+    productId: string,
+    limit = 4,
+  ): Promise<ProductWithBusiness[]> => {
+    if (!categoryId) return [];
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select(`*, business:businesses(${PRODUCT_BUSINESS_SELECT})`)
+      .eq("status", "published")
+      .eq("category_id", categoryId)
+      .neq("id", productId)
+      .order("views", { ascending: false })
+      .limit(limit);
+    if (error || !data) return [];
+    return data as ProductWithBusiness[];
+  },
+);
+
+const PRODUCT_SORT_COLUMNS: Record<
+  NonNullable<ProductListFilters["sort"]>,
+  { column: string; ascending: boolean }
+> = {
+  newest: { column: "created_at", ascending: false },
+  price_asc: { column: "price", ascending: true },
+  price_desc: { column: "price", ascending: false },
+  popular: { column: "views", ascending: false },
+};
+
+/** Published catalog rows with real total count, using only existing fields. */
+export const getPublishedProducts = cache(
+  async (
+    filters: ProductListFilters = {},
+  ): Promise<{ items: ProductWithBusiness[]; total: number }> => {
+    const supabase = await createClient();
+    const limit = filters.limit ?? 24;
+    const offset = filters.offset ?? 0;
+
+    let q = supabase
+      .from("products")
+      .select(`*, business:businesses(${PRODUCT_BUSINESS_SELECT})`, {
+        count: "exact",
+      })
+      .eq("status", "published");
+    if (filters.query) q = q.ilike("name", `%${filters.query}%`);
+    if (filters.categoryId) q = q.eq("category_id", filters.categoryId);
+    if (filters.inStock) q = q.gt("stock", 0);
+    if (filters.minPrice != null) q = q.gte("price", filters.minPrice);
+    if (filters.maxPrice != null) q = q.lte("price", filters.maxPrice);
+    const sort = PRODUCT_SORT_COLUMNS[filters.sort ?? "newest"];
+    q = q.order(sort.column, { ascending: sort.ascending });
+
+    const { data, error, count } = await q.range(offset, offset + limit - 1);
+    if (error || !data) return { items: [], total: 0 };
+    return { items: data as ProductWithBusiness[], total: count ?? 0 };
+  },
+);
+
+/* ==========================================================================
+ * Service discovery
+ * ========================================================================== */
+
+export type ServiceBusiness = ProductBusiness & { category_id: string };
+
+export type ServiceWithBusiness = Service & {
+  business: ServiceBusiness | null;
+};
+
+export type ServiceDetail = ServiceWithBusiness & {
+  categories: Pick<Category, "slug" | "name_ar" | "name_fr" | "name_en"> | null;
+};
+
+export type ServiceListFilters = {
+  query?: string;
+  categoryId?: string;
+  city?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: "newest" | "price_asc" | "price_desc";
+  limit?: number;
+  offset?: number;
+};
+
+const SERVICE_BUSINESS_SELECT = `${PRODUCT_BUSINESS_SELECT}, category_id`;
+
+/** Single published service by id, with its provider business (and category resolved separately). */
+export const getServiceById = cache(
+  async (id: string): Promise<ServiceDetail | null> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("services")
+      .select(`*, business:businesses(${SERVICE_BUSINESS_SELECT})`)
+      .eq("id", id)
+      .eq("status", "published")
+      .maybeSingle();
+    if (error || !data) return null;
+
+    const base = data as ServiceWithBusiness;
+    let categories: ServiceDetail["categories"] = null;
+    const categoryId = base.business?.category_id ?? null;
+    if (categoryId) {
+      const { data: cat } = await supabase
+        .from("categories")
+        .select("slug, name_ar, name_fr, name_en")
+        .eq("id", categoryId)
+        .maybeSingle();
+      if (cat) categories = cat as ServiceDetail["categories"];
+    }
+    return { ...base, categories };
+  },
+);
+
+/** Published services of the same provider (deterministic: featured first, then recency). */
+export const getServicesForBusinessRow = cache(
+  async (
+    businessId: string,
+    serviceId: string,
+    limit = 4,
+  ): Promise<ServiceWithBusiness[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("services")
+      .select(`*, business:businesses(${SERVICE_BUSINESS_SELECT})`)
+      .eq("business_id", businessId)
+      .eq("status", "published")
+      .neq("id", serviceId)
+      .order("featured", { ascending: false })
+      .order("updated_at", { ascending: false })
+      .limit(limit);
+    if (error || !data) return [];
+    return data as ServiceWithBusiness[];
+  },
+);
+
+/** Services from providers in the same category (deterministic, real data only). */
+export const getSimilarServices = cache(
+  async (
+    categoryId: string | null,
+    serviceId: string,
+    businessId: string,
+    limit = 4,
+  ): Promise<ServiceWithBusiness[]> => {
+    if (!categoryId) return [];
+    const supabase = await createClient();
+    const { data: businesses } = await supabase
+      .from("businesses")
+      .select("id")
+      .eq("category_id", categoryId)
+      .eq("status", "approved")
+      .neq("id", businessId)
+      .limit(50);
+    const ids = (businesses ?? []).map((b) => b.id);
+    if (ids.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from("services")
+      .select(`*, business:businesses(${SERVICE_BUSINESS_SELECT})`)
+      .eq("status", "published")
+      .neq("id", serviceId)
+      .in("business_id", ids)
+      .order("featured", { ascending: false })
+      .order("updated_at", { ascending: false })
+      .limit(limit);
+    if (error || !data) return [];
+    return data as ServiceWithBusiness[];
+  },
+);
+
+const SERVICE_SORT_COLUMNS: Record<
+  NonNullable<ServiceListFilters["sort"]>,
+  { column: string; ascending: boolean }
+> = {
+  newest: { column: "updated_at", ascending: false },
+  price_asc: { column: "price", ascending: true },
+  price_desc: { column: "price", ascending: false },
+};
+
+/** Published catalog rows with a real total count, using only existing fields. */
+export const getPublishedServices = cache(
+  async (
+    filters: ServiceListFilters = {},
+  ): Promise<{ items: ServiceWithBusiness[]; total: number }> => {
+    const supabase = await createClient();
+    const limit = filters.limit ?? 24;
+    const offset = filters.offset ?? 0;
+
+    // Category / city live on the provider business → resolve business ids first.
+    let businessIds: string[] | null = null;
+    if (filters.categoryId) {
+      const { data: biz } = await supabase
+        .from("businesses")
+        .select("id")
+        .eq("category_id", filters.categoryId)
+        .eq("status", "approved");
+      businessIds = (biz ?? []).map((b) => b.id);
+    }
+    if (filters.city) {
+      const { data: biz } = await supabase
+        .from("businesses")
+        .select("id")
+        .eq("city", filters.city)
+        .eq("status", "approved");
+      const cityIds = (biz ?? []).map((b) => b.id);
+      businessIds = businessIds
+        ? businessIds.filter((id) => cityIds.includes(id))
+        : cityIds;
+    }
+    if (businessIds && businessIds.length === 0) {
+      return { items: [], total: 0 };
+    }
+
+    let q = supabase
+      .from("services")
+      .select(`*, business:businesses(${SERVICE_BUSINESS_SELECT})`, {
+        count: "exact",
+      })
+      .eq("status", "published");
+    if (filters.query) q = q.ilike("name", `%${filters.query}%`);
+    if (filters.minPrice != null) q = q.gte("price", filters.minPrice);
+    if (filters.maxPrice != null) q = q.lte("price", filters.maxPrice);
+    if (businessIds) q = q.in("business_id", businessIds);
+
+    const sort = SERVICE_SORT_COLUMNS[filters.sort ?? "newest"];
+    q = q.order(sort.column, { ascending: sort.ascending });
+
+    const { data, error, count } = await q.range(offset, offset + limit - 1);
+    if (error || !data) return { items: [], total: 0 };
+    return { items: data as ServiceWithBusiness[], total: count ?? 0 };
+  },
+);
+
+/** Home rails: published services with their provider, featured first then recency. */
+export const getPopularServices = cache(
+  async (limit = 8): Promise<ServiceWithBusiness[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("services")
+      .select(`*, business:businesses(${SERVICE_BUSINESS_SELECT})`)
+      .eq("status", "published")
+      .order("featured", { ascending: false })
+      .order("updated_at", { ascending: false })
+      .limit(limit);
+    if (error || !data) return [];
+    return data as ServiceWithBusiness[];
+  },
+);
 
 export async function getAdminBusinesses(): Promise<AdminBusiness[]> {
   const supabase = await createClient();

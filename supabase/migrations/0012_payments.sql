@@ -1,4 +1,4 @@
-﻿-- Servis Sity — Phase L: Payments & Premium Subscription / Billing / Featured.
+﻿-- Service City — Phase L: Payments & Premium Subscription / Billing / Featured.
 -- Run after 0011_messenger.sql.
 
 -- ===========================================================================

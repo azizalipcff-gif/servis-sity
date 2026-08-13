@@ -1,4 +1,4 @@
--- Servis Sity — Phase 1: storage bucket + policies for business media uploads
+-- Service City — Phase 1: storage bucket + policies for business media uploads
 -- Run after 0001_initial.sql in the Supabase SQL editor.
 
 -- Publicly readable bucket, files stored under {owner_user_id}/{file}

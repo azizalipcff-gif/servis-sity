@@ -1,4 +1,4 @@
--- Servis Sity — Phase 1: core schema + RLS
+-- Service City — Phase 1: core schema + RLS
 -- Run in the Supabase SQL editor (or via `supabase db push`).
 
 create type user_role as enum ('client', 'owner', 'admin');

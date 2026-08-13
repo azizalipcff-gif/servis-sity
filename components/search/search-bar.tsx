@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { getCategoryIcon } from "@/components/category-icon";
 import { TRENDING_CATEGORIES } from "@/lib/constants";
 
-const RECENT_KEY = "servis:recent-searches";
+const RECENT_KEY = "service-city:recent-searches";
 
 function readRecent(): string[] {
   try {

@@ -47,11 +47,20 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   setRequestLocale(locale);
 
+  const t = await getTranslations({ locale, namespace: "a11y" });
+  const skipLinkLabel = t("skipToContent");
+
   return (
     <html lang={locale} dir={dirForLocale(locale as "ar" | "fr" | "en")}>
       <body
         className={`min-h-screen bg-background text-foreground antialiased ${inter.variable} ${tajawal.variable}`}
       >
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[60] focus:rounded-xl focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
+        >
+          {skipLinkLabel}
+        </a>
         <NextIntlClientProvider>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>
@@ -64,7 +73,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
 
   if (!hasLocale(routing.locales, locale)) {
-    return { title: "Servis Sity" };
+    return { title: "Service City" };
   }
 
   setRequestLocale(locale);
@@ -74,7 +83,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     metadataBase: new URL(siteUrl()),
     title: {
       default: t("title"),
-      template: "%s | Servis Sity",
+      template: "%s | Service City",
     },
     description: t("description"),
     icons: {
@@ -98,10 +107,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
     },
     manifest: "/manifest.webmanifest",
-    applicationName: "Servis Sity",
+    applicationName: "Service City",
     appleWebApp: {
       capable: true,
-      title: "Servis Sity",
+      title: "Service City",
       statusBarStyle: "default",
     },
     openGraph: {
@@ -112,10 +121,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: t("description"),
       images: [
         {
-          url: "/branding/servis-sity-logo.png",
+          url: "/branding/service-city-logo.png",
           width: 1536,
           height: 1024,
-          alt: "Servis Sity Logo",
+          alt: "Service City Logo",
         },
       ],
     },
@@ -123,7 +132,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title: t("title"),
       description: t("description"),
-      images: ["/branding/servis-sity-logo.png"],
+      images: ["/branding/service-city-logo.png"],
     },
     robots: {
       index: true,

@@ -1,11 +1,13 @@
 import { ArrowRight, ArrowUpRight, Building2, MapPin } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { Button } from "@/components/ui/button";
 import { BusinessCard } from "@/components/business-card";
 import { EmptyState } from "@/components/empty-state";
 import { RatingStars } from "@/components/rating-stars";
 import { SmartImage } from "@/components/smart-image";
 import { DEFAULT_PLACEHOLDER_IMAGES } from "@/lib/constants";
+import { businessHref } from "@/lib/business/url";
 import { localizedName, type Locale } from "@/lib/translations";
 import type { BusinessWithCategory } from "@/lib/queries";
 
@@ -26,11 +28,11 @@ export async function FeaturedBusinesses({
       <div className="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
         <div>
           <p className="eyebrow">{t("eyebrow")}</p>
-          <h2 className="mt-1 text-2xl font-bold sm:text-3xl">{t("title")}</h2>
+          <h2 className="mt-1 text-editorial text-2xl sm:text-3xl">{t("title")}</h2>
         </div>
         {businesses.length > 0 && (
           <Link
-            href="/search"
+            href="/business"
             className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-primary underline-offset-4 transition-colors hover:underline"
           >
             {t("viewAll")}
@@ -45,13 +47,12 @@ export async function FeaturedBusinesses({
           title={t("emptyTitle")}
           description={t("empty")}
           action={
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              {t("registerCta")}
-              <ArrowUpRight className="size-4 rtl:rotate-180" />
-            </Link>
+            <Button asChild>
+              <Link href="/dashboard">
+                {t("registerCta")}
+                <ArrowUpRight className="size-4 rtl:rotate-180" />
+              </Link>
+            </Button>
           }
         />
       ) : lead ? (
@@ -82,7 +83,7 @@ async function LeadCard({
 }) {
   const t = await getTranslations("featured");
   const categoryName = localizedName(business.categories, locale);
-  const href = `/business/${business.slug}`;
+  const href = businessHref(business);
 
   return (
     <Link

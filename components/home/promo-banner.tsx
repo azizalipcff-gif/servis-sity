@@ -1,6 +1,7 @@
 import { ArrowRight, Store } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { Button } from "@/components/ui/button";
 
 export async function PromoBanner() {
   const t = await getTranslations("promo");
@@ -29,13 +30,12 @@ export async function PromoBanner() {
               {t("subtitle")}
             </p>
           </div>
-          <Link
-            href="/dashboard"
-            className="inline-flex w-fit items-center gap-2 rounded-lg bg-primary px-7 py-3.5 text-base font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-          >
-            {t("cta")}
-            <ArrowRight className="size-5 rtl:rotate-180" />
-          </Link>
+          <Button asChild size="lg" className="px-7 text-base">
+            <Link href="/dashboard">
+              {t("cta")}
+              <ArrowRight className="size-5 rtl:rotate-180" />
+            </Link>
+          </Button>
         </div>
       </div>
     </section>

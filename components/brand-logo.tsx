@@ -13,13 +13,13 @@ export function BrandLogo({
 }: BrandLogoProps) {
   const src =
     variant === "white"
-      ? "/branding/servis-sity-logo-white.png"
-      : "/branding/servis-sity-logo.png";
+      ? "/branding/service-city-logo-white.png"
+      : "/branding/service-city-logo.png";
 
   return (
     <Image
       src={src}
-      alt="Servis Sity Logo"
+      alt="Service City Logo"
       width={300}
       height={200}
       priority={priority}

@@ -1,4 +1,4 @@
--- Servis Sity — Phase H: complete user profile + notifications.
+-- Service City — Phase H: complete user profile + notifications.
 -- Run after 0005_storage_buckets.sql in the Supabase SQL editor.
 --
 -- 1) Extends `profiles` with the full public profile schema (URLs only for

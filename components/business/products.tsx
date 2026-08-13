@@ -1,7 +1,19 @@
 import { getTranslations } from "next-intl/server";
+import { ProductCard } from "@/components/products/product-card";
 import type { Product } from "@/lib/supabase/database.types";
 
-export async function BusinessProducts({ products }: { products: Product[] }) {
+export async function BusinessProducts({
+  products,
+  business,
+}: {
+  products: Product[];
+  business: {
+    name: string | null;
+    slug: string;
+    logo_url: string | null;
+    verified: boolean;
+  };
+}) {
   const t = await getTranslations("products");
   const published = products.filter((p) => p.status === "published");
 
@@ -9,33 +21,19 @@ export async function BusinessProducts({ products }: { products: Product[] }) {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
+      <h2 className="text-lg font-semibold">{t("title")}</h2>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {published.map((product) => (
-          <div
+          <ProductCard
             key={product.id}
-            className="group overflow-hidden rounded-xl border bg-card"
-          >
-            <div className="aspect-square w-full overflow-hidden bg-muted">
-              {product.images?.[0] ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={product.images[0]}
-                  alt={product.name}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="h-full w-full" />
-              )}
-            </div>
-            <div className="p-3">
-              <h3 className="line-clamp-1 text-sm font-medium">{product.name}</h3>
-              <p className="mt-1 font-bold text-primary">
-                {product.price != null ? `${product.price} MAD` : "—"}
-              </p>
-            </div>
-          </div>
+            product={product}
+            seller={{
+              name: business.name,
+              slug: business.slug,
+              logo_url: business.logo_url,
+              verified: business.verified,
+            }}
+          />
         ))}
       </div>
     </section>

@@ -18,6 +18,7 @@ import {
   type VerificationStatus,
 } from "@/lib/supabase/database.types";
 import { Link } from "@/i18n/navigation";
+import { businessHref } from "@/lib/business/url";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -209,7 +210,7 @@ export function BusinessesTable({ businesses, locale }: Props) {
                         <Trash2 className="size-4" />
                       </Button>
                       <Link
-                        href={`/business/${b.slug}`}
+                        href={businessHref(b)}
                         target="_blank"
                         className="inline-flex size-9 items-center justify-center rounded-md hover:bg-muted"
                         title={t("viewPage")}

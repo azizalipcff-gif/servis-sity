@@ -25,7 +25,7 @@ export default async function MessengerPage({ params, searchParams }: Props) {
       : undefined;
 
   return (
-    <main className="container-site py-6">
+    <main id="main-content" className="container-site py-6">
       <h1 className="text-2xl font-bold md:text-3xl">{t("title")}</h1>
       <div className="mt-6 h-[calc(100vh-10rem)] min-h-[540px]">
         <MessengerClient

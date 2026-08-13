@@ -2,14 +2,14 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Servis Sity — Business Directory",
-    short_name: "Servis Sity",
+    name: "Service City — Business Directory",
+    short_name: "Service City",
     description:
-      "Servis Sity — connect with local service providers across Moroccan cities.",
+      "Service City — connect with local service providers across Moroccan cities.",
     start_url: "/en",
     display: "standalone",
     background_color: "#ffffff",
-    theme_color: "#bf5b32",
+    theme_color: "#e07a2d",
     icons: [
       {
         src: "/branding/icon-192.png",
@@ -22,7 +22,7 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
       },
       {
-        src: "/branding/servis-sity-logo.png",
+        src: "/branding/service-city-logo.png",
         sizes: "1536x1024",
         type: "image/png",
         purpose: "any",

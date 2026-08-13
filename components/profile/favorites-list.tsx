@@ -1,114 +1,130 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { Loader2, Heart, ExternalLink } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import { BusinessCard } from "@/components/business-card";
+import { ServiceCard } from "@/components/services/service-card";
+import { ProductCard } from "@/components/products/product-card";
+import { useFavorites } from "@/components/favorites/favorites-provider";
+import type { FavoritesData } from "@/lib/favorites";
 
-type Favorite = {
-  id: string;
-  created_at: string;
-  business?: {
-    id: string;
-    name: string | null;
-    logo_url: string | null;
-    slug: string | null;
-  } | null;
-};
-
-export function FavoritesList() {
+export function FavoritesList({ initial }: { initial: FavoritesData }) {
   const t = useTranslations("profile");
-  const [items, setItems] = useState<Favorite[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<string | null>(null);
+  const { ready, isFavorite } = useFavorites();
 
-  const load = useCallback(async () => {
-    const res = await fetch("/api/favorites", { cache: "no-store" });
-    if (res.ok) {
-      const data = await res.json();
-      setItems(data.favorites ?? []);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  async function remove(id: string) {
-    setBusy(id);
-    const res = await fetch("/api/favorites", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    setBusy(null);
-    if (res.ok) setItems((list) => list.filter((f) => f.id !== id));
-  }
-
-  if (loading) {
+  if (!ready) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  if (items.length === 0) {
+  const businesses = initial.businesses.filter((b) => isFavorite("business", b.id));
+  const services = initial.services.filter((s) => isFavorite("service", s.id));
+  const products = initial.products.filter((p) => isFavorite("product", p.id));
+
+  const total = businesses.length + services.length + products.length;
+
+  if (total === 0) {
     return (
-      <div className="rounded-2xl border border-dashed bg-card/40 p-10 text-center">
-        <Heart className="mx-auto mb-3 h-8 w-8 text-muted-foreground/60" />
+      <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed bg-card/40 p-10 text-center">
+        <Heart className="size-8 text-muted-foreground/60" />
         <p className="text-sm text-muted-foreground">{t("emptyFavorites")}</p>
+        <Button asChild variant="outline">
+          <Link href="/business">{t("favoritesCta")}</Link>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-2">
-      <p className="text-sm text-muted-foreground">{t("favoritesIntro")}</p>
-      <ul className="space-y-2">
-        {items.map((f) => (
-          <li
-            key={f.id}
-            className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3"
-          >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
-              {f.business?.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={f.business.logo_url}
-                  alt=""
-                  className="h-full w-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <Heart className="h-5 w-5 text-muted-foreground" />
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">
-                {f.business?.name || "—"}
-              </p>
-            </div>
-            {f.business?.slug && (
-              <Button variant="ghost" size="sm" asChild>
-                <Link href={`/business/${f.business.slug}`}>
-                  <ExternalLink className="h-4 w-4" />
-                </Link>
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={busy === f.id}
-              onClick={() => remove(f.id)}
-            >
-              <Heart className="h-4 w-4" />
-            </Button>
-          </li>
-        ))}
-      </ul>
+    <div className="space-y-12">
+      {businesses.length > 0 && (
+        <section aria-label={t("favoritesBusinesses")}>
+          <h3 className="mb-4 text-base font-semibold">{t("favoritesBusinesses")}</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+            {businesses.map((b) => (
+              <BusinessCard key={b.id} business={b} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {services.length > 0 && (
+        <section aria-label={t("favoritesServices")}>
+          <h3 className="mb-4 text-base font-semibold">{t("favoritesServices")}</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+            {services.map((s) => (
+              <ServiceCard
+                key={s.id}
+                service={s}
+                seller={
+                  s.business
+                    ? {
+                        name: s.business.name,
+                        slug: s.business.slug ?? undefined,
+                        logo_url: s.business.logo_url,
+                        verified: s.business.verified,
+                        city: s.business.city,
+                        rating_avg: s.business.rating_avg,
+                        reviews_count: s.business.reviews_count,
+                      }
+                    : undefined
+                }
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {products.length > 0 && (
+        <section aria-label={t("favoritesProducts")}>
+          <h3 className="mb-4 text-base font-semibold">{t("favoritesProducts")}</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+            {products.map((p) => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                seller={
+                  p.business
+                    ? {
+                        name: p.business.name,
+                        slug: p.business.slug ?? undefined,
+                        logo_url: p.business.logo_url,
+                        verified: p.business.verified,
+                        city: p.business.city,
+                        rating_avg: p.business.rating_avg,
+                        reviews_count: p.business.reviews_count,
+                      }
+                    : undefined
+                }
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {businesses.length === 0 && (
+        <EmptyHint label={t("emptyFavoritesBusinesses")} />
+      )}
+      {services.length === 0 && (
+        <EmptyHint label={t("emptyFavoritesServices")} />
+      )}
+      {products.length === 0 && (
+        <EmptyHint label={t("emptyFavoritesProducts")} />
+      )}
+    </div>
+  );
+}
+
+function EmptyHint({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2 rounded-xl border border-dashed bg-card/40 px-4 py-3 text-sm text-muted-foreground">
+      <Heart className="size-4 shrink-0 text-muted-foreground/40" />
+      <span>{label}</span>
     </div>
   );
 }

@@ -9,12 +9,12 @@
   --popover-foreground: #1f2933;
   --primary: #e07a2d;
   --primary-foreground: #ffffff;
-  --secondary: #f4e7d5;
-  --secondary-foreground: #7a3d00;
+  --secondary: #2c3e50;
+  --secondary-foreground: #ffffff;
   --muted: #f6f2ea;
   --muted-foreground: #5d6673;
-  --accent: #d94f4f;
-  --accent-foreground: #ffffff;
+  --accent: #f39c12;
+  --accent-foreground: #20242c;
   --destructive: #d94f4f;
   --destructive-foreground: #ffffff;
   --success: #18864b;
@@ -24,7 +24,7 @@
   --input: #ddd3c2;
   --ring: #e07a2d;
   --whatsapp: #128c7e;
-  --gold: #f2a33c;
+  --gold: #f39c12;
   --radius: 0.5rem;
 }
 
@@ -37,12 +37,12 @@
   --popover-foreground: #f4f1ea;
   --primary: #f08842;
   --primary-foreground: #ffffff;
-  --secondary: #2a2418;
-  --secondary-foreground: #f0b06d;
+  --secondary: #2c3e50;
+  --secondary-foreground: #ffffff;
   --muted: #262b32;
   --muted-foreground: #a2a9b3;
-  --accent: #e26a62;
-  --accent-foreground: #ffffff;
+  --accent: #f39c12;
+  --accent-foreground: #20242c;
   --destructive: #e26a62;
   --destructive-foreground: #ffffff;
   --success: #3aa86e;
@@ -106,13 +106,25 @@ html[lang="ar"] {
 
 /* Arabic glyphs connect — avoid negative tracking that cramps headings */
 [dir="rtl"] .tracking-tight,
-[dir="rtl"] .tracking-tighter {
+[dir="rtl"] .tracking-tighter,
+[dir="rtl"] .tracking-wide,
+[dir="rtl"] .tracking-wider,
+[dir="rtl"] .tracking-widest,
+[dir="rtl"] .uppercase {
   letter-spacing: 0;
 }
 
 /* Arabic headings — taller line-height & no negative tracking so ascenders/diacritics never clip */
 [dir="rtl"] .text-editorial {
   line-height: 1.3;
+  letter-spacing: 0;
+}
+
+/* Base heading rule applies -0.01em tracking; drop it for Arabic so letters stay connected */
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4 {
   letter-spacing: 0;
 }
 

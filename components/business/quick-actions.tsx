@@ -11,11 +11,12 @@ import {
   Share,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { BusinessDetail } from "@/lib/queries";
 import { FollowButton } from "@/components/follow-button";
 import { useBusinessChat } from "./use-business-chat";
+import { useFavorite } from "@/components/favorites/use-favorite";
+import { businessHref, businessPath } from "@/lib/business/url";
 
 export function QuickActions({
   business,
@@ -30,6 +31,7 @@ export function QuickActions({
     business.id,
     business.owner_id,
     business.slug,
+    businessHref(business),
   );
 
   const waNumber = business.whatsapp?.replace(/\D/g, "");
@@ -41,18 +43,10 @@ export function QuickActions({
     return undefined;
   })();
 
-  const savedKey = `sv-saved-${business.id}`;
-  const [saved, setSaved] = useState(false);
-  useEffect(() => {
-    try {
-      setSaved(localStorage.getItem(savedKey) === "1");
-    } catch {
-      setSaved(false);
-    }
-  }, [savedKey]);
+  const { saved, toggle, busy: favBusy } = useFavorite("business", business.id);
 
   async function onShare() {
-    const url = `${window.location.origin}/${locale}/business/${business.slug}`;
+    const url = `${window.location.origin}${businessPath(locale, business)}`;
     const data = { title: business.name, url };
     try {
       if (navigator.share) {
@@ -66,13 +60,7 @@ export function QuickActions({
   }
 
   function toggleSave() {
-    const next = !saved;
-    setSaved(next);
-    try {
-      localStorage.setItem(savedKey, next ? "1" : "0");
-    } catch {
-      /* ignore */
-    }
+    toggle();
   }
 
   type Action = {
@@ -95,7 +83,7 @@ export function QuickActions({
       enabled: Boolean(business.phone),
       href: business.phone ? `tel:${business.phone}` : undefined,
       external: false,
-      priority: "primary",
+      priority: waNumber ? "secondary" : "primary",
     },
     {
       key: "whatsapp",
@@ -104,7 +92,7 @@ export function QuickActions({
       enabled: Boolean(waNumber),
       href: waNumber ? `https://wa.me/${waNumber}` : undefined,
       external: true,
-      priority: "secondary",
+      priority: "primary",
     },
     {
       key: "chat",
@@ -129,6 +117,7 @@ export function QuickActions({
       label: saved ? dt("saved") : dt("save"),
       icon: Bookmark,
       enabled: true,
+      busy: favBusy,
       onClick: toggleSave,
       priority: "tertiary",
     },
@@ -156,7 +145,7 @@ export function QuickActions({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
-      className="flex flex-wrap items-center gap-2"
+      className="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-none pb-0.5 sm:flex-wrap sm:overflow-visible sm:whitespace-normal"
     >
       {actions.map((a, i) => {
         const Icon = a.icon;
@@ -176,7 +165,7 @@ export function QuickActions({
           </>
         );
         const shared = cn(
-          "group inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-4 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "group inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg px-4 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           actionClasses[a.priority],
           !a.enabled &&
             "pointer-events-none border border-border bg-muted text-muted-foreground/60",
@@ -214,6 +203,7 @@ export function QuickActions({
               );
             }}
             aria-label={a.label}
+            aria-pressed={a.key === "save" ? saved : undefined}
             aria-busy={a.busy || undefined}
             disabled={a.busy || undefined}
             className={shared}

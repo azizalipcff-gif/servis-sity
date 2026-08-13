@@ -1,253 +1,94 @@
-"use client";
+import { ArrowRight, Building2, MapPin, ShoppingBag, Wrench } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
+import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 
-import { ArrowUpRight, Search } from "lucide-react";
-import { motion } from "framer-motion";
-import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
-import { Link, useRouter } from "@/i18n/navigation";
-import { Input } from "@/components/ui/input";
-import { SmartImage } from "@/components/smart-image";
-import { localizedName, type Locale } from "@/lib/translations";
-import { MOROCCAN_CITIES, DEFAULT_PLACEHOLDER_IMAGES } from "@/lib/constants";
-import type { Category } from "@/lib/supabase/database.types";
-import type { BusinessWithCategory } from "@/lib/queries";
+type Props = {
+  businessCount: number;
+  cityCount: number;
+  serviceCount: number;
+  productCount: number;
+};
 
-export function Hero({
-  categories,
-  businesses,
-}: {
-  categories: Category[];
-  businesses: BusinessWithCategory[];
-}) {
-  const t = useTranslations("hero");
-  const locale = useLocale();
-  const router = useRouter();
+export async function Hero({
+  businessCount,
+  cityCount,
+  serviceCount,
+  productCount,
+}: Props) {
+  const t = await getTranslations("hero");
+  const locale = await getLocale();
+  const numberLocale = locale === "ar" ? "ar-MA" : locale;
 
-  const [query, setQuery] = useState("");
-  const [city, setCity] = useState("");
-  const [focused, setFocused] = useState(false);
-
-  const suggestions = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return categories
-      .filter((c) =>
-        [c.name_ar, c.name_fr, c.name_en].some((name) =>
-          name.toLowerCase().includes(q),
-        ),
-      )
-      .slice(0, 6);
-  }, [query, categories]);
-
-  function submit(value?: string, slug?: string) {
-    if (slug) {
-      router.push(`/category/${slug}`);
-      return;
-    }
-    const q = (value ?? query).trim();
-    const params = new URLSearchParams();
-    if (q) params.set("q", q);
-    if (city) params.set("city", city);
-    router.push(`/search?${params.toString()}`);
-  }
-
-  const gallery = businesses.slice(0, 3);
+  const stats = [
+    { value: businessCount, label: t("statBusinesses") },
+    { value: cityCount, label: t("statCities") },
+    { value: serviceCount, label: t("statServices") },
+    { value: productCount, label: t("statProducts") },
+  ];
 
   return (
-    <section className="border-b border-border bg-background">
-      <div className="container-site grid items-center gap-8 py-8 md:py-12 lg:grid-cols-12 lg:gap-10">
-        {/* Text + search */}
-        <div className="lg:col-span-7">
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4 }}
-            className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1 text-xs font-medium text-primary"
-          >
-            {t("badge")}
-          </motion.p>
+    <section className="relative overflow-hidden bg-gradient-to-b from-secondary/70 via-background to-background">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -start-40 -top-40 size-[34rem] rounded-full bg-primary/10 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-52 -end-40 size-[38rem] rounded-full bg-accent/10 blur-3xl"
+      />
 
-          <motion.h1
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
-            className="text-editorial max-w-2xl text-3xl sm:text-4xl md:text-5xl"
-          >
+      <div className="container-site relative py-12 sm:py-16 lg:py-20">
+        <div className="max-w-3xl">
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+            <MapPin className="size-3.5" />
+            {t("eyebrow")}
+          </span>
+
+          <h1 className="mt-6 text-editorial text-4xl sm:text-5xl lg:text-[3.4rem] xl:text-6xl">
             {t("title")}
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.08, ease: "easeOut" }}
-            className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg"
-          >
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             {t("subtitle")}
-          </motion.p>
+          </p>
 
-          <motion.form
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.16, ease: "easeOut" }}
-            className="mt-7 max-w-2xl"
-            onSubmit={(e) => {
-              e.preventDefault();
-              submit();
-            }}
-          >
-            <div className="flex h-14 items-center gap-2 rounded-xl border border-border bg-white p-1.5 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20">
-              <Search className="ms-3 size-5 shrink-0 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setTimeout(() => setFocused(false), 150)}
-                placeholder={t("marketSearchPlaceholder")}
-                aria-label={t("marketSearchPlaceholder")}
-                className="h-full flex-1 border-0 bg-transparent text-base shadow-none focus-visible:ring-0 md:text-lg"
-              />
-              <div className="hidden h-full items-center border-s border-border ps-2 md:flex">
-                <select
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="h-9 border-0 bg-transparent px-1 text-sm font-medium outline-none"
-                >
-                  <option value="">{t("allCities")}</option>
-                  {MOROCCAN_CITIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button asChild size="lg" className="px-7">
+              <Link href="/services">
+                <Wrench className="size-4" />
+                {t("ctaServices")}
+                <ArrowRight className="size-4 rtl:rotate-180" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outlinePrimary" className="px-7">
+              <Link href="/business">
+                <Building2 className="size-4" />
+                {t("ctaBusinesses")}
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outlinePrimary" className="px-7">
+              <Link href="/products">
+                <ShoppingBag className="size-4" />
+                {t("ctaProducts")}
+              </Link>
+            </Button>
+          </div>
+
+          <dl className="mt-12 grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4">
+            {stats.map((stat) => (
+              <div key={stat.label}>
+                <dd className="text-editorial text-3xl text-primary sm:text-4xl">
+                  {new Intl.NumberFormat(numberLocale).format(stat.value)}+
+                </dd>
+                <dt className="mt-1.5 text-[13px] font-medium text-muted-foreground">
+                  {stat.label}
+                </dt>
               </div>
-              <button
-                type="submit"
-                aria-label={t("searchButton")}
-                className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:px-6"
-              >
-                {t("searchButton")}
-                <ArrowUpRight className="size-4 rtl:rotate-180" />
-              </button>
-            </div>
-
-            {focused && suggestions.length > 0 && (
-              <ul className="overflow-hidden rounded-b-xl border-x border-b border-border bg-background py-1 shadow-lift">
-                {suggestions.map((c) => (
-                  <li key={c.id}>
-                    <button
-                      type="button"
-                      onMouseDown={() => {
-                        setQuery(localizedName(c, locale as Locale));
-                        submit(undefined, c.slug);
-                      }}
-                      className="flex w-full items-center gap-2 px-4 py-2.5 text-start text-sm hover:bg-muted"
-                    >
-                      <Search className="size-4 text-muted-foreground" />
-                      {localizedName(c, locale as Locale)}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </motion.form>
-
-          {categories.length > 0 && (
-            <div className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm">
-              <span className="text-muted-foreground">{t("popularLabel")}</span>
-              {categories.slice(0, 6).map((c, i) => (
-                <span key={c.id} className="flex items-center gap-2">
-                  {i > 0 && <span aria-hidden className="text-border">/</span>}
-                  <button
-                    type="button"
-                    onClick={() => submit(undefined, c.slug)}
-                    className="font-medium text-foreground/80 underline-offset-4 transition-colors hover:text-primary hover:underline"
-                  >
-                    {localizedName(c, locale as Locale)}
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Curated visual */}
-        <div className="lg:col-span-5">
-          {gallery.length >= 2 ? (
-            <div className="grid grid-cols-2 gap-2.5">
-              <div className="col-span-2">
-                <Link
-                  href={`/business/${gallery[0].slug}`}
-                  className="group relative block aspect-[16/8] overflow-hidden rounded-2xl"
-                >
-                  <SmartImage
-                    src={gallery[0].cover_url}
-                    alt={gallery[0].name}
-                    fallback={DEFAULT_PLACEHOLDER_IMAGES.cover}
-                    className="h-full w-full"
-                    imgClassName="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <GradientLabel name={gallery[0].name} city={gallery[0].city} />
-                </Link>
-              </div>
-              {gallery[1] && (
-                <Link
-                  href={`/business/${gallery[1].slug}`}
-                  className="group relative block aspect-square overflow-hidden rounded-2xl"
-                >
-                  <SmartImage
-                    src={gallery[1].cover_url}
-                    alt={gallery[1].name}
-                    fallback={DEFAULT_PLACEHOLDER_IMAGES.cover}
-                    className="h-full w-full"
-                    imgClassName="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <GradientLabel name={gallery[1].name} city={gallery[1].city} compact />
-                </Link>
-              )}
-              {gallery[2] && (
-                <Link
-                  href={`/business/${gallery[2].slug}`}
-                  className="group relative block aspect-square overflow-hidden rounded-2xl"
-                >
-                  <SmartImage
-                    src={gallery[2].cover_url}
-                    alt={gallery[2].name}
-                    fallback={DEFAULT_PLACEHOLDER_IMAGES.cover}
-                    className="h-full w-full"
-                    imgClassName="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <GradientLabel name={gallery[2].name} city={gallery[2].city} compact />
-                </Link>
-              )}
-            </div>
-          ) : (
-            <div className="flex aspect-[4/3] items-center justify-center border border-border bg-muted/40 px-8">
-              <p className="text-center text-xl font-semibold text-muted-foreground">
-                {t("subtitle")}
-              </p>
-            </div>
-          )}
+            ))}
+          </dl>
         </div>
       </div>
     </section>
-  );
-}
-
-function GradientLabel({
-  name,
-  city,
-  compact,
-}: {
-  name: string;
-  city: string | null;
-  compact?: boolean;
-}) {
-  return (
-    <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/70 via-black/10 to-transparent p-3">
-      <span className={compact ? "text-xs font-semibold text-white" : "text-sm font-semibold text-white"}>
-        {name}
-      </span>
-      {city && !compact && <span className="text-xs text-white/75">{city}</span>}
-    </div>
   );
 }

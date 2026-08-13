@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -43,6 +43,11 @@ export function SearchExplorer({
 
   const filter = search.filters;
   const hasAnyQuery = Boolean(search.q) || search.activeFilterCount > 0;
+
+  const mapBusinesses = useMemo(
+    () => search.items.filter((i) => i.kind === "business"),
+    [search.items],
+  );
 
   function applyFilters(parsed: ParsedFilters) {
     if (parsed.q) search.setQ(parsed.q);
@@ -143,12 +148,14 @@ export function SearchExplorer({
             onReset={search.resetAll}
             activeCount={search.activeFilterCount}
             hasQuery={hasAnyQuery}
+            type={filter.type}
+            setType={(type) => search.setFilter("type", type)}
           />
         </div>
 
         {mapVisible && (
           <MapPanel
-            businesses={search.items}
+            businesses={mapBusinesses}
             onClose={() => setMapVisible(false)}
           />
         )}
@@ -217,7 +224,7 @@ function FilterChips({
   if (filters.minPrice != null || filters.maxPrice != null)
     chips.push({
       key: "price",
-      label: priceLabel(filters),
+      label: priceLabel(filters, locale),
       clear: () => {
         onRemove("minPrice", null);
         onRemove("maxPrice", null);
@@ -248,10 +255,11 @@ function FilterChips({
   );
 }
 
-function priceLabel(filters: SearchFilterState): string {
+function priceLabel(filters: SearchFilterState, locale: string): string {
+  const suffix = locale === "ar" ? "د.م." : "DH";
   if (filters.minPrice != null && filters.maxPrice != null)
-    return `${filters.minPrice}–${filters.maxPrice} DH`;
-  if (filters.minPrice != null) return `${filters.minPrice}+ DH`;
-  if (filters.maxPrice != null) return `< ${filters.maxPrice} DH`;
-  return "DH";
+    return `${filters.minPrice}–${filters.maxPrice} ${suffix}`;
+  if (filters.minPrice != null) return `${filters.minPrice}+ ${suffix}`;
+  if (filters.maxPrice != null) return `< ${filters.maxPrice} ${suffix}`;
+  return suffix;
 }

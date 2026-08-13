@@ -1,13 +1,19 @@
 {
   "meta": {
-    "title": "Servis Sity — Discover the best craftsmen and services in Morocco",
+    "title": "Service City — Discover the best craftsmen and services in Morocco",
     "description": "The Moroccan platform connecting customers with local businesses and artisans: electrician, plumber, restaurant, barber, doctor and more. Book in 5 minutes.",
     "search": "Search",
     "searchResults": "Search results for \"{q}\"",
     "searchDescription": "Search trusted service professionals near you and book instantly."
   },
+  "a11y": {
+    "skipToContent": "Skip to content"
+  },
   "nav": {
     "home": "Home",
+    "businesses": "Businesses",
+    "services": "Services",
+    "products": "Products",
     "categories": "Categories",
     "search": "Search",
     "pricing": "Pricing",
@@ -21,8 +27,7 @@
     "messenger": "Messages",
     "forBusinesses": "For businesses",
     "help": "Help center",
-    "favorites": "Favorites",
-    "search": "Search"
+    "favorites": "Favorites"
   },
   "messenger": {
     "title": "Messages",
@@ -107,23 +112,32 @@
     "discoveryLabel": "Popular in:",
     "viewAll": "See what's next",
     "autocompleteHint": "Suggestions",
-    "marketSearchPlaceholder": "What are you looking for?"
+    "marketSearchPlaceholder": "What are you looking for?",
+    "eyebrow": "Your city, your services",
+    "ctaServices": "Explore services",
+    "ctaBusinesses": "Explore businesses",
+    "ctaProducts": "Browse products",
+    "statBusinesses": "Businesses",
+    "statCities": "Cities",
+    "statServices": "Services",
+    "statProducts": "Products"
   },
   "categories": {
     "eyebrow": "Categories",
     "title": "Explore what people are looking for",
     "subtitle": "Pick a category and discover the best businesses in your city",
     "viewAll": "View all categories",
+    "viewAllBusinesses": "View all businesses",
     "exploreAll": "Or search something else",
     "more": "More",
     "browseByCategory": "Browse by category",
+    "viewAllShort": "View all",
     "businesses": "{count, plural, one {# business} other {# businesses}}"
   },
   "featured": {
     "eyebrow": "Curated for you",
     "title": "Businesses worth knowing",
     "subtitle": "Verified professionals are waiting for you — they stand out for quality",
-    "views": "Full page",
     "leadLabel": "Featured",
     "viewBusiness": "Visit their page",
     "reviews": "{count, plural, one {# review} other {# reviews}}",
@@ -132,24 +146,52 @@
     "empty": "No businesses registered yet. Be the first business owner to sign up!",
     "emptyTitle": "No businesses yet",
     "registerCta": "Register your business",
-    "popularProducts": "Popular products"
+    "popularProducts": "Popular products",
+    "popularServices": "Popular services",
+    "noServices": "No services yet. Check back soon.",
+    "featuredServices": "Featured services",
+    "featuredProducts": "Featured products",
+    "comingSoon": "Coming soon"
   },
   "trust": {
     "title": "A platform that grows with you",
     "businesses": "More than {count} registered businesses",
     "cities": "{count} Moroccan cities",
-    "bookings": "{count} completed bookings"
+    "bookings": "{count} completed bookings",
+    "verified": "Trusted & verified",
+    "verifiedDesc": "Identity-verified professionals.",
+    "topRated": "Top rated",
+    "topRatedDesc": "Rated by real customers.",
+    "securePayments": "Secure payments",
+    "securePaymentsDesc": "Encrypted and safe.",
+    "support247": "24/7 support",
+    "support247Desc": "Always here when you need us."
+  },
+  "homeTypes": {
+    "eyebrow": "What are you looking for?",
+    "title": {
+      "businesses": "Businesses",
+      "services": "Services",
+      "products": "Products"
+    },
+    "desc": {
+      "businesses": "Restaurants, salons, clinics, workshops and verified local businesses.",
+      "services": "Book a trusted professional's service in minutes.",
+      "products": "Buy products from local sellers, delivered to your door."
+    }
   },
   "businessCard": {
     "call": "Call",
     "whatsapp": "WhatsApp",
-    "visit": "View page",
+    "visit": "View",
     "favorite": "Save to favorites",
     "share": "Share",
+    "shareText": "Check out {businessName} on Service City!",
     "verified": "Verified",
     "premium": "Premium",
     "reviews": "{count, plural, one {# review} other {# reviews}}",
-    "noReviews": "No reviews yet"
+    "noReviews": "No reviews yet",
+    "entityTypeBusiness": "Business"
   },
   "common": {
     "loading": "Loading...",
@@ -158,6 +200,7 @@
     "saved": "Saved successfully",
     "cancel": "Cancel",
     "edit": "Edit",
+    "priceOnRequest": "Price on request",
     "delete": "Delete",
     "add": "Add",
     "search": "Search",
@@ -244,6 +287,13 @@
     "fromLabel": "from",
     "priceOnRequest": "Price on request",
     "new": "New",
+    "entityBusiness": "Business",
+    "entityService": "Service",
+    "entityProduct": "Product",
+    "typeAll": "All",
+    "typeBusiness": "Businesses",
+    "typeService": "Services",
+    "typeProduct": "Products",
     "showMore": "Show more ({count})",
     "showLess": "Show less",
     "aiNotConfigured": "AI search isn't enabled yet, use regular search.",
@@ -252,7 +302,7 @@
   "promo": {
     "eyebrow": "For businesses",
     "title": "Let people find your services",
-    "subtitle": "List your business on Servis Sity and reach thousands of customers in Casablanca and across Morocco.",
+    "subtitle": "List your business on Service City and reach thousands of customers in Casablanca and across Morocco.",
     "cta": "Add your business"
   },
   "popularCategories": {
@@ -268,7 +318,8 @@
     "title": "{name}",
     "subtitle": "Best {name} in Morocco",
     "empty": "No businesses in this category yet",
-    "emptyTitle": "No businesses yet"
+    "emptyTitle": "No businesses yet",
+    "home": "Home"
   },
   "business": {
     "call": "Call",
@@ -278,6 +329,7 @@
     "website": "Website",
     "description": "About",
     "services": "Services & pricing",
+    "products": "Products",
     "price": "Price",
     "duration": "Duration",
     "minutes": "min",
@@ -355,12 +407,14 @@
       "admin": "Owner dashboard"
     },
     "home": "Home",
+    "viewPage": "View page",
+    "viewAll": "View all",
     "today": "Today",
     "updateSoon": "Details updated recently",
     "closedNow": "Closed now"
   },
   "auth": {
-    "metaTitle": "Sign in — Servis Sity",
+    "metaTitle": "Sign in — Service City",
     "loginTitle": "Welcome back",
     "registerTitle": "List your business",
     "loginSubtitle": "Sign in to manage your account and grow your business.",
@@ -470,7 +524,7 @@
       "bookings": "Bookings",
       "reviews": "Reviews",
       "gallery": "Gallery",
-"services": "Services",
+      "services": "Services",
       "products": "Products",
       "plan": "Subscription",
       "verification": "Verification",
@@ -480,7 +534,7 @@
       "whatsappClicks": "WhatsApp clicks",
       "callClicks": "Calls",
       "photoViews": "Photo views",
-      "events": "Recent activity",
+      "recent": "Recent activity",
       "last14": "Last 14 days",
       "confirm": "Confirm",
       "cancel": "Cancel",
@@ -505,11 +559,10 @@
       "freePlan": "Free",
       "premiumPlan": "Premium",
       "proPlan": "Pro",
-      "renews": "Renewal",
+      "renew": "Renewal",
       "active": "Active",
       "expired": "Expired",
       "upgrade": "Upgrade",
-      "verifyTitle": "Verification",
       "pendingDoc": "Documents:",
       "verifiedBadge": "Verified business",
       "submitDocs": "Submit documents",
@@ -537,6 +590,8 @@
     "verify": "Verify",
     "unverify": "Unverify",
     "delete": "Delete",
+    "markVerified": "Mark verified",
+    "confirmDelete": "Delete permanently? This cannot be undone.",
     "role": "Role",
     "client": "Client",
     "service": "Service",
@@ -545,6 +600,7 @@
     "viewPage": "View page",
     "notAdmin": "This page is for admins only.",
     "dashboard": "Dashboard",
+    "billing": "Billing",
     "categories": "Categories",
     "cities": "Cities",
     "reports": "Reports",
@@ -571,12 +627,10 @@
     "promote": "Promote",
     "demote": "Demote",
     "view": "View",
-    "open": "Open",
     "approve": "Approve",
     "reject": "Reject",
     "feature": "Feature",
     "unfeature": "Unfeature",
-    "markVerified": "Mark verified",
     "addCategory": "Add category",
     "addCity": "Add city",
     "resolve": "Resolve",
@@ -590,7 +644,6 @@
     "select": "Select…",
     "empty": "Nothing here yet.",
     "saved": "Saved",
-    "confirmDelete": "Delete permanently? This cannot be undone.",
     "analytics": "Analytics",
     "subscriptions": "Subscriptions",
     "banned": "Banned",
@@ -607,7 +660,7 @@
   },
   "pricing": {
     "title": "Choose the plan that fits you",
-    "subtitle": "Start free and grow your business with Servis Sity. No commitment.",
+    "subtitle": "Start free and grow your business with Service City. No commitment.",
     "free": "Free",
     "premium": "Premium",
     "pro": "Pro",
@@ -746,10 +799,10 @@
     "admin": {
       "title": "Billing",
       "plans": "Plans",
-"subscriptions": "Subscriptions",
-    "billing": "Billing",
+      "subscriptions": "Subscriptions",
+      "billing": "Billing",
       "payments": "Payments",
-"invoicesAll": "All invoices",
+      "invoicesAll": "All invoices",
       "coupons": "Coupons",
       "verification": "Verification",
       "refunds": "Refunds",
@@ -792,6 +845,9 @@
     "stock": "Stock",
     "featured": "Featured",
     "status": "Status",
+    "view": "View product",
+    "inStock": "In stock",
+    "outOfStock": "Out of stock",
     "statusDraft": "Draft",
     "statusPublished": "Published",
     "statusArchived": "Archived",
@@ -800,6 +856,110 @@
     "saved": "Saved",
     "confirmDelete": "Delete this product?",
     "stockEmpty": "Out of stock"
+  },
+  "product": {
+    "outOfStock": "Out of stock",
+    "inStock": "In stock",
+    "lowStock": "Only {count} left",
+    "entityProduct": "Product",
+    "save": "Save",
+    "saved": "Saved",
+    "description": "Description",
+    "tags": "Tags",
+    "seller": "Seller",
+    "visitBusiness": "View business",
+    "sku": "SKU",
+    "viewsLabel": "Views",
+    "moreFromBusiness": "More from this business",
+    "similarProducts": "Similar products",
+    "browseAllEyebrow": "Keep discovering",
+    "browseAllTitle": "Explore the full marketplace",
+    "browseAllCta": "Browse all products"
+  },
+  "productsPage": {
+    "eyebrow": "Marketplace",
+    "title": "Products",
+    "subtitle": "Discover products from trusted Moroccan sellers — compare prices and contact them directly.",
+    "searchPlaceholder": "Search products…",
+    "allCategories": "All",
+    "inStock": "In stock",
+    "minPrice": "Min",
+    "maxPrice": "Max",
+    "apply": "Apply",
+    "sortLabel": "Sort",
+    "sort": {
+      "newest": "Newest",
+      "price_asc": "Price: low to high",
+      "price_desc": "Price: high to low",
+      "popular": "Most viewed"
+    },
+    "results": "{count, plural, one {# product} other {# products}}",
+    "noResults": "No products found",
+    "noResultsHint": "Try a different search or clear your filters.",
+    "emptyHint": "There are no products yet. Check back soon.",
+    "clear": "Clear filters",
+    "loadMore": "Load more"
+  },
+  "service": {
+    "save": "Save",
+    "saved": "Saved",
+    "description": "Description",
+    "featured": "Featured by our team",
+    "priceOnRequest": "Price on request",
+    "seller": "Provider",
+    "visitBusiness": "View business",
+    "moreFromBusiness": "More from this provider",
+    "similarServices": "Similar services",
+    "browseAllEyebrow": "Keep discovering",
+    "browseAllTitle": "Explore the full marketplace",
+    "browseAllCta": "Browse all services"
+  },
+  "servicesPage": {
+    "eyebrow": "Services",
+    "title": "Services",
+    "subtitle": "Book reliable services from trusted Moroccan providers — compare prices and get in touch directly.",
+    "searchPlaceholder": "Search services…",
+    "allCategories": "All",
+    "allCities": "All cities",
+    "city": "City",
+    "minPrice": "Min",
+    "maxPrice": "Max",
+    "apply": "Apply",
+    "sortLabel": "Sort",
+    "sort": {
+      "newest": "Newest",
+      "price_asc": "Price: low to high",
+      "price_desc": "Price: high to low"
+    },
+    "results": "{count, plural, one {# service} other {# services}}",
+    "noResults": "No services found",
+    "noResultsHint": "Try a different search or clear your filters.",
+    "emptyHint": "There are no services yet. Check back soon.",
+    "clear": "Clear filters",
+    "loadMore": "Load more"
+  },
+  "businessesPage": {
+    "eyebrow": "Marketplace",
+    "title": "Businesses",
+    "subtitle": "Find trusted Moroccan businesses — compare ratings, verify professionals and get in touch directly.",
+    "searchPlaceholder": "Search businesses…",
+    "allCategories": "All",
+    "allCities": "All cities",
+    "city": "City",
+    "verified": "Verified only",
+    "apply": "Apply",
+    "sortLabel": "Sort",
+    "sort": {
+      "newest": "Newest",
+      "rating": "Top rated",
+      "reviews": "Most reviewed"
+    },
+    "results": "{count, plural, one {# business} other {# businesses}}",
+    "noResults": "No businesses found",
+    "noResultsHint": "Try a different search or clear your filters.",
+    "emptyHint": "There are no businesses yet. Be the first to register.",
+    "clear": "Clear filters",
+    "loadMore": "Load more"
   },
   "follow": {
     "follow": "Follow",
@@ -854,18 +1014,148 @@
     "notificationsIntro": "See recent activity about your account and businesses.",
     "emptyNotifications": "You're all caught up.",
     "markAllRead": "Mark all as read",
-    "favoritesIntro": "Businesses you have saved for later.",
-    "emptyFavorites": "You haven't saved any businesses yet.",
+    "favoritesIntro": "Businesses, services and products you have saved for later.",
+    "emptyFavorites": "You haven't saved any favorites yet.",
+    "favoritesCta": "Browse businesses",
+    "favoritesBusinesses": "Businesses",
+    "favoritesServices": "Services",
+    "favoritesProducts": "Products",
+    "emptyFavoritesBusinesses": "You haven't saved any businesses yet.",
+    "emptyFavoritesServices": "You haven't saved any services yet.",
+    "emptyFavoritesProducts": "You haven't saved any products yet.",
     "open": "Open"
+  },
+  "workspace": {
+    "name": "My professional space",
+    "editProfile": "Edit profile",
+    "add": {
+      "title": "What do you want to add?",
+      "subtitle": "Choose what you want to publish on Service City.",
+      "close": "Close",
+      "businessTitle": "Create a business profile",
+      "businessDesc": "Show your business, location, contact information and services.",
+      "businessCta": "Create business",
+      "businessCtaManage": "Manage business",
+      "serviceTitle": "Offer a service",
+      "serviceDesc": "Let customers discover and contact you for your service.",
+      "serviceCta": "Add service",
+      "productTitle": "Add a product",
+      "productDesc": "Showcase a product and make it available to customers.",
+      "productCta": "Add product",
+      "needBusiness": "Create your business first to publish services and products.",
+      "trigger": "Add"
+    },
+    "memberSince": "Member since {date}",
+    "roleOwner": "Service provider",
+    "roleClient": "Customer",
+    "roleAdmin": "Administrator",
+    "loading": "Loading your workspace…",
+    "nav": {
+      "overview": "Overview",
+      "business": "My Business",
+      "services": "Services",
+      "products": "Products",
+      "messages": "Messages",
+      "favorites": "Favorites",
+      "settings": "Settings"
+    },
+    "overview": {
+      "greeting": "Welcome back, {name}",
+      "tagline": "Everything you own and manage on Service City, in one place.",
+      "statBusinesses": "Businesses",
+      "statServices": "Services",
+      "statProducts": "Products",
+      "statMessages": "Messages",
+      "statFavorites": "Favorites",
+      "completionTitle": "Profile completion",
+      "completionHint": "Complete your identity to help customers trust you.",
+      "completionDone": "Your profile is complete — nice work!",
+      "completionCta": "Complete profile"
+    },
+    "business": {
+      "title": "My Business",
+      "viewAll": "Open my business",
+      "emptyTitle": "No business yet",
+      "emptyDesc": "Create your first business and start reaching customers.",
+      "create": "Create business",
+      "view": "View",
+      "manage": "Manage",
+      "services": "services",
+      "products": "products"
+    },
+    "services": {
+      "title": "My Services",
+      "viewAll": "All services",
+      "emptyTitle": "No services yet",
+      "emptyDesc": "Offer your first service and let customers discover what you do.",
+      "add": "Add service",
+      "view": "View",
+      "edit": "Edit",
+      "unit": "services"
+    },
+    "products": {
+      "title": "My Products",
+      "viewAll": "All products",
+      "emptyTitle": "No products yet",
+      "emptyDesc": "Showcase your first product and make it available to customers.",
+      "add": "Add product",
+      "view": "View",
+      "edit": "Edit",
+      "unit": "products"
+    },
+    "messages": {
+      "title": "Messages",
+      "desc": "Chat with customers asking about your business.",
+      "open": "Open messenger",
+      "empty": "No conversations yet"
+    },
+    "favorites": {
+      "title": "Favorites",
+      "desc": "Businesses you have saved for later.",
+      "open": "View favorites",
+      "empty": "Nothing saved yet"
+    },
+    "pagesBusiness": {
+      "title": "My Business",
+      "desc": "Your business profile on Service City.",
+      "noBusinessTitle": "No business yet",
+      "noBusinessDesc": "Create your first business and start reaching customers."
+    },
+    "pagesServices": {
+      "title": "My Services",
+      "desc": "Services you offer through your business.",
+      "noBusinessTitle": "No business yet",
+      "noBusinessDesc": "Create a business before publishing your services."
+    },
+    "pagesProducts": {
+      "title": "My Products",
+      "desc": "Products you sell through your business.",
+      "noBusinessTitle": "No business yet",
+      "noBusinessDesc": "Create a business before adding your products."
+    },
+    "status": {
+      "approved": "Approved",
+      "active": "Active",
+      "published": "Published",
+      "verified": "Verified",
+      "pending": "Pending review",
+      "pending_review": "Pending review",
+      "draft": "Draft",
+      "paused": "Paused",
+      "rejected": "Rejected",
+      "suspended": "Suspended",
+      "inactive": "Inactive",
+      "archived": "Archived"
+    }
   },
   "footer": {
     "tagline": "The Moroccan platform connecting customers with local businesses and artisans.",
     "quickLinks": "Quick links",
     "forBusinesses": "For businesses",
     "contact": "Contact us",
-    "rights": "© {year} Servis Sity. All rights reserved.",
+    "rights": "© {year} Service City. All rights reserved.",
     "privacy": "Privacy policy",
-    "terms": "Terms of service"
+    "terms": "Terms of service",
+    "cities": "Cities"
   }
 }
-

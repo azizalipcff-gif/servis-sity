@@ -37,6 +37,7 @@ export function OwnerDashboard({
   servicesEditor,
   businessEditor,
   productsEditor,
+  initialTab,
 }: {
   business: BusinessDetail;
   analytics: Parameters<typeof AnalyticsPanel>[0]["analytics"];
@@ -44,9 +45,24 @@ export function OwnerDashboard({
   servicesEditor: React.ReactNode;
   businessEditor: React.ReactNode;
   productsEditor?: React.ReactNode;
+  initialTab?: string;
 }) {
   const t = useTranslations("dashboard.dash");
-  const [tab, setTab] = useState("analytics");
+  const KNOWN_TABS = [
+    "analytics",
+    "bookings",
+    "reviews",
+    "gallery",
+    "services",
+    "products",
+    "plan",
+    "verification",
+  ] as const;
+  const [tab, setTab] = useState<string>(
+    initialTab && (KNOWN_TABS as readonly string[]).includes(initialTab)
+      ? initialTab
+      : "analytics",
+  );
 
   const tabs: { key: string; label: string; icon: typeof BarChart3 }[] = [
     { key: "analytics", label: t("analytics"), icon: BarChart3 },
@@ -58,6 +74,27 @@ export function OwnerDashboard({
     { key: "plan", label: t("plan"), icon: Gem },
     { key: "verification", label: t("verification"), icon: ShieldCheck },
   ];
+
+  const panels: Record<string, React.ReactNode> = {
+    analytics: <AnalyticsPanel analytics={analytics} />,
+    bookings: <BookingsManager bookings={bookings} />,
+    reviews: <ReviewsManager reviews={business.reviews} />,
+    gallery: <GalleryManager business={business} />,
+    services: servicesEditor,
+    products: productsEditor,
+    plan: (
+      <div className="grid gap-4 lg:grid-cols-2">
+        <PlanPanel plan={business.plan} />
+        {businessEditor}
+      </div>
+    ),
+    verification: (
+      <VerificationPanel
+        status={business.verification_status}
+        verified={business.verified}
+      />
+    ),
+  };
 
   return (
     <div className="space-y-6">
@@ -85,24 +122,7 @@ export function OwnerDashboard({
         })}
       </div>
 
-      {tab === "analytics" && <AnalyticsPanel analytics={analytics} />}
-      {tab === "bookings" && <BookingsManager bookings={bookings} />}
-      {tab === "reviews" && <ReviewsManager reviews={business.reviews} />}
-      {tab === "gallery" && <GalleryManager business={business} />}
-      {tab === "services" && servicesEditor}
-      {tab === "products" && productsEditor}
-      {tab === "plan" && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <PlanPanel plan={business.plan} />
-          {businessEditor}
-        </div>
-      )}
-      {tab === "verification" && (
-        <VerificationPanel
-          status={business.verification_status}
-          verified={business.verified}
-        />
-      )}
+      {panels[tab]}
     </div>
   );
 }

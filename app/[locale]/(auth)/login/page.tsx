@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { LoginForm } from "@/components/auth/login-form";
+import { safeReturnTo, stripLocalePrefix } from "@/lib/auth/return-to";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -15,12 +16,8 @@ export default async function LoginPage({ params, searchParams }: Props) {
     ? sp.returnTo[0]
     : sp.returnTo;
 
-  const returnTo =
-    typeof returnToParam === "string" &&
-    returnToParam.startsWith("/") &&
-    !returnToParam.startsWith("//")
-      ? returnToParam
-      : undefined;
+  const validReturnTo = safeReturnTo(returnToParam);
+  const returnTo = validReturnTo ? stripLocalePrefix(validReturnTo) : undefined;
 
   return <LoginForm returnTo={returnTo} />;
 }

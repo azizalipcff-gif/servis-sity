@@ -3,6 +3,7 @@
 import { Loader2, MapPin, MessageCircle, MessageSquare, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { businessHref } from "@/lib/business/url";
 import type { BusinessDetail } from "@/lib/queries";
 import { useBusinessChat } from "./use-business-chat";
 
@@ -12,6 +13,7 @@ export function StickyActionBar({ business }: { business: BusinessDetail }) {
     business.id,
     business.owner_id,
     business.slug,
+    businessHref(business),
   );
   const waNumber = business.whatsapp?.replace(/\D/g, "");
 

@@ -15,7 +15,12 @@ import { createClient } from "@/lib/supabase/client";
  * - On success the user is taken to the existing /messenger route opened on the
  *   conversation.
  */
-export function useBusinessChat(businessId: string, ownerId: string | null, slug: string) {
+export function useBusinessChat(
+  businessId: string,
+  ownerId: string | null,
+  slug: string,
+  returnHref?: string,
+) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -39,8 +44,10 @@ export function useBusinessChat(businessId: string, ownerId: string | null, slug
   const isOwner = Boolean(currentUserId && ownerId && currentUserId === ownerId);
 
   const openLogin = useCallback(() => {
-    router.push(`/login?returnTo=${encodeURIComponent(`/business/${slug}`)}`);
-  }, [router, slug]);
+    router.push(
+      `/login?returnTo=${encodeURIComponent(returnHref ?? `/business/${slug}`)}`,
+    );
+  }, [router, returnHref, slug]);
 
   const startChat = useCallback(async () => {
     if (busyRef.current) return;

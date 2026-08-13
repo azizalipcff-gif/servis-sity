@@ -1,13 +1,19 @@
 {
   "meta": {
-    "title": "Servis Sity — اكتشف أفضل مزودي الخدمات في المغرب",
+    "title": "سيرفيس سيتي — اكتشف أفضل مزودي الخدمات في المغرب",
     "description": "منصة مغربية تربطك بالحرفيين ومزودي الخدمات الموثوقين: كهربائي، سباك، مطعم، حلاق، طبيب وغير ذلك. احجز خلال خمس دقائق.",
     "search": "البحث",
     "searchResults": "نتائج البحث عن \"{q}\"",
     "searchDescription": "ابحث عن مزودي خدمات موثوقين بالقرب منك واحجز عبر الإنترنت."
   },
+  "a11y": {
+    "skipToContent": "تخطَّ إلى المحتوى"
+  },
   "nav": {
     "home": "الرئيسية",
+    "businesses": "الأنشطة",
+    "services": "الخدمات",
+    "products": "المنتجات",
     "categories": "التصنيفات",
     "search": "البحث",
     "pricing": "الأسعار",
@@ -15,7 +21,7 @@
     "admin": "الإدارة",
     "login": "تسجيل الدخول",
     "register": "سجّل نشاطك",
-"logout": "تسجيل الخروج",
+    "logout": "تسجيل الخروج",
     "profile": "الملف الشخصي",
     "notifications": "الإشعارات",
     "messenger": "الرسائل",
@@ -106,16 +112,26 @@
     "discoveryLabel": "الأكثر بحثًا في:",
     "viewAll": "شاهد المزيد",
     "autocompleteHint": "اقتراحات",
-    "marketSearchPlaceholder": "عما تبحث اليوم؟"
+    "marketSearchPlaceholder": "عما تبحث اليوم؟",
+    "eyebrow": "مدينتك، خدماتك",
+    "ctaServices": "استكشف الخدمات",
+    "ctaBusinesses": "استكشف الأنشطة التجارية",
+    "ctaProducts": "تصفح المنتجات",
+    "statBusinesses": "أنشطة تجارية",
+    "statCities": "مدن",
+    "statServices": "خدمات",
+    "statProducts": "منتجات"
   },
   "categories": {
     "eyebrow": "التصنيفات",
     "title": "اكتشف ما يبحث عنه الناس",
     "subtitle": "اختر التصنيف وابدأ في اكتشاف أفضل الأعمال في مدينتك",
     "viewAll": "عرض كل التصنيفات",
+    "viewAllBusinesses": "عرض كل الأنشطة التجارية",
     "exploreAll": "أو ابحث عن شيء آخر",
     "more": "المزيد",
     "browseByCategory": "تصفح حسب الفئة",
+    "viewAllShort": "عرض الكل",
     "businesses": "{count, plural, one {# نشاط} other {# نشاطات}}"
   },
   "featured": {
@@ -130,24 +146,52 @@
     "empty": "لا توجد أعمال مسجلة حتى الآن. كن أول صاحب عمل يسجّل نشاطه!",
     "emptyTitle": "لا توجد أعمال بعد",
     "registerCta": "سجّل نشاطك التجاري",
-    "popularProducts": "منتجات شائعة"
+    "popularProducts": "منتجات شائعة",
+    "popularServices": "خدمات شائعة",
+    "noServices": "لا توجد خدمات بعد. عد لاحقًا.",
+    "featuredServices": "خدمات مميزة",
+    "featuredProducts": "منتجات مميزة",
+    "comingSoon": "قريبًا"
   },
   "trust": {
     "title": "منصة تنمو معك",
     "businesses": "أكثر من {count} نشاطًا تجاريًا مسجلًا",
     "cities": "{count} مدينة مغربية",
-    "bookings": "{count} حجز مكتمل"
+    "bookings": "{count} حجز مكتمل",
+    "verified": "موثوق ومُتحقق منه",
+    "verifiedDesc": "متخصصون تم التحقق من هوياتهم.",
+    "topRated": "الأعلى تقييمًا",
+    "topRatedDesc": "تقييمات من عملاء حقيقيين.",
+    "securePayments": "مدفوعات آمنة",
+    "securePaymentsDesc": "مشفرة وآمنة.",
+    "support247": "دعم 24/7",
+    "support247Desc": "متاحون دائمًا عند الحاجة إليك."
+  },
+  "homeTypes": {
+    "eyebrow": "شنو بغيتي تلقى؟",
+    "title": {
+      "businesses": "المحلات",
+      "services": "الخدمات",
+      "products": "المنتجات"
+    },
+    "desc": {
+      "businesses": "مطاعم، صالونات، عيادات، ورشات ومحلات محلية موثقة.",
+      "services": "احجز خدمة من محترف موثوق خلال دقائق.",
+      "products": "اشترِ منتجات من باعة محليين تُوصَّل إلى بابك."
+    }
   },
   "businessCard": {
     "call": "اتصال",
     "whatsapp": "واتساب",
-    "visit": "عرض الصفحة",
+    "visit": "عرض",
     "favorite": "إضافة إلى المفضلة",
     "share": "مشاركة",
+    "shareText": "اكتشف {businessName} على سيرفيس سيتي!",
     "verified": "تم التحقق",
     "premium": "مميز",
     "reviews": "{count, plural, one {مراجعة واحدة} two {مراجعتان} few {# مراجعات} many {# مراجعة} other {# مراجعة}}",
-    "noReviews": "لا توجد تقييمات بعد"
+    "noReviews": "لا توجد تقييمات بعد",
+    "entityTypeBusiness": "نشاط تجاري"
   },
   "common": {
     "loading": "جارٍ التحميل...",
@@ -156,6 +200,7 @@
     "saved": "تم الحفظ بنجاح",
     "cancel": "إلغاء",
     "edit": "تعديل",
+    "priceOnRequest": "السعر عند الطلب",
     "delete": "حذف",
     "add": "إضافة",
     "search": "بحث",
@@ -242,6 +287,13 @@
     "fromLabel": "من",
     "priceOnRequest": "السعر عند الطلب",
     "new": "جديد",
+    "entityBusiness": "نشاط تجاري",
+    "entityService": "خدمة",
+    "entityProduct": "منتج",
+    "typeAll": "الكل",
+    "typeBusiness": "الأنشطة",
+    "typeService": "الخدمات",
+    "typeProduct": "المنتجات",
     "showMore": "عرض المزيد ({count})",
     "showLess": "عرض أقل",
     "aiNotConfigured": "البحث المتقدم غير مفعّل بعد، يمكنك استخدام البحث العادي.",
@@ -250,7 +302,7 @@
   "promo": {
     "eyebrow": "أصحاب الأعمال",
     "title": "أبرز نشاطك التجاري واجذب مزيدًا من العملاء",
-    "subtitle": "سجّل نشاطك في Servis Sity ليصل إلى آلاف العملاء في الدار البيضاء ومدن المغرب كافة.",
+    "subtitle": "سجّل نشاطك في سيرفيس سيتي ليصل إلى آلاف العملاء في الدار البيضاء ومدن المغرب كافة.",
     "cta": "أضف نشاطك"
   },
   "popularCategories": {
@@ -266,7 +318,8 @@
     "title": "{name}",
     "subtitle": "أفضل {name} في المغرب",
     "empty": "لم تُسجَّل أي أعمال في هذا التصنيف حتى الآن. كن أول من أضاف نشاطه هنا.",
-    "emptyTitle": "لا توجد أعمال في هذا التصنيف بعد"
+    "emptyTitle": "لا توجد أعمال في هذا التصنيف بعد",
+    "home": "الرئيسية"
   },
   "business": {
     "call": "اتصال",
@@ -276,6 +329,7 @@
     "website": "الموقع",
     "description": "الوصف",
     "services": "الخدمات والأسعار",
+    "products": "المنتجات",
     "price": "السعر",
     "duration": "المدة",
     "minutes": "دقيقة",
@@ -353,6 +407,8 @@
       "admin": "لوحة التحكم"
     },
     "home": "الرئيسية",
+    "viewPage": "عرض الصفحة",
+    "viewAll": "عرض الكل",
     "today": "اليوم",
     "updateSoon": "معلومات محدّثة مؤخرًا",
     "closedNow": "مغلق الآن"
@@ -468,7 +524,7 @@
       "bookings": "الحجوزات",
       "reviews": "التقييمات",
       "gallery": "المعرض",
-"services": "الخدمات",
+      "services": "الخدمات",
       "products": "المنتجات",
       "plan": "الاشتراك",
       "verification": "التحقق",
@@ -478,7 +534,7 @@
       "whatsappClicks": "نقرات واتساب",
       "callClicks": "المكالمات",
       "photoViews": "مشاهدات الصور",
-      "events": "النشاط الأخير",
+      "recent": "النشاط الأخير",
       "last14": "آخر 14 يومًا",
       "confirm": "تأكيد",
       "cancel": "إلغاء",
@@ -503,11 +559,10 @@
       "freePlan": "مجاني",
       "premiumPlan": "مميز",
       "proPlan": "احترافي",
-      "renews": "التجديد",
+      "renew": "التجديد",
       "active": "نشط",
       "expired": "منتهي",
       "upgrade": "الترقية",
-      "verifyTitle": "التحقق",
       "pendingDoc": "الوثائق:",
       "verifiedBadge": "نشاط موثّق",
       "submitDocs": "إرسال الوثائق",
@@ -569,7 +624,6 @@
     "promote": "ترقية",
     "demote": "خفض",
     "view": "عرض",
-    "open": "فتح",
     "approve": "اعتماد",
     "reject": "رفض",
     "feature": "مميز",
@@ -606,7 +660,7 @@
   },
   "pricing": {
     "title": "اختر الباقة المناسبة لك",
-    "subtitle": "ابدأ مجانًا وطور نشاطك مع Servis Sity. دون أي التزام، ويمكنك إلغاء الاشتراك أو تغييره في أي وقت.",
+    "subtitle": "ابدأ مجانًا وطور نشاطك مع سيرفيس سيتي. دون أي التزام، ويمكنك إلغاء الاشتراك أو تغييره في أي وقت.",
     "free": "مجانية",
     "premium": "مميزة",
     "pro": "احترافية",
@@ -746,6 +800,7 @@
       "title": "الفوترة",
       "plans": "الخطط",
       "subscriptions": "الاشتراكات",
+      "billing": "الفوترة",
       "payments": "المدفوعات",
       "invoicesAll": "كل الفواتير",
       "coupons": "أكواد التخفيض",
@@ -790,6 +845,9 @@
     "stock": "المخزون",
     "featured": "مميّز",
     "status": "الحالة",
+    "view": "عرض المنتج",
+    "inStock": "متوفر",
+    "outOfStock": "نفدت الكمية",
     "statusDraft": "مسودة",
     "statusPublished": "منشور",
     "statusArchived": "مؤرشف",
@@ -798,6 +856,110 @@
     "saved": "تم الحفظ",
     "confirmDelete": "حذف هذا المنتج؟",
     "stockEmpty": "نفدت الكمية"
+  },
+  "product": {
+    "outOfStock": "نفدت الكمية",
+    "inStock": "متوفر",
+    "lowStock": "بقي {count} فقط",
+    "entityProduct": "منتج",
+    "save": "حفظ",
+    "saved": "تم الحفظ",
+    "description": "الوصف",
+    "tags": "الوسوم",
+    "seller": "البائع",
+    "visitBusiness": "عرض المتجر",
+    "sku": "رمز المنتج",
+    "viewsLabel": "المشاهدات",
+    "moreFromBusiness": "المزيد من هذا المتجر",
+    "similarProducts": "منتجات مشابهة",
+    "browseAllEyebrow": "تابع الاستكشاف",
+    "browseAllTitle": "استكشف السوق كاملاً",
+    "browseAllCta": "تصفح جميع المنتجات"
+  },
+  "productsPage": {
+    "eyebrow": "السوق",
+    "title": "المنتجات",
+    "subtitle": "اكتشف منتجات من بائعين مغاربة موثوقين — قارن الأسعار وتواصل معهم مباشرة.",
+    "searchPlaceholder": "ابحث عن المنتجات…",
+    "allCategories": "الكل",
+    "inStock": "متوفر",
+    "minPrice": "الحد الأدنى",
+    "maxPrice": "الحد الأقصى",
+    "apply": "تطبيق",
+    "sortLabel": "ترتيب",
+    "sort": {
+      "newest": "الأحدث",
+      "price_asc": "السعر: من الأقل إلى الأعلى",
+      "price_desc": "السعر: من الأعلى إلى الأقل",
+      "popular": "الأكثر مشاهدة"
+    },
+    "results": "{count, plural, zero {لا توجد منتجات} one {منتج واحد} two {منتجان} few {# منتجات} many {# منتجاً} other {# منتج}}",
+    "noResults": "لا توجد منتجات",
+    "noResultsHint": "جرّب بحثاً مختلفاً أو أعد تعيين الفلاتر.",
+    "emptyHint": "لا توجد منتجات بعد. عد لاحقاً.",
+    "clear": "إعادة تعيين الفلاتر",
+    "loadMore": "تحميل المزيد"
+  },
+  "service": {
+    "save": "حفظ",
+    "saved": "تم الحفظ",
+    "description": "الوصف",
+    "featured": "مميز من فريقنا",
+    "priceOnRequest": "السعر عند الطلب",
+    "seller": "مقدّم الخدمة",
+    "visitBusiness": "عرض النشاط التجاري",
+    "moreFromBusiness": "المزيد من هذا المقدّم",
+    "similarServices": "خدمات مشابهة",
+    "browseAllEyebrow": "واصل الاكتشاف",
+    "browseAllTitle": "استكشف السوق بالكامل",
+    "browseAllCta": "تصفح جميع الخدمات"
+  },
+  "servicesPage": {
+    "eyebrow": "الخدمات",
+    "title": "الخدمات",
+    "subtitle": "احجز خدمات موثوقة من مقدمي خدمات مغاربة موثوقين — قارن الأسعار وتواصل معهم مباشرة.",
+    "searchPlaceholder": "ابحث عن الخدمات…",
+    "allCategories": "الكل",
+    "allCities": "جميع المدن",
+    "city": "المدينة",
+    "minPrice": "الحد الأدنى",
+    "maxPrice": "الحد الأقصى",
+    "apply": "تطبيق",
+    "sortLabel": "ترتيب",
+    "sort": {
+      "newest": "الأحدث",
+      "price_asc": "السعر: من الأقل إلى الأعلى",
+      "price_desc": "السعر: من الأعلى إلى الأقل"
+    },
+    "results": "{count, plural, zero {لا توجد خدمات} one {خدمة واحدة} two {خدمتان} few {# خدمات} many {# خدمة} other {# خدمة}}",
+    "noResults": "لا توجد خدمات",
+    "noResultsHint": "جرّب بحثاً مختلفاً أو أعد تعيين الفلاتر.",
+    "emptyHint": "لا توجد خدمات بعد. عد لاحقاً.",
+    "clear": "إعادة تعيين الفلاتر",
+    "loadMore": "تحميل المزيد"
+  },
+  "businessesPage": {
+    "eyebrow": "السوق",
+    "title": "الأنشطة التجارية",
+    "subtitle": "اعثر على أنشطة تجارية مغربية موثوقة — قارن التقييمات، تحقق من المحترفين وتواصل معهم مباشرة.",
+    "searchPlaceholder": "ابحث عن الأنشطة…",
+    "allCategories": "الكل",
+    "allCities": "جميع المدن",
+    "city": "المدينة",
+    "verified": "موثقة فقط",
+    "apply": "تطبيق",
+    "sortLabel": "ترتيب",
+    "sort": {
+      "newest": "الأحدث",
+      "rating": "الأعلى تقييمًا",
+      "reviews": "الأكثر تقييمًا"
+    },
+    "results": "{count, plural, zero {لا توجد أنشطة} one {نشاط واحد} two {نشاطان} few {# أنشطة} many {# نشاطًا} other {# نشاط}}",
+    "noResults": "لا توجد أنشطة تجارية",
+    "noResultsHint": "جرّب بحثاً مختلفاً أو أعد تعيين الفلاتر.",
+    "emptyHint": "لا توجد أنشطة تجارية بعد. كن أول من يسجّل نشاطه.",
+    "clear": "إعادة تعيين الفلاتر",
+    "loadMore": "تحميل المزيد"
   },
   "follow": {
     "follow": "متابعة",
@@ -852,18 +1014,148 @@
     "notificationsIntro": "اطّلع على آخر الأنشطة المتعلّقة بحسابك وخدماتك.",
     "emptyNotifications": "لا توجد إشعارات جديدة.",
     "markAllRead": "وضع علامة مقروء على الكل",
-    "favoritesIntro": "الخدمات التي حفظتها لمشاهدتها لاحقاً.",
-    "emptyFavorites": "لم تحفظ أي خدمة بعد.",
+    "favoritesIntro": "الشركات والخدمات والمنتجات التي حفظتها لمشاهدتها لاحقاً.",
+    "emptyFavorites": "لم تحفظ أي شيء في المفضلة بعد.",
+    "favoritesCta": "تصفح الشركات",
+    "favoritesBusinesses": "الشركات",
+    "favoritesServices": "الخدمات",
+    "favoritesProducts": "المنتجات",
+    "emptyFavoritesBusinesses": "لم تحفظ أي شركة بعد.",
+    "emptyFavoritesServices": "لم تحفظ أي خدمة بعد.",
+    "emptyFavoritesProducts": "لم تحفظ أي منتج بعد.",
     "open": "فتح"
+  },
+  "workspace": {
+    "name": "مساحتي المهنية",
+    "editProfile": "تعديل الملف",
+    "add": {
+      "title": "ماذا تريد أن تضيف؟",
+      "subtitle": "اختر ما تريد نشره على سيرفيس سيتي.",
+      "close": "إغلاق",
+      "businessTitle": "إنشاء ملف نشاط تجاري",
+      "businessDesc": "اعرض نشاطك التجاري وموقعه ومعلومات الاتصال وخدماته.",
+      "businessCta": "إنشاء نشاط تجاري",
+      "businessCtaManage": "إدارة النشاط",
+      "serviceTitle": "تقديم خدمة",
+      "serviceDesc": "دع العملاء يكتشفونك ويتواصلون معك لخدمتك.",
+      "serviceCta": "إضافة خدمة",
+      "productTitle": "إضافة منتج",
+      "productDesc": "اعرض منتجاً وأتِحه للعملاء.",
+      "productCta": "إضافة منتج",
+      "needBusiness": "أنشئ نشاطك التجاري أولاً لنشر الخدمات والمنتجات.",
+      "trigger": "أضف"
+    },
+    "memberSince": "عضو منذ {date}",
+    "roleOwner": "مزوّد خدمة",
+    "roleClient": "عميل",
+    "roleAdmin": "مسؤول",
+    "loading": "جارٍ تحميل مساحتك…",
+    "nav": {
+      "overview": "نظرة عامة",
+      "business": "نشاطي التجاري",
+      "services": "الخدمات",
+      "products": "المنتجات",
+      "messages": "الرسائل",
+      "favorites": "المفضلة",
+      "settings": "الإعدادات"
+    },
+    "overview": {
+      "greeting": "مرحباً بعودتك، {name}",
+      "tagline": "كل ما تملكه وتديره على سيرفيس سيتي في مكان واحد.",
+      "statBusinesses": "الأنشطة التجارية",
+      "statServices": "الخدمات",
+      "statProducts": "المنتجات",
+      "statMessages": "الرسائل",
+      "statFavorites": "المفضلة",
+      "completionTitle": "اكتمال الملف",
+      "completionHint": "أكمل هويتك لتبني ثقة العملاء.",
+      "completionDone": "ملفك مكتمل — عمل رائع!",
+      "completionCta": "إكمال الملف"
+    },
+    "business": {
+      "title": "نشاطي التجاري",
+      "viewAll": "فتح نشاطي التجاري",
+      "emptyTitle": "لا يوجد نشاط تجاري بعد",
+      "emptyDesc": "أنشئ نشاطك التجاري الأول وابدأ بالوصول إلى العملاء.",
+      "create": "إنشاء نشاط تجاري",
+      "view": "عرض",
+      "manage": "إدارة",
+      "services": "خدمات",
+      "products": "منتجات"
+    },
+    "services": {
+      "title": "خدماتي",
+      "viewAll": "جميع الخدمات",
+      "emptyTitle": "لا توجد خدمات بعد",
+      "emptyDesc": "قدّم خدمتك الأولى ودع العملاء يكتشفون ما تتقنه.",
+      "add": "إضافة خدمة",
+      "view": "عرض",
+      "edit": "تعديل",
+      "unit": "خدمة"
+    },
+    "products": {
+      "title": "منتجاتي",
+      "viewAll": "جميع المنتجات",
+      "emptyTitle": "لا توجد منتجات بعد",
+      "emptyDesc": "اعرض منتجك الأول وأتِحه للعملاء.",
+      "add": "إضافة منتج",
+      "view": "عرض",
+      "edit": "تعديل",
+      "unit": "منتج"
+    },
+    "messages": {
+      "title": "الرسائل",
+      "desc": "تحدّث مع العملاء المهتمين بنشاطك التجاري.",
+      "open": "فتح المراسلة",
+      "empty": "لا توجد محادثات بعد"
+    },
+    "favorites": {
+      "title": "المفضلة",
+      "desc": "الأنشطة التجارية التي حفظتها للاطلاع عليها لاحقاً.",
+      "open": "عرض المفضلة",
+      "empty": "لا شيء محفوظ بعد"
+    },
+    "pagesBusiness": {
+      "title": "نشاطي التجاري",
+      "desc": "ملف نشاطك التجاري على سيرفيس سيتي.",
+      "noBusinessTitle": "لا يوجد نشاط تجاري بعد",
+      "noBusinessDesc": "أنشئ نشاطك التجاري الأول وابدأ بالوصول إلى العملاء."
+    },
+    "pagesServices": {
+      "title": "خدماتي",
+      "desc": "الخدمات التي تقدمها عبر نشاطك التجاري.",
+      "noBusinessTitle": "لا يوجد نشاط تجاري بعد",
+      "noBusinessDesc": "أنشئ نشاطك التجاري قبل نشر خدماتك."
+    },
+    "pagesProducts": {
+      "title": "منتجاتي",
+      "desc": "المنتجات التي تبيعها عبر نشاطك التجاري.",
+      "noBusinessTitle": "لا يوجد نشاط تجاري بعد",
+      "noBusinessDesc": "أنشئ نشاطك التجاري قبل إضافة منتجاتك."
+    },
+    "status": {
+      "approved": "مقبول",
+      "active": "نشط",
+      "published": "منشور",
+      "verified": "موثَّق",
+      "pending": "قيد المراجعة",
+      "pending_review": "قيد المراجعة",
+      "draft": "مسوّدة",
+      "paused": "متوقف مؤقتاً",
+      "rejected": "مرفوض",
+      "suspended": "معلّق",
+      "inactive": "غير نشط",
+      "archived": "مؤرشَف"
+    }
   },
   "footer": {
     "tagline": "المنصة المغربية التي تربط العملاء بأصحاب الأعمال والحرفيين.",
     "quickLinks": "روابط سريعة",
     "forBusinesses": "لأصحاب الأعمال",
     "contact": "تواصل معنا",
-    "rights": "© {year} Servis Sity. جميع الحقوق محفوظة.",
+    "rights": "© {year} سيرفيس سيتي. جميع الحقوق محفوظة.",
     "privacy": "سياسة الخصوصية",
-    "terms": "شروط الاستخدام"
+    "terms": "شروط الاستخدام",
+    "cities": "المدن"
   }
 }
-

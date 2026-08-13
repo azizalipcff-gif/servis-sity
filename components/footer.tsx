@@ -28,7 +28,7 @@ export async function Footer() {
         {/* Statement */}
         <div className="grid gap-10 py-16 md:grid-cols-2 md:items-end">
           <Link href="/" className="text-5xl font-bold leading-none tracking-tight md:text-6xl">
-            Servis Sity
+            Service City
           </Link>
           <p className="max-w-sm text-lg leading-snug text-muted-foreground md:justify-self-end">
             {t("tagline")}
@@ -70,7 +70,7 @@ export async function Footer() {
           </div>
 
           <div>
-            <h3 className="eyebrow mb-4">Cities</h3>
+            <h3 className="eyebrow mb-4">{t("cities")}</h3>
             <ul className="flex flex-wrap gap-x-5 gap-y-2.5">
               {cities.map((c) => (
                 <li key={c}>
@@ -88,10 +88,10 @@ export async function Footer() {
           <div>
             <h3 className="eyebrow mb-4">{t("contact")}</h3>
             <a
-              href="mailto:contact@servis-sity.ma"
+              href="mailto:contact@service-city.ma"
               className="inline-flex items-center gap-1 text-[15px] text-foreground/80 transition-colors hover:text-foreground"
             >
-              contact@servis-sity.ma
+              contact@service-city.ma
               <ArrowUpRight className="size-4" />
             </a>
             <p className="mt-3 text-[15px] text-foreground/80" dir="ltr">

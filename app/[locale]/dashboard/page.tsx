@@ -18,11 +18,13 @@ export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ tab?: string | string[] }>;
 };
 
-export default async function DashboardPage({ params }: Props) {
+export default async function DashboardPage({ params, searchParams }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const { tab } = await searchParams;
 
   const user = await getCurrentUser();
 
@@ -74,6 +76,7 @@ export default async function DashboardPage({ params }: Props) {
         business={business}
         analytics={analytics}
         bookings={bookings}
+        initialTab={typeof tab === "string" ? tab : undefined}
         servicesEditor={
           <ServicesManager business={business} />
         }

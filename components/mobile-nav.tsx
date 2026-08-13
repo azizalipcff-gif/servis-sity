@@ -24,7 +24,8 @@ export function MobileNav({ user, cta }: MobileNavProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
 
-  if (pathname.startsWith("/business/")) return null;
+  if (pathname.startsWith("/business/") || pathname.startsWith("/businesses/"))
+    return null;
 
   const tabs = user
     ? [

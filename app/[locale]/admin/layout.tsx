@@ -43,7 +43,7 @@ export default async function AdminLayout({ children, params }: Props) {
 
       <AdminNav />
 
-      <main className="mt-6">{children}</main>
+      <main id="main-content" className="mt-6">{children}</main>
     </div>
   );
 }

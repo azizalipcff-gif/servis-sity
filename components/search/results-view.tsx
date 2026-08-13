@@ -18,12 +18,21 @@ import { cn } from "@/lib/utils";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ResultCard } from "@/components/search/result-card";
+import { ResultCardShell } from "@/components/search/result-card-shell";
+import {
+  categoryText,
+  fromSearchItem,
+} from "@/components/search/card-data";
 import { RatingStars } from "@/components/rating-stars";
 import { SmartImage } from "@/components/smart-image";
 import { DEFAULT_PLACEHOLDER_IMAGES } from "@/lib/constants";
-import { localizedName } from "@/lib/translations";
-import type { SearchBusiness } from "@/lib/search/types";
+import { businessHref } from "@/lib/business/url";
+import { formatPrice, localizedName, type Locale } from "@/lib/translations";
+import type {
+  SearchBusiness,
+  SearchItem,
+  SearchResultType,
+} from "@/lib/search/types";
 
 export function ResultsView({
   items,
@@ -40,8 +49,10 @@ export function ResultsView({
   onReset,
   activeCount,
   hasQuery,
+  type,
+  setType,
 }: {
-  items: SearchBusiness[];
+  items: SearchItem[];
   total: number;
   view: "grid" | "list";
   setView: (v: "grid" | "list") => void;
@@ -55,8 +66,21 @@ export function ResultsView({
   onReset: () => void;
   activeCount: number;
   hasQuery: boolean;
+  type: SearchResultType;
+  setType: (t: SearchResultType) => void;
 }) {
   const t = useTranslations("search");
+  const locale = useLocale() as Locale;
+
+  const typeOptions: Array<{
+    value: SearchResultType;
+    label: string;
+  }> = [
+    { value: "all", label: t("typeAll") },
+    { value: "business", label: t("typeBusiness") },
+    { value: "service", label: t("typeService") },
+    { value: "product", label: t("typeProduct") },
+  ];
 
   return (
     <div className="min-w-0 flex-1">
@@ -65,7 +89,25 @@ export function ResultsView({
         <p className="text-sm font-medium text-muted-foreground">
           {t("results", { count: total })}
         </p>
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-0.5 rounded-lg border p-0.5">
+            {typeOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                aria-pressed={type === opt.value}
+                onClick={() => setType(opt.value)}
+                className={cn(
+                  "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                  type === opt.value
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             onClick={onToggleMap}
@@ -162,15 +204,28 @@ export function ResultsView({
         <AnimatePresence mode="popLayout">
           {view === "grid" ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {items.map((b) => (
-                <ResultCard key={b.id} business={b} />
+              {items.map((item, index) => (
+                <ResultCardShell
+                  key={item.id}
+                  index={index}
+                  data={fromSearchItem(item)}
+                  category={categoryText(item.categories, locale)}
+                />
               ))}
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {items.map((b) => (
-                <ListRow key={b.id} business={b} />
-              ))}
+              {items.map((item) =>
+                item.kind === "business" ? (
+                  <ListRow key={item.id} business={item} />
+                ) : (
+                  <ResultCardShell
+                    key={item.id}
+                    data={fromSearchItem(item)}
+                    category={categoryText(item.categories, locale)}
+                  />
+                ),
+              )}
             </div>
           )}
         </AnimatePresence>
@@ -234,7 +289,7 @@ function ListRow({ business }: { business: SearchBusiness }) {
   const tS = useTranslations("search");
   const locale = useLocale() as "ar" | "fr" | "en";
   const categoryName = localizedName(business.categories, locale);
-  const pageHref = `/business/${business.slug}`;
+  const pageHref = businessHref(business);
 
   return (
     <motion.article
@@ -287,7 +342,7 @@ function ListRow({ business }: { business: SearchBusiness }) {
             )}
             {business.starting_price != null && (
               <span className="text-sm text-muted-foreground">
-                {formatMAD(business.starting_price, locale)} {tS("fromLabel")}
+                {formatPrice(business.starting_price, locale)} {tS("fromLabel")}
               </span>
             )}
           </div>
@@ -305,9 +360,3 @@ function ListRow({ business }: { business: SearchBusiness }) {
   );
 }
 
-function formatMAD(amount: number, locale: "ar" | "fr" | "en"): string {
-  const value = new Intl.NumberFormat(locale === "ar" ? "ar-MA" : locale, {
-    maximumFractionDigits: 0,
-  }).format(amount);
-  return locale === "ar" ? `${value} د.م.` : `${value} DH`;
-}

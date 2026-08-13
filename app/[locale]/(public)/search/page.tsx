@@ -22,11 +22,12 @@ export default async function SearchPage({ params, searchParams }: Props) {
   ]);
 
   return (
-    <main className="pb-16">
+    <div className="pb-16">
       <SearchExplorer
         categories={categories}
         initial={{
           q: initial.q,
+          type: initial.type,
           city: initial.city,
           category: initial.category,
           minRating: initial.minRating,
@@ -38,7 +39,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
           sort: initial.sort,
         }}
       />
-    </main>
+    </div>
   );
 }
 

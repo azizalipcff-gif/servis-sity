@@ -6,7 +6,7 @@ export function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.NEXT_PUBLIC_SITE_URL ??
-    "https://servis-sity.com"
+    "https://service-city.com"
   ).replace(/\/$/, "");
 }
 

@@ -23,11 +23,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!category) return {};
 
   const name = localizedName(category, locale as Locale);
-  const siteName = "Servis Sity";
+  const siteName = "Service City";
   const url = absoluteUrl(`/${locale}/category/${slug}`);
-  const ogImage = imageUrl(category.image_url) || absoluteUrl("/branding/servis-sity-logo.png");
+  const ogImage = imageUrl(category.image_url) || absoluteUrl("/branding/service-city-logo.png");
 
-  const title = category.seo_title || `${name} — Servis Sity`;
+  const title = category.seo_title || `${name} — Service City`;
   const description =
     category.seo_description ||
     `${name} — find trusted professionals, compare prices and book online.`;

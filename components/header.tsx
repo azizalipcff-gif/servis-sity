@@ -104,7 +104,7 @@ export async function Header() {
                   <Link
                     href="/profile"
                     aria-label={t("profile")}
-                    className="hidden size-9 items-center justify-center rounded-lg border-s border-border ps-2 ms-0.5 lg:flex lg:ps-2"
+                    className="hidden size-9 items-center justify-center rounded-lg lg:flex"
                   >
                     <span className="grid size-7 place-items-center overflow-hidden rounded-full bg-secondary text-xs font-bold text-secondary-foreground ring-1 ring-border">
                       {profile?.avatar_url ? (
@@ -140,7 +140,7 @@ export async function Header() {
                 <Link
                   href="/login"
                   aria-label={t("login")}
-                  className="flex size-9 items-center justify-center rounded-lg border-s border-border ps-2 ms-0.5 lg:hidden"
+                  className="flex size-9 items-center justify-center rounded-lg lg:hidden"
                 >
                   <UserIcon className="size-4" />
                 </Link>
@@ -151,7 +151,7 @@ export async function Header() {
                 <Link
                   href="/login"
                   aria-label={t("login")}
-                  className="hidden size-9 items-center justify-center rounded-lg border-s border-border ps-2 ms-0.5 lg:flex lg:ps-2"
+                  className="hidden size-9 items-center justify-center rounded-lg lg:flex"
                 >
                   <span className="grid size-7 place-items-center rounded-full bg-secondary ring-1 ring-border">
                     <UserIcon className="size-3.5" />

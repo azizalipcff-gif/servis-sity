@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { serviceSchema } from "@/lib/validations/schemas";
+import { formatPrice } from "@/lib/translations";
 import type { BusinessDetail } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,8 @@ type ServiceRow = NonNullable<BusinessDetail["services"]>[number];
 export function ServicesManager({ business }: { business: BusinessDetail | null }) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
+  const tBusiness = useTranslations("business");
+  const locale = useLocale() as "ar" | "fr" | "en";
 
   const [services, setServices] = useState<ServiceRow[]>(business?.services ?? []);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -196,9 +199,9 @@ export function ServicesManager({ business }: { business: BusinessDetail | null 
                 <div>
                   <p className="font-medium">{service.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {service.price != null ? `${service.price} DH` : "—"}
+                    {service.price != null ? formatPrice(service.price, locale) : "—"}
                     {service.duration_minutes != null &&
-                      ` · ${service.duration_minutes} min`}
+                      ` · ${service.duration_minutes} ${tBusiness("minutes")}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-1">

@@ -1,3 +1,4 @@
+import { LayoutGrid } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getCategoryIcon } from "@/components/category-icon";
@@ -23,14 +24,14 @@ export async function CategoryStrip({
       <div className="container-site flex items-center justify-between gap-4 py-4">
         <h2 className="text-base font-bold sm:text-lg">{t("browseByCategory")}</h2>
         <Link
-          href="/search"
+          href="/business"
           className="shrink-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
         >
-          {t("viewAll")}
+          {t("viewAllBusinesses")}
         </Link>
       </div>
-      <div className="container-site pb-5">
-        <div className="rail fade-edge gap-3">
+      <div className="container-site pb-6">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
           {visible.map((c) => {
             const Icon = getCategoryIcon(c.icon);
             const n = counts[c.id] ?? 0;
@@ -38,7 +39,7 @@ export async function CategoryStrip({
               <Link
                 key={c.id}
                 href={`/category/${c.slug}`}
-                className="group flex w-[92px] shrink-0 flex-col items-center gap-2 rounded-2xl border border-border bg-card px-2 py-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-soft"
+                className="group flex min-w-0 flex-col items-center gap-2 rounded-2xl border border-border bg-card px-2 py-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-soft"
               >
                 <span className="grid size-12 place-items-center rounded-full bg-secondary text-primary transition-colors duration-200 group-hover:bg-primary/10">
                   <Icon className="size-5" />
@@ -54,6 +55,17 @@ export async function CategoryStrip({
               </Link>
             );
           })}
+          <Link
+            href="/business"
+            className="group flex min-w-0 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/40 bg-primary/5 px-2 py-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/10 hover:shadow-soft"
+          >
+            <span className="grid size-12 place-items-center rounded-full bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary/20">
+              <LayoutGrid className="size-5" />
+            </span>
+            <span className="line-clamp-2 text-[13px] font-semibold leading-tight text-primary">
+              {t("viewAllShort")}
+            </span>
+          </Link>
         </div>
       </div>
     </section>

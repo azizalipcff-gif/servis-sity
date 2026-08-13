@@ -1,4 +1,4 @@
-import type { SearchBusiness, SortKey } from "./types";
+import type { SearchBusiness, SearchItem, SortKey } from "./types";
 
 /**
  * Smart ranking weights (see MASTER_PROMPT_V2 §8).
@@ -92,6 +92,108 @@ export function rankBusinesses(
 
 export function planRank(b: SearchBusiness): number {
   return b.plan === "pro" ? 0 : b.plan === "premium" ? 1 : 2;
+}
+
+/* ==========================================================================
+ * Unified ranking for mixed business/service/product feeds
+ * ========================================================================== */
+
+type ItemFields = {
+  rating: number;
+  reviews: number;
+  verified: boolean;
+  plan: string;
+  created: number;
+  updated: number;
+  distance: number | null;
+};
+
+function itemFields(item: SearchItem): ItemFields {
+  if (item.kind === "business") {
+    return {
+      rating: item.rating_avg ?? 0,
+      reviews: item.reviews_count ?? 0,
+      verified: item.verified,
+      plan: item.plan,
+      created: ts(item.created_at),
+      updated: ts(item.last_updated_at ?? item.created_at),
+      distance: item.distance_km ?? null,
+    };
+  }
+  const b = item.business;
+  return {
+    rating: b.rating_avg ?? 0,
+    reviews: b.reviews_count ?? 0,
+    verified: b.verified,
+    plan: b.plan,
+    created: item.kind === "service" ? ts(item.updated_at) : ts(item.created_at),
+    updated:
+      item.kind === "service" ? ts(item.updated_at) : ts(item.updated_at),
+    distance: null,
+  };
+}
+
+/** Relevance for a single mixed item — same earn-trust weights as businesses. */
+export function itemRelevance(item: SearchItem): number {
+  const f = itemFields(item);
+  let score = 0;
+  if (f.verified) score += WEIGHTS.verified;
+  if (f.plan === "pro") score += WEIGHTS.planPro;
+  else if (f.plan === "premium") score += WEIGHTS.planPremium;
+  score += Math.min(f.reviews, 50) * WEIGHTS.reviewCount;
+  score += f.rating * WEIGHTS.rating;
+
+  const daysSince = (Date.now() - f.updated) / 86_400_000;
+  if (Number.isFinite(daysSince) && daysSince < RECENT_WINDOW_DAYS) {
+    score += WEIGHTS.recent;
+  }
+  return score;
+}
+
+/** Server-side comparator for a mixed feed (see rankBusinesses above). */
+export function rankItems<T extends SearchItem>(
+  items: T[],
+  sort: SortKey,
+  userLat: number | null,
+  userLng: number | null,
+): T[] {
+  const list = [...items];
+  const f = itemFields;
+
+  switch (sort) {
+    case "rating":
+      return list.sort(
+        (a, b) =>
+          f(b).rating - f(a).rating || f(b).reviews - f(a).reviews,
+      );
+    case "newest":
+      return list.sort((a, b) => f(b).created - f(a).created);
+    case "popular":
+      return list.sort((a, b) => f(b).reviews - f(a).reviews);
+    case "premium":
+      return list.sort(
+        (a, b) =>
+          planRankOf(f(a)) - planRankOf(f(b)) ||
+          itemRelevance(b) - itemRelevance(a),
+      );
+    case "recently_active":
+      return list.sort((a, b) => f(b).updated - f(a).updated);
+    case "recommended":
+    default: {
+      if (userLat != null && userLng != null) {
+        return list.sort(
+          (a, b) =>
+            itemRelevance(b) - itemRelevance(a) ||
+            (f(a).distance ?? Infinity) - (f(b).distance ?? Infinity),
+        );
+      }
+      return list.sort((a, b) => itemRelevance(b) - itemRelevance(a));
+    }
+  }
+}
+
+function planRankOf(f: ItemFields): number {
+  return f.plan === "pro" ? 0 : f.plan === "premium" ? 1 : 2;
 }
 
 export function haversineKm(

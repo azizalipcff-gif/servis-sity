@@ -31,9 +31,9 @@ export const POPULAR_CATEGORY_SLUGS = [
 ] as const;
 
 export const DEFAULT_PLACEHOLDER_IMAGES = {
-  cover: "https://placehold.co/1600x900/f1e7d8/4a3b2f?text=Servis+Sity",
+  cover: "https://placehold.co/1600x900/f1e7d8/4a3b2f?text=Service+City",
   logo: "https://placehold.co/400x400/bf5b32/ffffff?text=Logo",
-  business: "https://placehold.co/800x600/f1e7d8/4a3b2f?text=Servis+Sity",
+  business: "https://placehold.co/800x600/f1e7d8/4a3b2f?text=Service+City",
 };
 
 /** Light neutral SVG used as a Next.js blur placeholder while images load. */

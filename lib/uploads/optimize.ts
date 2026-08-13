@@ -1,3 +1,5 @@
+"use client";
+
 export type OptimizedImage = {
   blob: Blob;
   /** Output MIME type actually produced (WebP when supported). */

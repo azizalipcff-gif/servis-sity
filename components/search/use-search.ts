@@ -31,6 +31,7 @@ export function useSearch(initial: Partial<SearchState>) {
 
   const [q, setQ] = useState(initial.q ?? "");
   const [filters, setFilters] = useState<SearchFilterState>({
+    type: initial.type ?? "all",
     city: initial.city ?? "",
     category: initial.category ?? "",
     minRating: initial.minRating ?? 0,
@@ -51,6 +52,7 @@ export function useSearch(initial: Partial<SearchState>) {
         "search",
         locale,
         debouncedQ,
+        filters.type,
         filters.city,
         filters.category,
         filters.minRating,
@@ -68,6 +70,7 @@ export function useSearch(initial: Partial<SearchState>) {
     (offset: number) => {
       const sp = new URLSearchParams();
       if (debouncedQ) sp.set("q", debouncedQ);
+      if (filters.type !== "all") sp.set("type", filters.type);
       if (filters.city) sp.set("city", filters.city);
       if (filters.category) sp.set("category", filters.category);
       if (filters.minRating > 0) sp.set("minRating", String(filters.minRating));
@@ -137,6 +140,7 @@ export function useSearch(initial: Partial<SearchState>) {
   );
 
   const defaultFilters = (): SearchFilterState => ({
+    type: "all",
     city: "",
     category: "",
     minRating: 0,

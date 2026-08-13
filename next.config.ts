@@ -20,7 +20,7 @@ const securityHeaders = [
       "img-src 'self' data: blob: https:",
       "media-src 'self' blob: https:",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "frame-src https://accounts.google.com https://www.google.com https://www.openstreetmap.org https://js.stripe.com",
+      "frame-src https://accounts.google.com https://www.google.com https://maps.google.com https://www.openstreetmap.org https://js.stripe.com",
       "connect-src 'self' https: wss:",
     ].join("; "),
   },

@@ -1,4 +1,4 @@
--- Servis Sity — Phase K: professional realtime messenger.
+-- Service City — Phase K: professional realtime messenger.
 -- Run after 0010_follows_bookings.sql.
 --
 -- Conversations / members / messages / attachments / reads / reactions /

@@ -1,4 +1,4 @@
--- Servis Sity — V2: status workflow, cities, verification, favorites, reports
+-- Service City — V2: status workflow, cities, verification, favorites, reports
 -- Run after 0001_initial.sql and 0002_storage.sql in the Supabase SQL editor.
 
 -- =========================================================

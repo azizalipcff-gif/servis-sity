@@ -7,6 +7,7 @@ import { isValidHttpUrl, isValidSupabaseKey } from "./lib/supabase/validate";
 const handleI18nRouting = createMiddleware(routing);
 
 const ADMIN_SEGMENT = "admin";
+const FAVORITES_PATH = "profile/favorites";
 
 function isAdminPath(pathname: string): boolean {
   const segments = pathname.split("/").filter(Boolean);
@@ -20,6 +21,14 @@ function isAdminPath(pathname: string): boolean {
     return true;
   }
   return false;
+}
+
+function isFavoritesPath(pathname: string): boolean {
+  const segments = pathname.split("/").filter(Boolean);
+  if ((routing.locales as readonly string[]).includes(segments[0] ?? "")) {
+    segments.shift();
+  }
+  return segments.join("/") === FAVORITES_PATH;
 }
 
 export default async function middleware(request: NextRequest) {
@@ -62,6 +71,19 @@ export default async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = `/${segmentsPrefix(pathname)}`;
       url.search = "";
+      return NextResponse.redirect(url);
+    }
+
+    // Guest gate for the profile favorites page. Redirect must happen before
+    // any route Suspense boundary streams so the client sees a real 307 (and
+    // does not soft-render an empty shell with HTTP 200).
+    if (!isAdmin && isFavoritesPath(pathname) && !user) {
+      const locale = segmentsPrefix(pathname) || routing.defaultLocale;
+      const url = request.nextUrl.clone();
+      url.pathname = `/${locale}/login`;
+      url.search = "";
+      // URLSearchParams percent-encodes the value: ?returnTo=%2Fprofile%2Ffavorites
+      url.searchParams.set("returnTo", `/${FAVORITES_PATH}`);
       return NextResponse.redirect(url);
     }
   }

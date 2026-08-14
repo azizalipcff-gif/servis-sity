@@ -6,7 +6,9 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node scripts/tests/search-quality.test.ts",
+    "test:search": "node scripts/tests/search-quality.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",

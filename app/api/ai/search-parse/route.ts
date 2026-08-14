@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAiConfigured, chatComplete } from "@/lib/ai/client";
 import { buildFilterParsePrompt } from "@/lib/ai/prompts";
-import { parseNaturalQuery } from "@/lib/search/nl-parser";
+import { parseNaturalQuery } from "@/lib/search-quality/parser";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError } from "@/lib/security/http";

@@ -2,17 +2,26 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/user";
 import { assertSameOrigin } from "@/lib/security/csrf";
+import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 import { resolveProvider } from "@/lib/payments/provider";
-import { finalizeSuccessfulPayment } from "@/lib/payments/service";
-import { notifyUser } from "@/lib/notifications";
-import type { PlanType } from "@/lib/supabase/database.types";
+import { recordAttempt } from "@/lib/payments/service";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Polled by the client after checkout. Mirrors the gateway-reported status
+ * back onto the payment row. Entitlement (subscription + business plan) is
+ * granted ONLY by an admin via the admin payments confirm action, never by
+ * the payer's own session — otherwise a user could craft a payments row
+ * (RLS allows inserting/updating their own rows) with arbitrary metadata
+ * and provider references to escalate their plan for free.
+ */
 export async function POST(req: NextRequest) {
   return withErrorCapture("billing.payments.verify", async () => {
     if (!assertSameOrigin(req)) return jsonError(403, "csrf_rejected");
+    const limited = rateLimit(req, { key: "billing.payments.verify", limit: 20, windowMs: 60000 });
+    if (!limited.ok) return rateLimitResponse(limited.retryAfter);
 
     const supabase = await createClient();
     const user = await getCurrentUser();
@@ -31,7 +40,6 @@ export async function POST(req: NextRequest) {
     if (payment.status === "succeeded") return jsonOk({ status: "succeeded" });
 
     const provider = resolveProvider(payment.provider);
-    const meta = (payment.metadata ?? {}) as Record<string, unknown>;
 
     // Manual gateway stays pending until an admin confirms the transfer.
     if (provider.code === "manual" || payment.status === "pending") {
@@ -39,6 +47,11 @@ export async function POST(req: NextRequest) {
     }
 
     const verification = await provider.verifyPayment(payment.provider_payment_id ?? "");
+
+    await recordAttempt(supabase, payment.id, provider.code, verification.status, {
+      response: verification.raw,
+    });
+
     if (verification.status !== "succeeded") {
       await supabase
         .from("payments")
@@ -47,32 +60,16 @@ export async function POST(req: NextRequest) {
       return jsonOk({ status: verification.status });
     }
 
-    await finalizeSuccessfulPayment(supabase, {
-      userId: user.id,
-      businessId: String(meta.businessId),
-      paymentId: payment.id,
-      planCode: meta.planCode as PlanType,
-      intervalType: String(meta.interval),
-      planName: String(meta.planName),
-      amountCents: payment.amount_cents,
-      currency: payment.currency,
-      discountCents: Number(meta.discountCents ?? 0),
-      taxRate: Number(meta.taxRate ?? 0),
-      taxCents: Number(meta.taxCents ?? 0),
-      totalCents: Number(meta.totalCents ?? payment.amount_cents),
-      lifetime: Boolean(meta.lifetime),
-      couponId: meta.couponId ? String(meta.couponId) : null,
-    });
+    // Gateway confirms the payment went through — reflect that, but leave the
+    // subscription/plan grant to the admin confirm action (single grant path).
+    await supabase
+      .from("payments")
+      .update({
+        status: "succeeded",
+        provider_payment_id: verification.providerPaymentId ?? payment.provider_payment_id,
+      })
+      .eq("id", payment.id);
 
-    await notifyUser({
-      recipientId: user.id,
-      type: "payment",
-      category: "payment",
-      title: "Payment successful",
-      body: `Your ${String(meta.planName)} subscription is now active.`,
-      link: "/billing",
-    });
-
-    return jsonOk({ status: "succeeded" });
+    return jsonOk({ status: "succeeded", pendingActivation: true });
   });
 }

@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     });
 
     const now = new Date();
-    const { data } = await supabase
+    const { data, error: insertError } = await supabase
       .from("featured_businesses")
       .insert({
         business_id: body.businessId,
@@ -85,6 +85,7 @@ export async function POST(req: NextRequest) {
       })
       .select("*")
       .single();
+    if (insertError || !data) return jsonError(502, "featured_activation_failed");
 
     return jsonOk({ item: data, paymentId: payment.id, paymentRef: payment.id });
   });

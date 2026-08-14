@@ -51,9 +51,16 @@ export interface SearchResponse {
   hasMore: boolean;
   /** The resolved kind for this page (echoed from the request). */
   type: SearchResultType;
+  /** Data source that produced this page — observability for AI search. */
+  matchMethod: SearchMatchMethod;
+  /** Pipeline version tag emitted in non-production only (observability). */
+  searchVersion?: string;
   /** true when the data source was unreachable (e.g. unconfigured creds). */
   error?: boolean;
 }
+
+/** Which search engine produced the results on this request. */
+export type SearchMatchMethod = "hybrid" | "legacy";
 
 export type SearchBusiness = Business & {
   categories: Pick<

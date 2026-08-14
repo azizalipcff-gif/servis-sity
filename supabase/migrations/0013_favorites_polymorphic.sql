@@ -48,13 +48,15 @@ alter table public.favorites
   drop constraint if exists favorites_user_id_business_id_key;
 
 -- 7. Partial unique indexes per item_type (mirror the follows idiom).
-create unique index if not exists public.favorites_business_unique
+--    NOTE: index names are unqualified — PostgreSQL rejects schema-qualified
+--    index names with `CREATE INDEX IF NOT EXISTS` (42601).
+create unique index if not exists favorites_business_unique
   on public.favorites (user_id, business_id)
   where item_type = 'business';
-create unique index if not exists public.favorites_service_unique
+create unique index if not exists favorites_service_unique
   on public.favorites (user_id, service_id)
   where item_type = 'service';
-create unique index if not exists public.favorites_product_unique
+create unique index if not exists favorites_product_unique
   on public.favorites (user_id, product_id)
   where item_type = 'product';
 

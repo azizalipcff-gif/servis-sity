@@ -7,6 +7,11 @@ import {
 } from "@/lib/search/ranking";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { withErrorCapture } from "@/lib/security/http";
+import {
+  isEmbeddingConfigured,
+  generateEmbedding,
+  EMBEDDING_DIMENSION,
+} from "@/lib/search-quality/embeddings";
 import type {
   SearchBusiness,
   SearchItem,
@@ -16,6 +21,7 @@ import type {
   SearchSeller,
   SearchServiceItem,
 } from "@/lib/search/types";
+import type { SearchMatchMethod } from "@/lib/search/types";
 import type { Category } from "@/lib/supabase/database.types";
 
 export const runtime = "nodejs";
@@ -52,6 +58,209 @@ async function handleSearch(request: Request): Promise<NextResponse> {
   const supabase = await createClient();
   const categories = await loadCategories(supabase);
 
+  // Preferred path: hybrid_search RPC (vector + trigram + in-SQL filters).
+  // Falls back to the in-memory catalog scan below when the function has not
+  // been deployed (migration 0019 not yet applied) or fails.
+  const v3 = await searchHybrid(params, supabase, categories);
+  const matchMethod: SearchMatchMethod = v3 ? "hybrid" : "legacy";
+  const items = v3 ?? (await searchLegacy(params, supabase, categories));
+
+  const ranked = rankItems(items, params.sort, params.lat, params.lng);
+  const page = ranked.slice(params.offset, params.offset + params.limit);
+
+  const body: SearchResponse = {
+    items: page,
+    total: items.length,
+    offset: params.offset,
+    limit: params.limit,
+    hasMore: params.offset + page.length < items.length,
+    type: params.type,
+    matchMethod,
+  };
+  // Observability: emit the pipeline tag outside production so operations can
+  // confirm which engine served a page without leaking it into production logs.
+  if (process.env.NODE_ENV !== "production") {
+    body.searchVersion = matchMethod === "hybrid" ? "v4-hybrid" : "v3-legacy";
+  }
+
+  return NextResponse.json<SearchResponse>(body);
+}
+
+/* ==========================================================================
+ * Preferred path — hybrid_search RPC (migration 0019)
+ * ========================================================================== */
+
+type HybridRow = {
+  kind: "business" | "service" | "product";
+  id: string;
+  score: number;
+  payload: Record<string, unknown>;
+};
+
+/**
+ * Returns the query embedding as a Postgres vector literal (`[x,y,…]`), or
+ * `null` when the provider is unconfigured, the query is empty, or generation
+ * fails. Returning `null` keeps the hybrid RPC on its lexical path — semantic
+ * search is an additive capability, never a hard dependency.
+ */
+async function queryEmbeddingOrNull(q: string): Promise<string | null> {
+  const text = (q ?? "").trim();
+  if (!text || !isEmbeddingConfigured()) return null;
+  try {
+    const vector = await generateEmbedding(text);
+    if (vector.length !== EMBEDDING_DIMENSION) return null;
+    return `[${vector.join(",")}]`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Runs the hybrid_search RPC and maps rows back into `SearchItem`. Returns
+ * `null` when the function is unavailable so callers fall back to legacy.
+ */
+async function searchHybrid(
+  params: SearchParams,
+  supabase: Supabase,
+  categories: Map<string, Category>,
+): Promise<SearchItem[] | null> {
+  try {
+    const client = supabase as unknown as {
+      rpc: (
+        fn: "hybrid_search",
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: { message: string } | null }>;
+    };
+    const args: Record<string, unknown> = {
+      p_query: params.q || null,
+      // "Open now" only exists for businesses — legacy behavior kept.
+      p_type: params.openNowOnly ? "business" : params.type,
+      p_city: params.city || null,
+      p_category: params.category || null,
+      p_min_rating: params.minRating || 0,
+      p_min_price: params.minPrice ?? null,
+      p_max_price: params.maxPrice ?? null,
+      p_verified: params.verifiedOnly,
+      p_premium: params.premiumOnly,
+      p_open_now: params.openNowOnly,
+      p_limit: RANK_POOL_CAP,
+    };
+
+    // Semantic leg: embed the free-text query server-side with the active
+    // provider (Ollama). When the provider is not configured or the call fails,
+    // the embedding is omitted and the RPC runs its trigram/lexical path —
+    // search keeps working, never 500s on AI outages.
+    const embedding = await queryEmbeddingOrNull(params.q);
+    if (embedding) args.p_embedding = embedding;
+
+    const { data, error } = await client.rpc("hybrid_search", args);
+    if (error || !Array.isArray(data)) return null;
+
+    const rows = data as unknown as HybridRow[];
+    const bizIds = rows
+      .filter((r) => r.kind === "business")
+      .map((r) => String(r.payload.id));
+
+    const prices = await getStartingPrices(
+      bizIds.map((id) => ({ id }) as SearchBusiness),
+      supabase,
+    );
+
+    const items: SearchItem[] = rows.map((r) =>
+      hybridRowToItem(r, categories, prices),
+    );
+
+    if (params.lat != null && params.lng != null) {
+      for (const i of items) {
+        if (i.kind === "business" && i.lat != null && i.lng != null) {
+          (i as SearchBusiness & { kind: "business" }).distance_km =
+            haversineKm(params.lat, params.lng, i.lat, i.lng);
+        }
+      }
+    }
+
+    return items;
+  } catch {
+    return null;
+  }
+}
+
+function hybridRowToItem(
+  row: HybridRow,
+  categories: Map<string, Category>,
+  prices: Map<string, number>,
+): SearchItem {
+  const p = row.payload;
+  const categoryFor = (id: number | string | null | undefined) =>
+    id == null ? null : categories.get(String(id)) ?? null;
+
+  switch (row.kind) {
+    case "service": {
+      const seller = (p.business ?? {}) as Record<string, unknown>;
+      return {
+        kind: "service",
+        id: String(p.id),
+        name: String(p.name ?? ""),
+        slug: p.slug != null ? String(p.slug) : null,
+        price: toNullableNumber(p.price),
+        duration_minutes: toNullableNumber(p.duration_minutes),
+        photo_url: p.photo_url != null ? String(p.photo_url) : null,
+        description: p.description != null ? String(p.description) : null,
+        updated_at: String(p.updated_at ?? ""),
+        categories: categoryFor(seller.category_id as string | null),
+        business: toSeller(seller),
+        sellerName: String(seller.name ?? ""),
+      };
+    }
+    case "product": {
+      const seller = (p.business ?? {}) as Record<string, unknown>;
+      return {
+        kind: "product",
+        id: String(p.id),
+        slug: String(p.slug ?? p.id),
+        name: String(p.name ?? ""),
+        price: toNullableNumber(p.price) ?? 0,
+        compare_at_price: toNullableNumber(p.compare_at_price),
+        stock: Math.max(toNullableNumber(p.stock) ?? 0, 0),
+        images: Array.isArray(p.images)
+          ? (p.images as string[]).map(String)
+          : [],
+        description: p.description != null ? String(p.description) : null,
+        created_at: String(p.created_at ?? ""),
+        updated_at: String(p.updated_at ?? ""),
+        categories: categoryFor(p.category_id as string | null),
+        business: toSeller(seller),
+        sellerName: String(seller.name ?? ""),
+      };
+    }
+    default: {
+      const id = String(p.id);
+      return {
+        ...(p as unknown as SearchBusiness),
+        id,
+        kind: "business",
+        categories: categoryFor(p.category_id as string | null),
+        starting_price: prices.get(id) ?? null,
+      };
+    }
+  }
+}
+
+function toNullableNumber(v: unknown): number | null {
+  if (v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+/* ==========================================================================
+ * Legacy path — in-memory catalog scan (unchanged behavior)
+ * ========================================================================== */
+
+async function searchLegacy(
+  params: SearchParams,
+  supabase: Supabase,
+  categories: Map<string, Category>,
+): Promise<SearchItem[]> {
   const items: SearchItem[] = [];
 
   const includeBusiness =
@@ -82,17 +291,7 @@ async function handleSearch(request: Request): Promise<NextResponse> {
     filterInPlace(items, (i) => i.kind === "business");
   }
 
-  const ranked = rankItems(items, params.sort, params.lat, params.lng);
-  const page = ranked.slice(params.offset, params.offset + params.limit);
-
-  return NextResponse.json<SearchResponse>({
-    items: page,
-    total: items.length,
-    offset: params.offset,
-    limit: params.limit,
-    hasMore: params.offset + page.length < items.length,
-    type: params.type,
-  });
+  return items;
 }
 
 function filterInPlace<T>(arr: T[], predicate: (item: T) => boolean): void {
@@ -395,26 +594,15 @@ function toCategory(
   };
 }
 
-function toSeller(
-  b: {
-    name: string | null;
-    slug: string | null;
-    logo_url: string | null;
-    verified: boolean;
-    city: string | null;
-    rating_avg: number | null;
-    reviews_count: number | null;
-    plan: string;
-  },
-): SearchSeller {
+function toSeller(b: Record<string, unknown>): SearchSeller {
   return {
-    name: b.name ?? "",
-    slug: b.slug,
-    logo_url: b.logo_url,
-    verified: b.verified,
-    city: b.city,
-    rating_avg: b.rating_avg ?? 0,
-    reviews_count: b.reviews_count ?? 0,
-    plan: b.plan,
+    name: b.name != null ? String(b.name) : "",
+    slug: b.slug != null ? String(b.slug) : null,
+    logo_url: b.logo_url != null ? String(b.logo_url) : null,
+    verified: Boolean(b.verified),
+    city: b.city != null ? String(b.city) : null,
+    rating_avg: toNullableNumber(b.rating_avg) ?? 0,
+    reviews_count: toNullableNumber(b.reviews_count) ?? 0,
+    plan: b.plan != null ? String(b.plan) : "free",
   };
 }

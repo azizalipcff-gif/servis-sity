@@ -50,7 +50,9 @@ alter table public.subscriptions
   add column if not exists updated_at timestamptz not null default now();
 
 alter table public.subscriptions
-  add constraint if not exists subscriptions_interval_check
+  drop constraint if exists subscriptions_interval_check;
+alter table public.subscriptions
+  add constraint subscriptions_interval_check
   check (interval in ('monthly','quarterly','yearly','lifetime'));
 
 -- keep exactly one live subscription per business
@@ -345,6 +347,7 @@ create policy "plans_write_admin" on public.plans
 
 -- subscriptions (reuse existing owner/admin policies from 0001/0004 if present;
 -- re-declare defensively)
+drop policy if exists "subscriptions_select_owner" on public.subscriptions;
 create policy "subscriptions_select_owner" on public.subscriptions
   for select using (public.is_owner_or_admin(business_id));
 create policy "subscriptions_insert_owner" on public.subscriptions
@@ -367,7 +370,13 @@ create policy "pm_manage_own" on public.payment_methods
   for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 create policy "attempts_select_owner" on public.payment_attempts
-  for select using (public.is_admin() or user_id = auth.uid());
+  for select using (
+    public.is_admin()
+    or exists (
+      select 1 from public.payments p
+      where p.id = payment_id and p.user_id = auth.uid()
+    )
+  );
 
 create policy "invoices_select_owner" on public.invoices
   for select using (user_id = auth.uid() or public.is_owner_or_admin(business_id) or public.is_admin());
@@ -530,5 +539,5 @@ on conflict (plan_key, interval) do nothing;
 insert into public.coupons
   (code, type, value, amount_total_cents, period, active, starts_at, expires_at, max_usage, per_user_limit, applies_to, plans, created_by)
 values
-  ('WELCOME10', 'percent', 10, 0, 'one_time', true, now(), now() + interval '90 days', null, 1, 'subscription', '{}', null)
+  ('WELCOME10', 'percent', 10, 0, 'one_time', true, now(), now() + interval '90 days', null, 1, 'plans', '{}', null)
 on conflict (code) do nothing;

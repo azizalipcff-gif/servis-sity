@@ -75,7 +75,7 @@ export function MobileNav({ user, cta }: MobileNavProps) {
           icon: Store,
           match: pathname.startsWith("/pricing"),
         },
-        { href: cta.href, label: t("login"), icon: LogIn, match: false },
+        { href: cta.href, label: cta.label, icon: LogIn, match: false },
       ];
 
   return (

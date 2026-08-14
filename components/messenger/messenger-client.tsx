@@ -108,6 +108,7 @@ export function MessengerClient({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("search")}
+              aria-label={t("search")}
               className="w-full rounded-full bg-muted py-2 pe-3 ps-9 text-sm outline-none placeholder:text-muted-foreground"
             />
           </div>

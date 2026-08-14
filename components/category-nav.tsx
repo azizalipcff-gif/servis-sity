@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, Package, Store, Wrench } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { getCategoryIcon } from "@/components/category-icon";
@@ -15,6 +16,12 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
   const navt = useTranslations("nav");
   const locale = useLocale() as Locale;
   const pathname = usePathname();
+  const [searchCategory, setSearchCategory] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (pathname !== "/search") return;
+    setSearchCategory(new URLSearchParams(window.location.search).get("category"));
+  }, [pathname]);
 
   if (categories.length === 0) return null;
 
@@ -59,10 +66,7 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
           const href = `/category/${c.slug}`;
           const active =
             pathname === href ||
-            (pathname === "/search" &&
-              new URLSearchParams(
-                typeof window !== "undefined" ? window.location.search : "",
-              ).get("category") === c.slug);
+            (pathname === "/search" && searchCategory === c.slug);
           return (
             <Link
               key={c.id}

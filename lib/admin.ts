@@ -6,7 +6,9 @@ import type { Profile } from "@/lib/supabase/database.types";
 /**
  * Server-side guard used by admin API routes and server components.
  * Returns the Supabase client + admin profile when the caller is an
- * authenticated, non-banned admin — otherwise null.
+ * authenticated, non-banned, non-suspended admin — otherwise null.
+ * Mirrors the DB-level is_admin() (role='admin' AND not banned AND not
+ * suspended) so the route layer and the policy layer agree.
  */
 export const requireAdmin = cache(
   async (): Promise<{
@@ -23,7 +25,7 @@ export const requireAdmin = cache(
       .eq("id", user.id)
       .maybeSingle();
 
-    if (!profile || profile.role !== "admin" || profile.banned) return null;
+    if (!profile || profile.role !== "admin" || profile.banned || profile.suspended) return null;
     return { admin: profile, supabase };
   },
 );

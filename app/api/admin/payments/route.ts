@@ -47,6 +47,11 @@ export async function PATCH(req: NextRequest) {
     if (!payment) return jsonError(404, "not_found");
 
     if (body.action === "confirm") {
+      // Idempotent: a second confirm click must not finalize (which would
+      // create a duplicate subscription + transaction) for an already
+      // succeeded payment.
+      if (payment.status === "succeeded") return jsonOk({ ok: true, action: "confirm", skipped: true });
+
       await supabase.from("payments").update({ status: "succeeded" }).eq("id", payment.id);
 
       if (payment.business_id && payment.user_id) {

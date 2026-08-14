@@ -179,6 +179,7 @@ export function Composer({
             }
           }}
           placeholder={t("messagePlaceholder")}
+          aria-label={t("messagePlaceholder")}
           rows={1}
           disabled={disabled}
           className="max-h-32 min-h-[40px] flex-1 resize-none rounded-2xl bg-muted px-4 py-2.5 text-sm outline-none disabled:opacity-60"

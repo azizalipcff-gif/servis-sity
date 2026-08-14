@@ -5,6 +5,10 @@ import { getCurrentUser } from "@/lib/supabase/user";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 type Props = {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;

@@ -2,6 +2,13 @@
 
 import { createClient } from "@/lib/supabase/client";
 
+/** Client-side ceiling for messenger uploads (no server path intercepts the
+ *  direct-to-storage write, so cap the payload here to avoid filling the
+ *  attachments bucket with arbitrary-size objects). Voice notes are far
+ *  smaller and get their own lower bound. */
+export const MESSENGER_MAX_FILE_BYTES = 25 * 1024 * 1024;
+export const MESSENGER_MAX_VOICE_BYTES = 10 * 1024 * 1024;
+
 export type MessengerUploadMeta = {
   url: string;
   kind: string;
@@ -61,6 +68,9 @@ export async function uploadFile(
   userId: string,
   file: File,
 ): Promise<MessengerKind> {
+  if (file.size === 0 || file.size > MESSENGER_MAX_FILE_BYTES) {
+    throw new Error("file_too_large");
+  }
   const url = await upload(userId, "attachments", file, file.name);
   let width: number | undefined;
   let height: number | undefined;
@@ -84,6 +94,9 @@ export async function uploadRecording(
   blob: Blob,
   duration: number,
 ): Promise<MessengerKind> {
+  if (blob.size === 0 || blob.size > MESSENGER_MAX_VOICE_BYTES) {
+    throw new Error("recording_too_large");
+  }
   const url = await upload(userId, "voice-notes", blob, "voice.webm");
   return {
     url,

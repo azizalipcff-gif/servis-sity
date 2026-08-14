@@ -1,8 +1,13 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getCurrentUser } from "@/lib/supabase/user";
+import { redirect } from "@/i18n/navigation";
 import { MessengerClient } from "@/components/messenger/messenger-client";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = {
+  robots: { index: false, follow: false },
+};
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -14,6 +19,10 @@ export default async function MessengerPage({ params, searchParams }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations("messenger");
   const user = await getCurrentUser();
+  if (!user) {
+    redirect({ href: "/login", locale: locale as "ar" | "fr" | "en" });
+    return;
+  }
   const sp = await searchParams;
 
   const conversationParam = Array.isArray(sp.conversation)
@@ -29,7 +38,7 @@ export default async function MessengerPage({ params, searchParams }: Props) {
       <h1 className="text-2xl font-bold md:text-3xl">{t("title")}</h1>
       <div className="mt-6 h-[calc(100vh-10rem)] min-h-[540px]">
         <MessengerClient
-          userId={user?.id ?? ""}
+          userId={user.id}
           initialConversationId={initialConversationId}
         />
       </div>

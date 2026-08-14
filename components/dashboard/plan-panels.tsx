@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import type { PlanType } from "@/lib/supabase/database.types";
 
@@ -33,8 +34,8 @@ export function PlanPanel({ plan }: { plan: PlanType }) {
         <p className="mt-3 text-sm text-muted-foreground">
           {t("renew")}: —
         </p>
-        <Button className="mt-4 w-full gap-2 rounded-2xl">
-          {t("upgrade")}
+        <Button className="mt-4 w-full gap-2 rounded-2xl" asChild>
+          <Link href="/pricing">{t("upgrade")}</Link>
         </Button>
       </div>
 

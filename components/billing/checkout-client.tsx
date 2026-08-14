@@ -91,7 +91,7 @@ export function CheckoutClient({
         <h2 className="text-lg font-semibold">{t("payment.chooseProvider")}</h2>
         <p className="mt-3 text-sm text-muted-foreground">{t("payment.manualInstructions")}</p>
         <Link
-          href="/billing"
+          href="/pricing"
           className="mt-6 inline-block rounded-xl bg-foreground px-4 py-2.5 text-sm font-semibold text-background"
         >
           {t("payment.backToPlans")}

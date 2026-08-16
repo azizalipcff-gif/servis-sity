@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 import { notifyUser } from "@/lib/notifications";
+import { verificationPatchSchema } from "@/lib/validations/admin-schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -32,23 +33,21 @@ export async function PATCH(req: NextRequest) {
     const auth = await requireAdmin();
     if (!auth) return jsonError(403, "forbidden");
 
-    const body = (await req.json().catch(() => ({}))) as {
-      id?: string;
-      status?: "approved" | "rejected" | "request_changes";
-      note?: string;
-    };
-    if (!body.id || !body.status) return jsonError(400, "bad_request");
+    const body = await req.json().catch(() => null);
+    const parsed = verificationPatchSchema.safeParse(body);
+    if (!parsed.success) return jsonError(400, "bad_request");
+    const { id, status: requestedStatus, note } = parsed.data;
 
     const { data: row } = (await auth.supabase
       .from("verification_requests")
       .select("id,business_id,status,admin_note")
-      .eq("id", body.id)
+      .eq("id", id)
       .single()) as { data: ReqRow | null; error: unknown };
 
     const status =
-      body.status === "approved"
+      requestedStatus === "approved"
         ? "verified"
-        : body.status === "rejected"
+        : requestedStatus === "rejected"
           ? "rejected"
           : "pending";
 
@@ -56,10 +55,10 @@ export async function PATCH(req: NextRequest) {
       .from("verification_requests")
       .update({
         status,
-        admin_note: body.note ?? null,
+        admin_note: note ?? null,
         reviewed_at: new Date().toISOString(),
       } as never)
-      .eq("id", body.id);
+      .eq("id", id);
 
     // Reflect on the business + profile verification flag.
     if (row?.business_id && status === "verified") {
@@ -81,8 +80,8 @@ export async function PATCH(req: NextRequest) {
         recipientId: owner.data.owner_id,
         type: "verification",
         title: status === "verified" ? "Business verified" : "Verification update",
-        body: body.note ?? "",
-        link: "/billing",
+        body: note ?? "",
+        link: "/dashboard",
       });
     }
 

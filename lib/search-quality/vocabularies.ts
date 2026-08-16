@@ -242,7 +242,7 @@ export const CATEGORIES: CategoryEntry[] = [
     ],
   },
   {
-    slug: "ménager-services",
+    slug: "menager-services",
     aliases: [
       "aide menagere", "aide ménagère", "housemaid", "maid", "housekeeper",
       "gardener", "jardinier", "pool cleaning", "entretien piscine",

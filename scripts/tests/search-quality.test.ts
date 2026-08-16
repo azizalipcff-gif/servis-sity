@@ -192,7 +192,7 @@ await run("parse: cours particulier + residual english", () => {
 });
 
 await run("parse: jardinier → home services", () => {
-  expectParse("jardinier", { category: "ménager-services", q: "" });
+  expectParse("jardinier", { category: "menager-services", q: "" });
 });
 
 await run("parse: توصيل سريع → auto services", () => {

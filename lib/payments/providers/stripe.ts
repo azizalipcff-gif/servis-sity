@@ -81,13 +81,26 @@ export class StripeProvider implements PaymentProvider {
   }
 
   async refund(paymentReference: string): Promise<{ providerRefundId: string }> {
+    // The stored reference may be a checkout session id (cs_...) rather than a
+    // payment_intent (pi_...). Resolve the intent first so the refund targets
+    // the actual charge.
+    let intent = paymentReference;
+    if (paymentReference.startsWith("cs_")) {
+      const sessionRes = await fetch(
+        `${STRIPE_BASE}/checkout/sessions/${paymentReference}`,
+        { headers: { Authorization: `Bearer ${this.key()}` } },
+      );
+      if (!sessionRes.ok) throw new Error(`stripe:refund:resolve_session:${sessionRes.status}`);
+      const session = (await sessionRes.json()) as { payment_intent?: string | null };
+      if (session.payment_intent) intent = session.payment_intent;
+    }
     const res = await fetch(`${STRIPE_BASE}/refunds`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${this.key()}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: formUrlEncode({ payment_intent: paymentReference }),
+      body: formUrlEncode({ payment_intent: intent }),
     });
     if (!res.ok) throw new Error(`stripe:refund:${res.status}`);
     const data = (await res.json()) as { id: string };

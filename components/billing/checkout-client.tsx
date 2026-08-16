@@ -74,6 +74,13 @@ export function CheckoutClient({
         return;
       }
       if (data.url) {
+        if (data.paymentId) {
+          try {
+            sessionStorage.setItem("pending_payment", data.paymentId);
+          } catch {
+            // sessionStorage may be unavailable; the return URL also carries ?payment=.
+          }
+        }
         window.location.href = data.url;
         return;
       }

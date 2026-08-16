@@ -713,7 +713,11 @@
     "status_paused": "En pause",
     "status_pending": "En attente",
     "status_cancelled": "Annulé",
+    "status_cancelling": "Annulation",
     "status_expired": "Expiré",
+    "status_superseded": "Remplacé",
+    "status_trialing": "Essai",
+    "interval": "Intervalle",
     "planFeatures": "Fonctionnalités du plan",
     "upgrade": "Passer au plan supérieur",
     "downgrade": "Changer de plan",
@@ -746,9 +750,17 @@
     "periodSelector": "Période de facturation",
     "payment": {
       "title": "Paiement",
-      "chooseProvider": "Finalisez votre paiement en toute sécurité",
+      "chooseProvider": "Effectuez votre paiement en toute sécurité",
       "manualInstructions": "Suivez les instructions affichées et nous activerons votre plan dès confirmation.",
-      "backToPlans": "Retour aux plans"
+      "backToPlans": "Retour aux offres"
+    },
+    "paymentStatus": {
+      "checking": "Vérification de votre paiement...",
+      "succeeded": "Paiement reçu. Votre plan sera activé une fois confirmé.",
+      "failed": "Le paiement a échoué. Veuillez réessayer.",
+      "cancelled": "Paiement annulé.",
+      "pending": "Paiement en attente. Nous mettrons cette page à jour dès que le statut change.",
+      "unknown": "Impossible de confirmer le paiement pour le moment."
     },
     "invoices": {
       "title": "Factures",
@@ -762,7 +774,10 @@
     },
     "history": {
       "title": "Historique des transactions",
-      "empty": "Aucune transaction pour le moment."
+      "empty": "Aucune transaction pour le moment.",
+      "date": "Date",
+      "amount": "Montant",
+      "status": "Statut"
     },
     "methods": {
       "title": "Moyen de paiement",

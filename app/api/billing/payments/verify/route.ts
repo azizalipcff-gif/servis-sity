@@ -6,6 +6,7 @@ import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 import { resolveProvider } from "@/lib/payments/provider";
 import { recordAttempt } from "@/lib/payments/service";
+import { uuidSchema } from "@/lib/validations/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,9 @@ export async function POST(req: NextRequest) {
     if (!user) return jsonError(401, "unauthorized");
 
     const body = (await req.json().catch(() => ({}))) as { paymentId?: string };
-    if (!body.paymentId) return jsonError(400, "bad_request");
+    if (!body.paymentId || !uuidSchema.safeParse(body.paymentId).success) {
+      return jsonError(400, "bad_request");
+    }
 
     const { data: payment } = await supabase
       .from("payments")

@@ -71,6 +71,8 @@ export type SearchBusiness = Business & {
   starting_price?: number | null;
   open_now?: boolean;
   distance_km?: number | null;
+  /** Canonical city slug resolved from the cities table (via `city_id`). */
+  city_slug?: string | null;
 };
 
 /** A normalized seller/avatar block used by service & product results. */
@@ -80,6 +82,7 @@ export type SearchSeller = {
   logo_url: string | null;
   verified: boolean;
   city: string | null;
+  city_slug: string | null;
   rating_avg: number;
   reviews_count: number;
   plan: string;

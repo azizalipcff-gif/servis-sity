@@ -7,8 +7,10 @@ import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 import { getPlan } from "@/lib/billing/plans";
 import { applyCoupon } from "@/lib/billing/coupons";
+import { findActiveSubscriptionId } from "@/lib/billing/subscription";
 import { computeTotals, recordPayment, recordAttempt } from "@/lib/payments/service";
 import { resolveProvider } from "@/lib/payments/provider";
+import { siteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +46,11 @@ export async function POST(req: NextRequest) {
     const plan = await getPlan(body.planCode, body.interval);
     if (!plan) return jsonError(400, "plan_invalid");
     if (plan.price_cents <= 0) return jsonError(400, "plan_free");
+
+    // Reject a duplicate purchase while the business is already entitled to a
+    // paid plan. Prevents accidental double-payment from repeated clicks.
+    const activeSubId = await findActiveSubscriptionId(supabase, body.businessId);
+    if (activeSubId) return jsonError(409, "already_subscribed");
 
     const subtotal = plan.price_cents;
     let discount = 0;
@@ -86,8 +93,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const returnUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/billing`;
-    const cancelUrl = returnUrl;
+    const returnUrl = `${siteUrl()}/dashboard/billing?payment=${payment.id}`;
+    const cancelUrl = `${siteUrl()}/dashboard/billing`;
 
     const checkout = await provider.createCheckout({
       planCode: body.planCode,

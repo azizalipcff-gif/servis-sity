@@ -4,6 +4,7 @@ import { getMyBusiness } from "@/lib/queries";
 import { parseStoredUrl } from "@/lib/supabase/storage";
 import { mediaCreateSchema } from "@/lib/validations/schemas";
 import { sanitizeUrl } from "@/lib/security/sanitize";
+import { uuidSchema } from "@/lib/validations/schemas";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
@@ -70,7 +71,7 @@ export async function DELETE(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-    if (!id) return jsonError(400, "bad_request");
+    if (!id || !uuidSchema.safeParse(id).success) return jsonError(400, "bad_request");
 
     // Fetch the row first so we can remove the storage object it references
     // (scoped to the business the caller owns) — never leave orphan files.

@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { businessPatchSchema } from "@/lib/validations/admin-schemas";
+import { uuidSchema } from "@/lib/validations/schemas";
 import type {
   BusinessStatus,
   PlanType,
@@ -87,7 +88,7 @@ export async function DELETE(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-    if (!id) return jsonError(400, "bad_request");
+    if (!id || !uuidSchema.safeParse(id).success) return jsonError(400, "bad_request");
 
     const { error } = await guard.supabase.from("businesses").delete().eq("id", id);
     if (error) return jsonError(500, "delete_failed");

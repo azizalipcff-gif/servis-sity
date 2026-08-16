@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
+import { featuredPatchSchema } from "@/lib/validations/admin-schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -24,26 +25,26 @@ export async function PATCH(req: NextRequest) {
     const auth = await requireAdmin();
     if (!auth) return jsonError(403, "forbidden");
 
-    const body = (await req.json().catch(() => ({}))) as {
-      id?: string;
-      action?: "approve" | "revoke" | "renew";
-    };
-    if (!body.id || !body.action) return jsonError(400, "bad_request");
+    const body = await req.json().catch(() => null);
+    const parsed = featuredPatchSchema.safeParse(body);
+    if (!parsed.success) return jsonError(400, "bad_request");
+    const { id, action } = parsed.data;
 
     const now = new Date();
     const patch: Record<string, unknown> =
-      body.action === "approve"
+      action === "approve"
         ? { status: "active", starts_at: now.toISOString(), expires_at: new Date(now.getTime() + 86400000 * 30).toISOString() }
-        : body.action === "renew"
+        : action === "renew"
           ? { status: "active", starts_at: now.toISOString(), expires_at: new Date(now.getTime() + 86400000 * 30).toISOString() }
           : { status: "revoked" };
 
-    const { data } = await auth.supabase
+    const { data, error } = await auth.supabase
       .from("featured_businesses")
       .update(patch as never)
-      .eq("id", body.id)
+      .eq("id", id)
       .select("*")
       .single();
+    if (error) return jsonError(500, "update_failed");
     return jsonOk({ item: data ?? null });
   });
 }

@@ -29,7 +29,14 @@ export async function POST(request: Request) {
       comment,
     });
 
-    if (error) return jsonError(500, "insert_failed");
+    if (error) {
+      // The unique (business_id, user_id) constraint rejects a second review.
+      // Surface it as a graceful conflict instead of a generic 500.
+      if ((error as { code?: string }).code === "23505") {
+        return jsonError(409, "already_reviewed");
+      }
+      return jsonError(500, "insert_failed");
+    }
     return jsonOk();
   });
 }

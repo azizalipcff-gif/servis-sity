@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/user";
 import { getMyBusiness } from "@/lib/queries";
 import { getPlan } from "@/lib/billing/plans";
+import { getCurrentSubscription } from "@/lib/billing/subscription";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 
@@ -17,7 +18,7 @@ export async function GET() {
     const business = await getMyBusiness(user.id);
     if (!business) return jsonOk({ business: null, subscriptions: [], invoices: [], payments: [] });
 
-    const [subs, invoices, payments, txs] = await Promise.all([
+    const [subs, invoices, payments, txs, currentRes] = await Promise.all([
       supabase
         .from("subscriptions")
         .select("*")
@@ -42,12 +43,28 @@ export async function GET() {
         .eq("business_id", business.id)
         .order("created_at", { ascending: false })
         .limit(10),
+      getCurrentSubscription(supabase, business.id),
     ]);
 
-const current = subs.data?.find((s) => s.status === "active") ?? null;
+    const current = currentRes.subscription as {
+      plan_key: string | null;
+      plan: string | null;
+      interval: string | null;
+      status: string | null;
+      started_at: string | null;
+      expires_at: string | null;
+      next_billing_at: string | null;
+      auto_renew: boolean;
+      lifetime: boolean;
+      cancel_at: string | null;
+      cancelled_at: string | null;
+      paused_at: string | null;
+      trial_end_at: string | null;
+    } | null;
+
     const currentPlan = current
       ? await getPlan(
-          current.plan_key as Parameters<typeof getPlan>[0],
+          (current.plan_key ?? current.plan) as Parameters<typeof getPlan>[0],
           (current.interval ?? "monthly") as Parameters<typeof getPlan>[1],
         )
       : null;
@@ -55,6 +72,8 @@ const current = subs.data?.find((s) => s.status === "active") ?? null;
     return jsonOk({
       business: { id: business.id, name: business.name, plan: business.plan },
       current,
+      state: currentRes.state,
+      entitled: currentRes.entitled,
       currentPlan,
       subscriptions: subs.data ?? [],
       invoices: invoices.data ?? [],
@@ -104,17 +123,25 @@ export async function PATCH(req: NextRequest) {
           ? { paused_at: now, status: "paused" }
           : { paused_at: null, status: "active" };
 
-    await supabase
+    const { error: subErr } = await supabase
       .from("subscriptions")
       .update(update)
       .eq("id", sub.id);
-    await supabase.from("subscription_history").insert({
+    if (subErr) return jsonError(500, "update_failed");
+
+    const { error: histErr } = await supabase.from("subscription_history").insert({
       subscription_id: sub.id,
       business_id: body.businessId,
-      action: body.action,
+      action:
+        body.action === "cancel"
+          ? "cancelled"
+          : body.action === "pause"
+            ? "paused"
+            : "resumed",
       plan_to: sub.plan_key,
       interval: sub.interval ?? "monthly",
     });
+    if (histErr) return jsonError(500, "history_failed");
 
     return jsonOk({ ok: true, action: body.action });
   });

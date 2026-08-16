@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/supabase/user";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
+import { uuidSchema } from "@/lib/validations/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ type Target = { type: "business"; id: string } | { type: "user"; id: string };
 function parseTarget(searchParams: URLSearchParams): Target | null {
   const type = searchParams.get("type");
   const id = searchParams.get("id");
-  if (!id) return null;
+  if (!id || !uuidSchema.safeParse(id).success) return null;
   if (type === "business") return { type: "business", id };
   if (type === "user") return { type: "user", id };
   return null;
@@ -69,7 +70,12 @@ export async function POST(req: NextRequest) {
     if (!user) return jsonError(401, "unauthorized");
 
     const body = (await req.json().catch(() => ({}))) as { type?: string; id?: string };
-    const target = body.type && body.id ? { type: body.type, id: body.id } : null;
+    if (!body.type || !body.id || !uuidSchema.safeParse(body.id).success) {
+      return jsonError(400, "bad_request");
+    }
+    let target: Target | null = null;
+    if (body.type === "business") target = { type: "business", id: body.id };
+    else if (body.type === "user") target = { type: "user", id: body.id };
     if (!target) return jsonError(400, "bad_request");
     if (target.type === "user" && target.id === user.id) {
       return jsonError(400, "bad_request");
@@ -95,7 +101,15 @@ export async function POST(req: NextRequest) {
       following_type: target.type,
       ...(target.type === "business" ? { business_id: target.id } : { user_id: target.id }),
     });
-    if (error) return jsonError(500, "insert_failed");
+    if (error) {
+      // The partial unique indexes (follows_business_unique / follows_user_unique)
+      // reject a duplicate follow on a concurrent race. A second request that
+      // reaches the insert is effectively "following", so return that state.
+      if ((error as { code?: string }).code === "23505") {
+        return jsonOk({ ok: true, following: true });
+      }
+      return jsonError(500, "insert_failed");
+    }
     return jsonOk({ ok: true, following: true });
   });
 }

@@ -40,6 +40,7 @@ export type ResultSellerInput = {
   logo_url?: string | null;
   verified?: boolean;
   city?: string | null;
+  city_slug?: string | null;
   rating_avg?: number;
   reviews_count?: number;
 };

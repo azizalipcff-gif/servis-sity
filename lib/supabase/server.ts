@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
 import { isValidHttpUrl, isValidSupabaseKey } from "./validate";
 
@@ -42,4 +43,19 @@ export async function createClient() {
       },
     },
   );
+}
+
+/**
+ * Server-only client that bypasses RLS (service role). Used exclusively by
+ * gateway webhook handlers, which must record provider-confirmed payment state
+ * without a user session. Never call this from user-facing routes — mutations
+ * there must stay on the session client so RLS still applies.
+ */
+export function createServiceClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!isValidHttpUrl(url) || !key) return null;
+  return createSupabaseClient<Database>(url, key, {
+    auth: { persistSession: false },
+  });
 }

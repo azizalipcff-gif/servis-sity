@@ -314,7 +314,7 @@ async function searchBusinesses(
   let builder = supabase
     .from("businesses")
     .select(
-      "*, categories!businesses_category_id_fkey(slug, icon, name_ar, name_fr, name_en)",
+      `*, categories!businesses_category_id_fkey(slug, icon, name_ar, name_fr, name_en), cities!businesses_city_id_fkey(slug)`,
     )
     .eq("status", "approved")
     .limit(RANK_POOL_CAP);
@@ -369,11 +369,18 @@ async function searchBusinesses(
     pool = await filterOpenNow(pool, supabase);
   }
 
-  const items = pool.map((b) => ({
-    ...b,
-    kind: "business" as const,
-    starting_price: prices.get(b.id) ?? null,
-  }));
+  const items = pool.map((b) => {
+    const raw = b as unknown as SearchBusiness & {
+      cities?: { slug: string | null } | null;
+    };
+    const { cities, ...rest } = raw;
+    return {
+      ...rest,
+      city_slug: cities?.slug ?? null,
+      kind: "business" as const,
+      starting_price: prices.get(b.id) ?? null,
+    };
+  });
 
   return { items };
 }
@@ -444,7 +451,7 @@ function toMinutes(time: string): number {
  * ========================================================================== */
 
 const SERVICE_SELECT =
-  "id, name, price, duration_minutes, photo_url, description, updated_at, business:businesses(id, name, slug, logo_url, city, verified, rating_avg, reviews_count, plan, category_id)";
+  "id, name, price, duration_minutes, photo_url, description, updated_at, business:businesses(id, name, slug, logo_url, city, city_id, verified, rating_avg, reviews_count, plan, category_id, cities!businesses_city_id_fkey(slug))";
 
 async function searchServices(
   params: SearchParams,
@@ -504,7 +511,7 @@ async function searchServices(
  * ========================================================================== */
 
 const PRODUCT_SELECT =
-  "id, slug, name, price, compare_at_price, stock, images, description, category_id, created_at, updated_at, business:businesses(id, name, slug, logo_url, city, verified, rating_avg, reviews_count, plan)";
+  "id, slug, name, price, compare_at_price, stock, images, description, category_id, created_at, updated_at, business:businesses(id, name, slug, logo_url, city, city_id, verified, rating_avg, reviews_count, plan, cities!businesses_city_id_fkey(slug))";
 
 async function searchProducts(
   params: SearchParams,
@@ -595,12 +602,17 @@ function toCategory(
 }
 
 function toSeller(b: Record<string, unknown>): SearchSeller {
+  const cities =
+    b.cities && typeof b.cities === "object"
+      ? ((b.cities as { slug?: string | null })?.slug ?? null)
+      : null;
   return {
     name: b.name != null ? String(b.name) : "",
     slug: b.slug != null ? String(b.slug) : null,
     logo_url: b.logo_url != null ? String(b.logo_url) : null,
     verified: Boolean(b.verified),
     city: b.city != null ? String(b.city) : null,
+    city_slug: cities,
     rating_avg: toNullableNumber(b.rating_avg) ?? 0,
     reviews_count: toNullableNumber(b.reviews_count) ?? 0,
     plan: b.plan != null ? String(b.plan) : "free",

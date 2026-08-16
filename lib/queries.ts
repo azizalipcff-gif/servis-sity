@@ -14,6 +14,8 @@ import type {
 
 export type BusinessWithCategory = Business & {
   categories: Category | null;
+  /** Canonical city slug resolved from the cities table (via `city_id`). */
+  city_slug?: string | null;
 };
 
 export type BusinessDetail = Business & {
@@ -22,7 +24,37 @@ export type BusinessDetail = Business & {
   media: { id: string; type: "image" | "video"; url: string }[];
   reviews: (Review & { profile: { full_name: string | null } | null })[];
   hours: { id: string; day_of_week: number; open_time: string | null; close_time: string | null; is_closed: boolean }[];
+  /** Canonical city slug resolved from the cities table (via `city_id`). */
+  city_slug?: string | null;
 };
+
+/** City-slug join fragment: resolves the canonical `cities.slug` for a row. */
+const CITY_SLUG_JOIN = "cities!businesses_city_id_fkey(slug)";
+
+type WithCityJoin = { cities?: { slug: string | null } | null };
+
+/** Strip the nested `cities` join and expose it as a canonical `city_slug`. */
+function attachCitySlug<T extends object>(row: T & WithCityJoin): T & { city_slug: string | null } {
+  const { cities, ...rest } = row as T & WithCityJoin & { city_slug?: never };
+  return { ...rest, city_slug: cities?.slug ?? null } as T & { city_slug: string | null };
+}
+
+type WithSellerCityJoin = {
+  business?:
+    | (Record<string, unknown> & WithCityJoin)
+    | null;
+};
+
+/** Attach the canonical `city_slug` onto a nested `business` seller projection. */
+function attachSellerCitySlug<T>(row: T): T {
+  const seller = (row as WithSellerCityJoin).business;
+  if (!seller) return row;
+  const { cities, ...business } = seller;
+  return {
+    ...row,
+    business: { ...business, city_slug: cities?.slug ?? null },
+  } as T;
+}
 
 const SORT_ORDER = { pro: 0, premium: 1, free: 2 } as const;
 
@@ -89,7 +121,7 @@ export const getFeaturedBusinesses = cache(
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("businesses")
-      .select("*, categories!businesses_category_id_fkey(*)")
+      .select(`*, categories!businesses_category_id_fkey(*), ${CITY_SLUG_JOIN}`)
       .eq("status", "approved")
       .order("plan", { ascending: true })
       .order("rating_avg", { ascending: false })
@@ -97,7 +129,7 @@ export const getFeaturedBusinesses = cache(
       .limit(8);
 
     if (error || !data) return [];
-    return data as BusinessWithCategory[];
+    return (data ?? []).map(attachCitySlug) as unknown as BusinessWithCategory[];
   },
 );
 
@@ -106,14 +138,14 @@ export const getBusinessesByCategory = cache(
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("businesses")
-      .select("*, categories!businesses_category_id_fkey!inner(*)")
+      .select(`*, categories!businesses_category_id_fkey!inner(*), ${CITY_SLUG_JOIN}`)
       .eq("status", "approved")
       .eq("categories.slug", categorySlug)
       .order("plan", { ascending: true })
       .order("rating_avg", { ascending: false });
 
     if (error || !data) return [];
-    return data as BusinessWithCategory[];
+    return (data ?? []).map(attachCitySlug) as unknown as BusinessWithCategory[];
   },
 );
 
@@ -147,7 +179,9 @@ export const getPublishedBusinesses = cache(
 
     let q = supabase
       .from("businesses")
-      .select("*, categories!businesses_category_id_fkey(*)", { count: "exact" })
+      .select(`*, categories!businesses_category_id_fkey(*), ${CITY_SLUG_JOIN}`, {
+        count: "exact",
+      })
       .eq("status", "approved");
     if (filters.query)
       q = q.or(`name.ilike.%${filters.query}%,description.ilike.%${filters.query}%`);
@@ -160,7 +194,10 @@ export const getPublishedBusinesses = cache(
 
     const { data, error, count } = await q.range(offset, offset + limit - 1);
     if (error || !data) return { items: [], total: 0 };
-    return { items: data as BusinessWithCategory[], total: count ?? 0 };
+    return {
+      items: (data ?? []).map(attachCitySlug) as unknown as BusinessWithCategory[],
+      total: count ?? 0,
+    };
   },
 );
 
@@ -174,11 +211,11 @@ export const getBusinessBySlug = cache(
 
     const businessResult = (await supabase
       .from("businesses")
-      .select("*, categories!businesses_category_id_fkey(slug, name_ar, name_fr, name_en)")
+      .select(`*, categories!businesses_category_id_fkey(slug, name_ar, name_fr, name_en), ${CITY_SLUG_JOIN}`)
       .eq("slug", slug)
       .eq("status", "approved")
       .maybeSingle()) as unknown as {
-      data: JoinedBusiness | null;
+      data: (JoinedBusiness & WithCityJoin) | null;
       error: { message: string } | null;
     };
 
@@ -209,7 +246,7 @@ export const getBusinessBySlug = cache(
     ]);
 
     return {
-      ...business,
+      ...attachCitySlug(business),
       services: services.data ?? [],
       media: media.data ?? [],
       reviews: (reviews.data ?? []) as BusinessDetail["reviews"],
@@ -223,7 +260,7 @@ export const getRelatedBusinesses = cache(
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("businesses")
-      .select("*, categories!businesses_category_id_fkey(*)")
+      .select(`*, categories!businesses_category_id_fkey(*), ${CITY_SLUG_JOIN}`)
       .eq("category_id", business.category_id)
       .eq("status", "approved")
       .neq("id", business.id)
@@ -232,7 +269,7 @@ export const getRelatedBusinesses = cache(
       .limit(4);
 
     if (error || !data) return [];
-    return data as BusinessWithCategory[];
+    return (data ?? []).map(attachCitySlug) as unknown as BusinessWithCategory[];
   },
 );
 
@@ -267,12 +304,49 @@ export async function getPublishedProductsCount(): Promise<number> {
 }
 
 export const getSitemapBusinesses = cache(
-  async (): Promise<Pick<Business, "slug" | "city" | "last_updated_at">[]> => {
+  async (): Promise<
+    (Pick<Business, "slug" | "city" | "city_id" | "last_updated_at"> & {
+      city_slug: string | null;
+    })[]
+  > => {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("businesses")
-      .select("slug, city, last_updated_at")
+      .select(`slug, city, city_id, last_updated_at, ${CITY_SLUG_JOIN}`)
       .eq("status", "approved");
+    if (error || !data) return [];
+    return (data ?? []).map(attachCitySlug) as unknown as (Pick<
+      Business,
+      "slug" | "city" | "city_id" | "last_updated_at"
+    > & {
+      city_slug: string | null;
+    })[];
+  },
+);
+
+export const getSitemapProducts = cache(
+  async (): Promise<Pick<Product, "slug" | "updated_at">[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select("slug, updated_at")
+      .eq("status", "published")
+      .order("updated_at", { ascending: false })
+      .limit(5000);
+    if (error || !data) return [];
+    return data;
+  },
+);
+
+export const getSitemapServices = cache(
+  async (): Promise<Pick<Service, "id" | "updated_at">[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("services")
+      .select("id, updated_at")
+      .eq("status", "published")
+      .order("updated_at", { ascending: false })
+      .limit(5000);
     if (error || !data) return [];
     return data;
   },
@@ -298,10 +372,10 @@ export async function getMyBusiness(ownerId: string): Promise<BusinessDetail | n
 
   const businessResult = (await supabase
     .from("businesses")
-    .select("*, categories!businesses_category_id_fkey(slug, name_ar, name_fr, name_en)")
+    .select(`*, categories!businesses_category_id_fkey(slug, name_ar, name_fr, name_en), ${CITY_SLUG_JOIN}`)
     .eq("owner_id", ownerId)
     .maybeSingle()) as unknown as {
-    data: JoinedBusiness | null;
+    data: (JoinedBusiness & WithCityJoin) | null;
     error: { message: string } | null;
   };
 
@@ -332,7 +406,7 @@ export async function getMyBusiness(ownerId: string): Promise<BusinessDetail | n
     ]);
 
     return {
-      ...business,
+      ...attachCitySlug(business),
       services: services.data ?? [],
       media: media.data ?? [],
       hours: hours.data ?? [],
@@ -353,7 +427,7 @@ export const getProductsForBusiness = cache(
       .eq("business_id", businessId)
       .order("created_at", { ascending: false });
     if (error) return [];
-    return (data ?? []) as ProductWithBusiness[];
+    return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[];
   },
 );
 
@@ -370,7 +444,7 @@ export const getFeaturedProducts = cache(
       .order("created_at", { ascending: false })
       .limit(limit);
     if (error) return [];
-    return (data ?? []) as ProductWithBusiness[];
+    return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[];
   },
 );
 
@@ -407,6 +481,7 @@ export type ProductBusiness = Pick<
   | "logo_url"
   | "cover_url"
   | "city"
+  | "city_id"
   | "verified"
   | "whatsapp"
   | "phone"
@@ -414,7 +489,10 @@ export type ProductBusiness = Pick<
   | "rating_avg"
   | "reviews_count"
   | "plan"
->;
+> & {
+  /** Canonical city slug resolved from the cities table (via `city_id`). */
+  city_slug?: string | null;
+};
 
 export type ProductWithBusiness = Product & {
   business: ProductBusiness | null;
@@ -435,8 +513,7 @@ export type ProductListFilters = {
   offset?: number;
 };
 
-const PRODUCT_BUSINESS_SELECT =
-  "id, name, slug, logo_url, cover_url, city, verified, whatsapp, phone, owner_id, rating_avg, reviews_count, plan";
+const PRODUCT_BUSINESS_SELECT = `id, name, slug, logo_url, cover_url, city, city_id, verified, whatsapp, phone, owner_id, rating_avg, reviews_count, plan, ${CITY_SLUG_JOIN}`;
 
 /** Single published product by slug, with its seller (and category resolved separately). */
 export const getProductBySlug = cache(
@@ -450,7 +527,7 @@ export const getProductBySlug = cache(
       .maybeSingle();
     if (error || !data) return null;
 
-    const base = data as ProductWithBusiness;
+    const base = attachSellerCitySlug(data) as ProductWithBusiness;
     let categories: ProductDetail["categories"] = null;
     if (base.category_id) {
       const { data: cat } = await supabase
@@ -482,7 +559,7 @@ export const getSimilarProducts = cache(
       .order("views", { ascending: false })
       .limit(limit);
     if (error || !data) return [];
-    return data as ProductWithBusiness[];
+    return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[];
   },
 );
 
@@ -521,7 +598,10 @@ export const getPublishedProducts = cache(
 
     const { data, error, count } = await q.range(offset, offset + limit - 1);
     if (error || !data) return { items: [], total: 0 };
-    return { items: data as ProductWithBusiness[], total: count ?? 0 };
+    return {
+      items: ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[],
+      total: count ?? 0,
+    };
   },
 );
 
@@ -564,7 +644,7 @@ export const getServiceById = cache(
       .maybeSingle();
     if (error || !data) return null;
 
-    const base = data as ServiceWithBusiness;
+    const base = attachSellerCitySlug(data) as ServiceWithBusiness;
     let categories: ServiceDetail["categories"] = null;
     const categoryId = base.business?.category_id ?? null;
     if (categoryId) {
@@ -597,7 +677,7 @@ export const getServicesForBusinessRow = cache(
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (error || !data) return [];
-    return data as ServiceWithBusiness[];
+    return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ServiceWithBusiness[];
   },
 );
 
@@ -631,7 +711,7 @@ export const getSimilarServices = cache(
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (error || !data) return [];
-    return data as ServiceWithBusiness[];
+    return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ServiceWithBusiness[];
   },
 );
 
@@ -694,7 +774,10 @@ export const getPublishedServices = cache(
 
     const { data, error, count } = await q.range(offset, offset + limit - 1);
     if (error || !data) return { items: [], total: 0 };
-    return { items: data as ServiceWithBusiness[], total: count ?? 0 };
+    return {
+      items: ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ServiceWithBusiness[],
+      total: count ?? 0,
+    };
   },
 );
 
@@ -710,7 +793,7 @@ export const getPopularServices = cache(
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (error || !data) return [];
-    return data as ServiceWithBusiness[];
+    return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ServiceWithBusiness[];
   },
 );
 

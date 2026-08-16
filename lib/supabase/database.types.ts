@@ -1746,6 +1746,32 @@ export interface Database {
         Args: Record<string, never>;
         Returns: boolean;
       };
+      finalize_payment_ledger: {
+        Args: {
+          p_payment_id: string;
+          p_user_id: string;
+          p_business_id: string;
+          p_currency: string;
+          p_amount_cents: number;
+          p_reference: string;
+          p_invoice_id?: string | null;
+          p_coupon_id?: string | null;
+          p_discount_cents?: number;
+        };
+        Returns: string | null;
+      };
+      finalize_payment_refund: {
+        Args: {
+          p_payment_id: string;
+          p_provider_refund_id?: string | null;
+          p_reason?: string | null;
+        };
+        Returns: string | null;
+      };
+      coupon_global_usage: {
+        Args: { p_coupon_id: string };
+        Returns: number;
+      };
     };
     Enums: {
       user_role: UserRole;

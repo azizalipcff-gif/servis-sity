@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? localizedName(business.categories, locale as Locale)
       : business.city ?? "Pro";
 
-  const canonicalCity = businessCitySlug(business.city);
+  const canonicalCity = businessCitySlug(business);
   const description = business.description
     ? business.description.slice(0, 155)
     : `${category} in ${business.city ?? "Morocco"} — ${business.rating_avg.toFixed(1)} stars.`;
@@ -93,7 +93,7 @@ export default async function BusinessPage({ params }: Props) {
   const business = await getBusinessBySlug(slug);
   if (!business) notFound();
 
-  const canonicalCity = businessCitySlug(business.city);
+  const canonicalCity = businessCitySlug(business);
   if (city !== canonicalCity) {
     permanentRedirect(businessPath(locale, business));
   }

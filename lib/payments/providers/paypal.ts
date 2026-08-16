@@ -9,8 +9,12 @@ import type {
 type PayPalOrder = {
   id: string;
   status: string;
-links?: { rel: string; href: string }[];
-  purchase_units?: { payments?: { captures?: { status: string }[] }[] }[];
+  links?: { rel: string; href: string }[];
+  purchase_units?: {
+    payments?: {
+      captures?: { id?: string; status: string }[];
+    }[];
+  }[];
 };
 
 export class PayPalProvider implements PaymentProvider {
@@ -110,10 +114,27 @@ export class PayPalProvider implements PaymentProvider {
 
   async refund(paymentReference: string): Promise<{ providerRefundId: string }> {
     const token = await this.token();
+    // The stored reference is the order id. Refunds target a capture, so
+    // resolve the capture id from the order first.
+    let captureId = paymentReference;
+    if (!paymentReference.startsWith("3V") && !paymentReference.startsWith("2W")) {
+      const orderRes = await fetch(`${this.base()}/v2/checkout/orders/${paymentReference}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (!orderRes.ok) throw new Error(`paypal:refund:get_order:${orderRes.status}`);
+      const order = (await orderRes.json()) as PayPalOrder;
+      const capture =
+        order.purchase_units?.[0]?.payments?.[0]?.captures?.find(
+          (c) => c.status === "COMPLETED" || c.status === "PARTIALLY_REFUNDED",
+        );
+      if (!capture?.id) throw new Error("paypal:refund:no_capture");
+      captureId = capture.id;
+    }
     const res = await fetch(`${this.base()}/v2/payments/refunds`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ capture_id: paymentReference }),
+      body: JSON.stringify({ capture_id: captureId }),
     });
     if (!res.ok) throw new Error(`paypal:refund:${res.status}`);
     const data = (await res.json()) as { id: string };

@@ -15,6 +15,21 @@ export async function POST(request: Request) {
     if (!parsed.success) return jsonError(400, "bad_request");
 
     const supabase = await createClient();
+
+    // Integrity: the booked service must actually belong to the business the
+    // booking targets — otherwise a caller could attach another business's
+    // service to a booking slot at this business (cross-tenant confusion).
+    if (parsed.data.service_id) {
+      const { data: service } = await supabase
+        .from("services")
+        .select("business_id")
+        .eq("id", parsed.data.service_id)
+        .maybeSingle();
+      if (!service || service.business_id !== parsed.data.business_id) {
+        return jsonError(400, "bad_request");
+      }
+    }
+
     const { error } = await supabase.from("bookings").insert({
       business_id: parsed.data.business_id,
       service_id: parsed.data.service_id ?? null,
@@ -25,7 +40,16 @@ export async function POST(request: Request) {
       status: "pending",
     });
 
-    if (error) return jsonError(500, "insert_failed");
+    if (error) {
+      // The partial unique index (business_id, booking_date, booking_time,
+      // client_phone) WHERE status IN ('pending','confirmed','accepted') rejects
+      // a double-submit of the same client/slot as 23505. Surface as a graceful
+      // conflict rather than a generic 500.
+      if ((error as { code?: string }).code === "23505") {
+        return jsonError(409, "booking_duplicate");
+      }
+      return jsonError(500, "insert_failed");
+    }
     return jsonOk();
   });
 }

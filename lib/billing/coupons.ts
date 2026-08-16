@@ -51,10 +51,9 @@ export async function applyCoupon(
     }
   }
 
-  const { count: globalUsage } = await supabase
-    .from("coupon_usage")
-    .select("id", { count: "exact", head: true })
-    .eq("coupon_id", coupon.id);
+  const { data: globalUsage } = await supabase.rpc("coupon_global_usage", {
+    p_coupon_id: coupon.id,
+  });
   if (coupon.max_usage != null && (globalUsage ?? 0) >= coupon.max_usage) {
     throw new Error("coupon_limit_reached");
   }

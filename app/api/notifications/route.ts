@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/user";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
+import { uuidSchema } from "@/lib/validations/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,7 @@ export async function PATCH(req: Request) {
       return jsonOk({ ok: true });
     }
 
-    if (!body.id) return jsonError(400, "bad_request");
+    if (!body.id || !uuidSchema.safeParse(body.id).success) return jsonError(400, "bad_request");
     const { error } = await supabase
       .from("notifications")
       .update({ read_at: new Date().toISOString() })

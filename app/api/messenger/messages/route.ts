@@ -6,6 +6,7 @@ import { assertSameOrigin } from "@/lib/security/csrf";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 import { sanitizeText } from "@/lib/security/sanitize";
+import { uuidSchema } from "@/lib/validations/schemas";
 import {
   isConversationMember,
   isBlocked,
@@ -36,7 +37,9 @@ export async function GET(req: NextRequest) {
 
     const url = new URL(req.url);
     const conversationId = url.searchParams.get("conversationId");
-    if (!conversationId) return jsonError(400, "bad_request");
+    if (!conversationId || !uuidSchema.safeParse(conversationId).success) {
+      return jsonError(400, "bad_request");
+    }
     if (!(await isConversationMember(supabase, user.id, conversationId))) {
       return jsonError(403, "forbidden");
     }
@@ -106,7 +109,14 @@ export async function POST(req: NextRequest) {
     };
 
     const conversationId = body.conversationId;
-    if (!conversationId || !ALLOWED_TYPES.has(body.type ?? "text")) {
+    if (
+      !conversationId ||
+      !uuidSchema.safeParse(conversationId).success ||
+      !ALLOWED_TYPES.has(body.type ?? "text")
+    ) {
+      return jsonError(400, "bad_request");
+    }
+    if (body.replyTo && !uuidSchema.safeParse(body.replyTo).success) {
       return jsonError(400, "bad_request");
     }
     if (!(await isConversationMember(supabase, user.id, conversationId))) {
@@ -205,7 +215,9 @@ export async function PATCH(req: NextRequest) {
     };
 
     if (body.action === "readAll") {
-      if (!body.conversationId) return jsonError(400, "bad_request");
+      if (!body.conversationId || !uuidSchema.safeParse(body.conversationId).success) {
+        return jsonError(400, "bad_request");
+      }
       if (!(await isConversationMember(supabase, user.id, body.conversationId))) {
         return jsonError(403, "forbidden");
       }
@@ -220,7 +232,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const id = body.id;
-    if (!id) return jsonError(400, "bad_request");
+    if (!id || !uuidSchema.safeParse(id).success) return jsonError(400, "bad_request");
 
     const { data: msg } = await supabase
       .from("messages")

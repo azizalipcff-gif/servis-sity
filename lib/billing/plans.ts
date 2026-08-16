@@ -31,12 +31,12 @@ export async function getPlan(
 }
 
 export function planTypeFor(key: string): PlanType {
-  if (key === "premium" || key === "enterprise") return key;
+  if (key === "premium" || key === "enterprise" || key === "pro") return key as PlanType;
   return "free";
 }
 
 export function isPaidPlan(key: string): boolean {
-  return key === "premium" || key === "enterprise";
+  return key === "premium" || key === "enterprise" || key === "pro";
 }
 
 /** Group catalogue by plan key for the pricing page. */

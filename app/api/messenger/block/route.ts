@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/supabase/user";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
+import { uuidSchema } from "@/lib/validations/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,9 @@ export async function POST(req: NextRequest) {
       userId?: string;
     };
     const other = body.userId;
-    if (!other || other === user.id) return jsonError(400, "bad_request");
+    if (!other || !uuidSchema.safeParse(other).success || other === user.id) {
+      return jsonError(400, "bad_request");
+    }
 
     if (body.action === "block") {
       const { error } = await supabase.from("blocked_users").insert({

@@ -713,7 +713,11 @@
     "status_paused": "Paused",
     "status_pending": "Pending",
     "status_cancelled": "Cancelled",
+    "status_cancelling": "Cancelling",
     "status_expired": "Expired",
+    "status_superseded": "Superseded",
+    "status_trialing": "Trial",
+    "interval": "Interval",
     "planFeatures": "Plan features",
     "upgrade": "Upgrade",
     "downgrade": "Change plan",
@@ -750,6 +754,14 @@
       "manualInstructions": "Follow the instructions shown and we'll activate your plan once confirmed.",
       "backToPlans": "Back to plans"
     },
+    "paymentStatus": {
+      "checking": "Checking your payment...",
+      "succeeded": "Payment received. Your plan will be activated once confirmed.",
+      "failed": "Payment failed. Please try again.",
+      "cancelled": "Payment cancelled.",
+      "pending": "Payment pending. We'll update this page when the status changes.",
+      "unknown": "Unable to confirm the payment right now."
+    },
     "invoices": {
       "title": "Invoices",
       "empty": "No invoices yet.",
@@ -762,7 +774,10 @@
     },
     "history": {
       "title": "Transaction history",
-      "empty": "No transactions yet."
+      "empty": "No transactions yet.",
+      "date": "Date",
+      "amount": "Amount",
+      "status": "Status"
     },
     "methods": {
       "title": "Payment method",

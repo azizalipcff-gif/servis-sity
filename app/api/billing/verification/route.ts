@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/user";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
+import { verificationRequestSchema } from "@/lib/validations/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -14,20 +15,15 @@ export async function POST(req: NextRequest) {
     const user = await getCurrentUser();
     if (!user) return jsonError(401, "unauthorized");
 
-    const body = (await req.json().catch(() => ({}))) as {
-      businessId?: string;
-      idDocumentUrl?: string;
-      activityDocumentUrl?: string;
-      licenseUrl?: string;
-      taxDocumentUrl?: string;
-      notes?: string;
-    };
-    if (!body.businessId) return jsonError(400, "bad_request");
+    const body = await req.json().catch(() => null);
+    const parsed = verificationRequestSchema.safeParse(body);
+    if (!parsed.success) return jsonError(400, "bad_request");
 
+    const { businessId } = parsed.data;
     const { data: owner } = await supabase
       .from("businesses")
       .select("id")
-      .eq("id", body.businessId)
+      .eq("id", businessId)
       .eq("owner_id", user.id)
       .maybeSingle();
     if (!owner) return jsonError(403, "forbidden");
@@ -35,7 +31,7 @@ export async function POST(req: NextRequest) {
     const { data: existing } = await supabase
       .from("verification_requests")
       .select("id,status")
-      .eq("business_id", body.businessId)
+      .eq("business_id", businessId)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -43,20 +39,35 @@ export async function POST(req: NextRequest) {
       return jsonError(409, "already_pending");
 
     const payload: Record<string, unknown> = {
-      business_id: body.businessId,
+      business_id: businessId,
       status: "pending",
       created_at: new Date().toISOString(),
     };
-    if (body.idDocumentUrl) payload.id_document_url = body.idDocumentUrl;
-    if (body.activityDocumentUrl) payload.activity_document_url = body.activityDocumentUrl;
-    if (body.licenseUrl) payload.license_url = body.licenseUrl;
-    if (body.taxDocumentUrl) payload.tax_document_url = body.taxDocumentUrl;
-    if (body.notes) payload.notes = body.notes;
+    if (parsed.data.idDocumentUrl) payload.id_document_url = parsed.data.idDocumentUrl;
+    if (parsed.data.activityDocumentUrl) payload.activity_document_url = parsed.data.activityDocumentUrl;
+    if (parsed.data.licenseUrl) payload.license_url = parsed.data.licenseUrl;
+    if (parsed.data.taxDocumentUrl) payload.tax_document_url = parsed.data.taxDocumentUrl;
+    if (parsed.data.notes) payload.notes = parsed.data.notes;
 
     if (existing) {
-      await supabase.from("verification_requests").update(payload as never).eq("id", existing.id);
+      const { error } = await supabase
+        .from("verification_requests")
+        .update(payload as never)
+        .eq("id", existing.id);
+      if (error) return jsonError(500, "update_failed");
     } else {
-      await supabase.from("verification_requests").insert(payload as never);
+      // Concurrent double-submit: the partial unique index
+      // (business_id) WHERE status='pending' rejects the second insert with
+      // 23505. Treat it as the same "already pending" outcome as above.
+      const { error } = await supabase
+        .from("verification_requests")
+        .insert(payload as never);
+      if (error) {
+        if ((error as { code?: string }).code === "23505") {
+          return jsonError(409, "already_pending");
+        }
+        return jsonError(500, "insert_failed");
+      }
     }
 
     return jsonOk({ ok: true, submitted: true });

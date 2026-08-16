@@ -72,6 +72,7 @@ export async function issueInvoice(
       currency: opts.currency,
       issued_at: new Date().toISOString(),
       due_date: new Date(Date.now() + 86400000 * 30).toISOString(),
+      paid_at: opts.status === "paid" ? new Date().toISOString() : null,
     })
     .select("*")
     .single();
@@ -201,9 +202,32 @@ export async function finalizeSuccessfulPayment(
   const lifetime = opts.lifetime ?? opts.intervalType === "lifetime";
   const periodMonths = monthsOfInterval(opts.intervalType);
 
-  await supabase.from("payments").update({ status: "succeeded" }).eq("id", opts.paymentId);
+  // Idempotency guard: never activate the same payment twice. The admin route
+  // also guards on payment.status, but that is NOT a reliable "already
+  // finalized" signal here — the route marks the payment succeeded BEFORE it
+  // calls us — so we key off the durable marker: a transaction already linked
+  // to this payment.
+  const { data: existingPayment } = await supabase
+    .from("payments")
+    .select("id,status")
+    .eq("id", opts.paymentId)
+    .maybeSingle();
+  if (!existingPayment) throw new Error(`finalize:payment_not_found`);
 
-  const { data: sub } = await supabase
+  const { data: existingTx } = await supabase
+    .from("transactions")
+    .select("id")
+    .eq("payment_id", opts.paymentId)
+    .maybeSingle();
+  if (existingTx) return { subscriptionId: null, invoiceId: null, skipped: true };
+
+  const { error: payErr } = await supabase
+    .from("payments")
+    .update({ status: "succeeded" })
+    .eq("id", opts.paymentId);
+  if (payErr) throw new Error(`finalize:mark_paid:${payErr.message}`);
+
+  const { data: sub, error: subErr } = await supabase
     .from("subscriptions")
     .insert({
       business_id: opts.businessId,
@@ -220,10 +244,15 @@ export async function finalizeSuccessfulPayment(
     })
     .select("*")
     .single();
+  if (subErr) throw new Error(`finalize:create_subscription:${subErr.message}`);
 
-  await supabase.from("businesses").update({ plan: opts.planCode }).eq("id", opts.businessId);
+  const { error: bizErr } = await supabase
+    .from("businesses")
+    .update({ plan: opts.planCode })
+    .eq("id", opts.businessId);
+  if (bizErr) throw new Error(`finalize:update_business:${bizErr.message}`);
 
-  await supabase.from("subscription_history").insert({
+  const { error: histErr } = await supabase.from("subscription_history").insert({
     subscription_id: sub?.id ?? null,
     business_id: opts.businessId,
     action: "create",
@@ -234,18 +263,9 @@ export async function finalizeSuccessfulPayment(
     amount_cents: opts.totalCents,
     currency: opts.currency,
   });
+  if (histErr) throw new Error(`finalize:history:${histErr.message}`);
 
-  await supabase.from("transactions").insert({
-    business_id: opts.businessId,
-    user_id: opts.userId,
-    payment_id: opts.paymentId,
-    type: "payment",
-    amount_cents: opts.totalCents,
-    currency: opts.currency,
-    status: "completed",
-    reference: `SUB-${opts.planCode.toUpperCase()}-${opts.intervalType}`,
-  });
-
+  // Invoice must exist before the ledger RPC so coupon usage can link to it.
   const invoice = await issueInvoice(supabase, {
     userId: opts.userId,
     businessId: opts.businessId,
@@ -261,21 +281,23 @@ export async function finalizeSuccessfulPayment(
     currency: opts.currency,
     status: "paid",
   });
-  if (invoice) {
-    await supabase
-      .from("invoices")
-      .update({ status: "paid", paid_at: now.toISOString() })
-      .eq("id", invoice.id);
-  }
 
-  if (opts.couponId) {
-    await supabase.from("coupon_usage").insert({
-      coupon_id: opts.couponId,
-      user_id: opts.userId,
-      invoice_id: invoice?.id ?? null,
-      total_discount_cents: opts.discountCents ?? 0,
-    } as never);
-  }
+  // Trusted ledger write (transaction + coupon usage) via the SECURITY DEFINER
+  // RPC. It runs under the admin session, but derives ownership from the
+  // payment record and requires payment.status = 'succeeded', so a normal user
+  // (or even an admin) can never attribute a row to an arbitrary customer.
+  const { error: ledgerErr } = await supabase.rpc("finalize_payment_ledger", {
+    p_payment_id: opts.paymentId,
+    p_user_id: opts.userId,
+    p_business_id: opts.businessId,
+    p_currency: opts.currency,
+    p_amount_cents: opts.totalCents,
+    p_reference: `SUB-${opts.planCode.toUpperCase()}-${opts.intervalType}`,
+    p_invoice_id: invoice?.id ?? null,
+    p_coupon_id: opts.couponId ?? null,
+    p_discount_cents: opts.discountCents ?? 0,
+  });
+  if (ledgerErr) throw new Error(`finalize:ledger:${ledgerErr.message}`);
 
   return { subscriptionId: sub?.id ?? null, invoiceId: invoice?.id ?? null };
 }

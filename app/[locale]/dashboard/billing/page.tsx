@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 import type { Locale } from "@/lib/translations";
 import { BillingDashboard } from "@/components/billing/billing-dashboard";
 
@@ -16,7 +17,9 @@ export default async function BillingPage({ params }: Props) {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">{t("title")}</h2>
       </div>
-      <BillingDashboard />
+      <Suspense fallback={null}>
+        <BillingDashboard />
+      </Suspense>
     </div>
   );
 }

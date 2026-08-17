@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/user";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 import { resolveProvider } from "@/lib/payments/provider";
 import { recordAttempt } from "@/lib/payments/service";
+import { isTerminalPaymentStatus } from "@/lib/payments/security";
 import { uuidSchema } from "@/lib/validations/schemas";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +43,12 @@ export async function POST(req: NextRequest) {
     if (!payment) return jsonError(404, "not_found");
     if (payment.status === "succeeded") return jsonOk({ status: "succeeded" });
 
+    // Terminal states (refunded/cancelled/partial_refunded) are endpoint
+    // states: a user mirror must never regress them back to a payable state.
+    if (isTerminalPaymentStatus(payment.status)) {
+      return jsonOk({ status: payment.status });
+    }
+
     const provider = resolveProvider(payment.provider);
 
     // Manual gateway stays pending until an admin confirms the transfer.
@@ -67,11 +74,23 @@ export async function POST(req: NextRequest) {
     // subscription/plan grant to the admin confirm action (single grant path).
     await supabase
       .from("payments")
-      .update({
-        status: "succeeded",
-        provider_payment_id: verification.providerPaymentId ?? payment.provider_payment_id,
-      })
+      .update({ status: "succeeded", failure_reason: null })
       .eq("id", payment.id);
+
+    // The gateway-derived provider id (e.g. Stripe payment_intent) is a
+    // snapshot field: non-admin session updates are blocked by the snapshot
+    // trigger, so persist it with the service client — the value always comes
+    // from the gateway response, never from the caller. Unknown/mismatched
+    // values are simply left as the server-recorded reference.
+    if (verification.providerPaymentId && verification.providerPaymentId !== payment.provider_payment_id) {
+      const svc = createServiceClient();
+      if (svc) {
+        await svc
+          .from("payments")
+          .update({ provider_payment_id: verification.providerPaymentId, status: "succeeded" })
+          .eq("id", payment.id);
+      }
+    }
 
     return jsonOk({ status: "succeeded", pendingActivation: true });
   });

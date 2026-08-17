@@ -1,3 +1,4 @@
+import { verifyFormSignature } from "../security.ts";
 import type {
   CheckoutInput,
   CheckoutResult,
@@ -16,6 +17,11 @@ export class CmiMoroccoProvider implements PaymentProvider {
 
   private storeKey(): string {
     return process.env.CMI_STORE_KEY ?? "";
+  }
+
+  private webhookSecret(): string {
+    // The merchant key is the shared secret CMI uses to sign its return hash.
+    return process.env.CMI_WEBHOOK_SECRET || process.env.CMI_STORE_KEY || "";
   }
 
   configured(): boolean {
@@ -58,7 +64,15 @@ export class CmiMoroccoProvider implements PaymentProvider {
     references: string[];
     status?: "succeeded" | "failed";
   }> {
+    // FAIL CLOSED: the merchant key signs the return payload. Without a key, or
+    // when the `Hash` field is missing/wrong, throw — an unsigned forged body
+    // must never mirror a payment to "succeeded". The route maps the throw to a
+    // 5xx so the gateway's retry sees an error, not an ack.
+    const secret = this.webhookSecret();
     const params = new URLSearchParams(body);
+    const provided = params.get("Hash") ?? params.get("hash");
+    await verifyFormSignature(secret, body, provided, "cmi", ["Hash", "hash"]);
+
     const oid = params.get("oid") ?? params.get("clientid") ?? "";
     const response = params.get("Response") ?? params.get("ProcReturnCode") ?? "";
     const success = response === "23" || response === "000";

@@ -1,3 +1,4 @@
+import { verifyFormSignature } from "../security.ts";
 import type {
   CheckoutInput,
   CheckoutResult,
@@ -16,6 +17,11 @@ export class PayzoneProvider implements PaymentProvider {
 
   private merchantId(): string {
     return process.env.PAYZONE_MERCHANT_ID ?? "";
+  }
+
+  private webhookSecret(): string {
+    // The merchant API key is the shared secret Payzone uses to sign returns.
+    return process.env.PAYZONE_WEBHOOK_SECRET || process.env.PAYZONE_API_KEY || "";
   }
 
   configured(): boolean {
@@ -57,7 +63,18 @@ export class PayzoneProvider implements PaymentProvider {
     references: string[];
     status?: "succeeded" | "failed";
   }> {
+    // FAIL CLOSED: the merchant API key signs the return payload. Without a key,
+    // or when the `signature`/`SHA` field is missing or wrong, throw so the
+    // route 5xxes and an unsigned forged body can never mirror "succeeded".
+    const secret = this.webhookSecret();
     const params = new URLSearchParams(body);
+    const provided = params.get("signature") ?? params.get("sign") ?? params.get("SHA");
+    await verifyFormSignature(secret, body, provided, "payzone", [
+      "signature",
+      "sign",
+      "SHA",
+    ]);
+
     const ref = params.get("pay_token") ?? params.get("invoiceNumber") ?? "";
     const responseCode = params.get("responseCode") ?? params.get("error") ?? "";
     const success = responseCode === "0" || responseCode === "000";

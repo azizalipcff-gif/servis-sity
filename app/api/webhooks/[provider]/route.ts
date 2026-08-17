@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { resolveProvider } from "@/lib/payments/provider";
 import { createServiceClient } from "@/lib/supabase/server";
 import { recordAttempt } from "@/lib/payments/service";
+import { isTerminalPaymentStatus, paymentMatchesProvider } from "@/lib/payments/security";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 
 export const dynamic = "force-dynamic";
@@ -29,13 +30,16 @@ export async function POST(req: NextRequest, { params }: Props) {
     const sb = createServiceClient();
     if (!sb) return jsonError(500, "service_role_unconfigured");
 
-    // Match by provider reference (session/order id) OR idempotency key.
+    // Match by provider reference (session/order id) OR idempotency key. Both
+    // lookups are scoped to this webhook's provider so an (unsigned) webhook
+    // from one gateway can never update a payment recorded under another.
     let payment = null;
     for (const ref of result.references) {
       if (!ref) continue;
       const byProvider = await sb
         .from("payments")
         .select("id,status,provider,provider_payment_id,idempotency_key,user_id,business_id")
+        .eq("provider", provider.code)
         .eq("provider_payment_id", ref)
         .maybeSingle();
       if (byProvider.data) {
@@ -45,6 +49,7 @@ export async function POST(req: NextRequest, { params }: Props) {
       const byKey = await sb
         .from("payments")
         .select("id,status,provider,provider_payment_id,idempotency_key,user_id,business_id")
+        .eq("provider", provider.code)
         .eq("idempotency_key", ref)
         .maybeSingle();
       if (byKey.data) {
@@ -54,12 +59,18 @@ export async function POST(req: NextRequest, { params }: Props) {
     }
     if (!payment) return jsonOk({ ok: true, event: result.event, matched: false });
 
-    // Only forward transition: succeeded/refunded are terminal from the gateway.
-    if (
-      payment.status === "succeeded" ||
-      payment.status === "refunded" ||
-      payment.status === "cancelled"
-    ) {
+    // Belt & braces: the provider filter above already guarantees this, but a
+    // payment whose status is terminal must never be moved again.
+    if (!paymentMatchesProvider(provider.code, payment as { provider?: string | null })) {
+      return jsonOk({ ok: true, event: result.event, matched: false });
+    }
+
+    // Idempotent delivery: a duplicate webhook for the same state is a no-op.
+    if (payment.status === result.status)
+      return jsonOk({ ok: true, event: result.event, matched: true, noop: true });
+
+    // Only forward transitions: succeeded/refunded are terminal from the gateway.
+    if (isTerminalPaymentStatus(payment.status)) {
       return jsonOk({ ok: true, event: result.event, matched: true, terminal: true });
     }
 

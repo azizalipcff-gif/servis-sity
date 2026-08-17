@@ -1,0 +1,21 @@
+warning: in the working copy of 'app/api/admin/payments/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/api/billing/checkout/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/api/billing/featured/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/api/billing/payments/verify/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/api/search/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/api/webhooks/[provider]/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/payments/providers/cmi.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/payments/providers/payzone.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'lib/payments/providers/stripe.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+ app/api/admin/payments/route.ts          | 28 [32m+++++++++++++++++++++++++[m[31m---[m
+ app/api/billing/checkout/route.ts        | 13 [32m++++++++++[m[31m---[m
+ app/api/billing/featured/route.ts        |  9 [32m+++++++[m[31m--[m
+ app/api/billing/payments/verify/route.ts | 29 [32m++++++++++++++++++++++++[m[31m-----[m
+ app/api/search/route.ts                  | 28 [32m+++++++++++++++++++++++++++[m[31m-[m
+ app/api/webhooks/[provider]/route.ts     | 25 [32m++++++++++++++++++[m[31m-------[m
+ lib/payments/providers/cmi.ts            | 14 [32m++++++++++++++[m
+ lib/payments/providers/payzone.ts        | 17 [32m+++++++++++++++++[m
+ lib/payments/providers/stripe.ts         | 22 [32m+++++[m[31m-----------------[m
+ package.json                             |  3 [32m++[m[31m-[m
+ 10 files changed, 149 insertions(+), 39 deletions(-)

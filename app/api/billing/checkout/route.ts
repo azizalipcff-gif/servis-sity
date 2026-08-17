@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/user";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
@@ -23,6 +23,13 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient();
     const user = await getCurrentUser();
     if (!user) return jsonError(401, "unauthorized");
+
+    // Payment rows are a SERVER-controlled snapshot (amount, plan metadata,
+    // provider reference). They are created with the service client so no
+    // RLS path lets a user author an arbitrary payment to present to an admin
+    // for confirmation. The service role key is a required deploy credential.
+    const server = createServiceClient();
+    if (!server) return jsonError(500, "service_role_unconfigured");
 
     const body = (await req.json().catch(() => ({}))) as {
       planCode?: string;
@@ -70,7 +77,7 @@ export async function POST(req: NextRequest) {
     const provider = resolveProvider();
     const idempotencyKey = randomUUID();
 
-    const payment = await recordPayment(supabase, {
+    const payment = await recordPayment(server, {
       userId: user.id,
       businessId: body.businessId,
       subscriptionId: null,
@@ -110,7 +117,7 @@ export async function POST(req: NextRequest) {
       customerEmail: user.email,
     });
 
-    await supabase
+    await server
       .from("payments")
       .update({
         provider_payment_id: checkout.paymentReference,

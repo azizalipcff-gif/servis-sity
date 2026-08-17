@@ -166,8 +166,15 @@ async function searchHybrid(
       supabase,
     );
 
+    // Canonical city slug map (id -> cities.slug), the same canonical source
+    // the legacy path joins. Only loaded when the pool actually has businesses.
+    const citySlugs =
+      bizIds.length > 0
+        ? await loadCitySlugById(supabase)
+        : new Map<string, string | null>();
+
     const items: SearchItem[] = rows.map((r) =>
-      hybridRowToItem(r, categories, prices),
+      hybridRowToItem(r, categories, prices, citySlugs),
     );
 
     if (params.lat != null && params.lng != null) {
@@ -189,6 +196,7 @@ function hybridRowToItem(
   row: HybridRow,
   categories: Map<string, Category>,
   prices: Map<string, number>,
+  citySlugs: ReadonlyMap<string, string | null>,
 ): SearchItem {
   const p = row.payload;
   const categoryFor = (id: number | string | null | undefined) =>
@@ -235,12 +243,16 @@ function hybridRowToItem(
     }
     default: {
       const id = String(p.id);
+      const cityId = p.city_id != null ? String(p.city_id) : null;
       return {
         ...(p as unknown as SearchBusiness),
         id,
         kind: "business",
         categories: categoryFor(p.category_id as string | null),
         starting_price: prices.get(id) ?? null,
+        // Canonical cities.slug resolved via city_id; null keeps the URL
+        // layer's existing slugify(city) fallback for legacy rows.
+        city_slug: cityId != null ? (citySlugs.get(cityId) ?? null) : null,
       };
     }
   }
@@ -580,6 +592,20 @@ async function loadCategories(
     .from("categories")
     .select("id, slug, icon, image_url, name_ar, name_fr, name_en");
   for (const c of data ?? []) map.set(c.id, c as Category);
+  return map;
+}
+
+/**
+ * Canonical city slug map (id -> cities.slug) — the same canonical source the
+ * legacy business path joins. Loaded in-memory for this request; rows without
+ * a `city_id` keep `city_slug` null so the URL layer's legacy fallback applies.
+ */
+async function loadCitySlugById(
+  supabase: Supabase,
+): Promise<Map<string, string | null>> {
+  const map = new Map<string, string | null>();
+  const { data } = await supabase.from("cities").select("id, slug");
+  for (const c of data ?? []) map.set(c.id, c.slug);
   return map;
 }
 

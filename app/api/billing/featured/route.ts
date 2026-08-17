@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/user";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
@@ -58,6 +58,11 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
     if (!owner.data) return jsonError(403, "forbidden");
 
+    // Payment rows are a server-controlled snapshot created via the service
+    // client; a user session must never author an arbitrary payment.
+    const server = createServiceClient();
+    if (!server) return jsonError(500, "service_role_unconfigured");
+
     // Idempotency: reject while a pending slot already exists for this
     // business+surface (prevents duplicate pending purchases from retries).
     const { data: existing } = await supabase
@@ -70,7 +75,7 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
     if (existing) return jsonError(409, "featured_pending");
 
-    const payment = await recordPayment(supabase, {
+    const payment = await recordPayment(server, {
       userId: user.id,
       businessId,
       subscriptionId: null,

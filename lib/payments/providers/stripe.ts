@@ -1,3 +1,4 @@
+import { verifyStripeSignature } from "../security.ts";
 import type {
   CheckoutInput,
   CheckoutResult,
@@ -126,10 +127,10 @@ export class StripeProvider implements PaymentProvider {
     const sig = headers.get("stripe-signature") ?? "";
     if (!sig) throw new Error("stripe:webhook:bad_signature");
 
-    const expected = await this.sign(secret, body);
-    if (!sig.split(",").some((part) => part === `v1=${expected}`)) {
-      throw new Error("stripe:webhook:invalid_signature");
-    }
+    // Strict t=,v1= verification over `${t}.${body}` within the clock-tolerance
+    // window. A forged, replayed or malformed signature throws and the route
+    // surfaces a 5xx (fail closed) — never a mirrored success.
+    await verifyStripeSignature(secret, sig, body);
 
     const event = JSON.parse(body) as {
       type?: string;
@@ -143,18 +144,5 @@ export class StripeProvider implements PaymentProvider {
           ? "succeeded"
           : undefined,
     };
-  }
-
-  private async sign(secret: string, payload: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      "raw",
-      encoder.encode(secret),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"],
-    );
-    const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
-    return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 }

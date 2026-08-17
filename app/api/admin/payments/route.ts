@@ -4,6 +4,8 @@ import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 import { finalizeSuccessfulPayment } from "@/lib/payments/service";
 import { resolveProvider } from "@/lib/payments/provider";
+import { adminConfirmGuard } from "@/lib/payments/security";
+import { getPlan } from "@/lib/billing/plans";
 import { notifyUser } from "@/lib/notifications";
 import { paymentPatchSchema } from "@/lib/validations/admin-schemas";
 import type { PlanType } from "@/lib/supabase/database.types";
@@ -45,6 +47,17 @@ export async function PATCH(req: NextRequest) {
     if (!payment) return jsonError(404, "not_found");
 
     if (action === "confirm") {
+      // Entitlement-grant preconditions: never confirm a terminal/negative
+      // payment, and require online payments to have been gateway-verified as
+      // succeeded. Manual (offline) payments stay 'pending' until an admin
+      // confirms the transfer, so they are exempt.
+      const guard = adminConfirmGuard(payment);
+      if (!guard.ok) {
+        return guard.code === "payment_not_verified"
+          ? jsonError(409, "payment_not_verified")
+          : jsonError(400, "payment_not_confirmable");
+      }
+
       // Idempotent: a second confirm click must not finalize (which would
       // create a duplicate subscription + transaction) for an already
       // finalized payment. We cannot key off payment.status here: the verify
@@ -72,15 +85,24 @@ export async function PATCH(req: NextRequest) {
             .order("created_at", { ascending: true })
             .limit(1);
         } else if (meta.planCode) {
+          // The payment snapshot is server-controlled (see migration 0029), so
+          // metadata.planCode / interval may be trusted; still re-validate the
+          // plan against the live catalogue before creating a subscription.
+          const plan = await getPlan(
+            String(meta.planCode),
+            String(meta.interval) as Parameters<typeof getPlan>[1],
+          );
+          if (!plan) return jsonError(400, "plan_invalid");
+
           await finalizeSuccessfulPayment(supabase, {
             userId: payment.user_id,
             businessId: payment.business_id,
             paymentId: payment.id,
             planCode: meta.planCode as PlanType,
             intervalType: String(meta.interval),
-            planName: String(meta.planName),
-            amountCents: payment.amount_cents,
-            currency: payment.currency,
+            planName: String(meta.planName ?? plan.name),
+            amountCents: plan.price_cents,
+            currency: plan.currency,
             discountCents: Number(meta.discountCents ?? 0),
             taxRate: Number(meta.taxRate ?? 0),
             taxCents: Number(meta.taxCents ?? 0),

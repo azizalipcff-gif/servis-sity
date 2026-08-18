@@ -24,14 +24,29 @@ export async function PATCH(request: Request) {
     const parsed = businessPatchSchema.safeParse(body);
     if (!parsed.success) return jsonError(400, "bad_request");
 
-    const { id, status, plan, verification_status, verified } = parsed.data;
+    const { id, status, status_note, plan, verification_status, verified } = parsed.data;
+
+    // Load the current row to record the canonical transition (previous status)
+    // and to notify the owner on approval. The authenticated admin is always
+    // the reviewer: no client-provided reviewer/id is ever accepted.
+    const { data: current, error: readError } = await guard.supabase
+      .from("businesses")
+      .select("id, name, owner_id, status, status_note")
+      .eq("id", id)
+      .maybeSingle();
+    if (readError || !current) return jsonError(404, "not_found");
+
     const patch: {
       status?: BusinessStatus;
+      status_note?: string | null;
       plan?: PlanType;
       verification_status?: VerificationStatus;
       verified?: boolean;
     } = {};
     if (status) patch.status = status;
+    if (status_note !== undefined) patch.status_note = status_note;
+    // Approving the listing clears any previous rejection note.
+    if (status === "approved") patch.status_note = null;
     if (plan) patch.plan = plan;
     if (verification_status) {
       patch.verification_status = verification_status;
@@ -44,33 +59,49 @@ export async function PATCH(request: Request) {
 
     // Notify the business owner when their listing is verified.
     if (verification_status === "verified") {
-      const { data: business } = await guard.supabase
-        .from("businesses")
-        .select("id,name,owner_id")
-        .eq("id", id)
-        .maybeSingle();
-      if (business?.owner_id) {
+      if (current.owner_id) {
         await guard.supabase.from("notifications").insert({
-          recipient_id: business.owner_id,
+          recipient_id: current.owner_id,
           type: "verification",
-          title: business.name ?? "",
+          title: current.name ?? "",
           body: "VERIFIED",
           link: `/dashboard?tab=verification`,
         });
       }
     }
 
+    // Notify the owner when their listing transitions *to* approved by an admin.
+    if (status === "approved" && current.status !== "approved" && current.owner_id) {
+      await guard.supabase.from("notifications").insert({
+        recipient_id: current.owner_id,
+        type: "admin",
+        title: current.name ?? "",
+        body: "APPROVED",
+        link: `/dashboard?tab=business`,
+      });
+    }
+
     let action: AuditAction;
-    if (status) action = "business.status_change";
+    if (status || status_note !== undefined) action = "business.status_change";
     else if (verification_status === "verified") action = "business.verify";
     else if (verification_status === "rejected") action = "business.reject_verification";
     else action = "business.plan_change";
+
+    const metadata: Record<string, unknown> = {};
+    if (status) {
+      metadata.from = current.status;
+      metadata.to = status;
+      if (status_note !== undefined) metadata.note = status_note;
+    }
+    if (plan) metadata.plan = plan;
+    if (verification_status) metadata.verification_status = verification_status;
+
     await writeAudit({
       actorId: guard.admin.id,
       action,
       targetType: "business",
       targetId: id,
-      metadata: patch,
+      metadata,
     });
 
     return jsonOk();

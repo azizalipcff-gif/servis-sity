@@ -3,24 +3,27 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
-  BadgeCheck,
   Banknote,
+  BadgeCheck,
+  Eye,
+  Loader2,
   ShieldCheck,
+  Store,
   Trash2,
+  XCircle,
 } from "lucide-react";
 import { localizedName, type Locale } from "@/lib/translations";
+import type { AdminBusiness } from "@/lib/queries";
 import type {
-  AdminBusiness,
-} from "@/lib/queries";
-import {
-  type BusinessStatus,
-  type PlanType,
-  type VerificationStatus,
+  BusinessStatus,
+  PlanType,
+  VerificationStatus,
 } from "@/lib/supabase/database.types";
 import { Link } from "@/i18n/navigation";
 import { businessHref } from "@/lib/business/url";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BusinessPreviewDrawer } from "@/components/admin/business-preview-drawer";
 
 type Props = {
   businesses: AdminBusiness[];
@@ -40,7 +43,8 @@ export function BusinessesTable({ businesses, locale }: Props) {
   const [rows, setRows] = useState(businesses);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | BusinessStatus>("all");
-  const [busy, setBusy] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ id: string; action?: "reject" } | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -54,44 +58,62 @@ export function BusinessesTable({ businesses, locale }: Props) {
   }, [rows, query, status]);
 
   async function api(path: string, method: string, body?: unknown) {
-    setBusy(true);
-    try {
-      const res = await fetch(path, {
-        method,
-        headers: body ? { "Content-Type": "application/json" } : undefined,
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      return res.ok;
-    } finally {
-      setBusy(false);
-    }
+    const res = await fetch(path, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return res.ok;
   }
 
   function update(id: string, patch: Partial<AdminBusiness>) {
     setRows((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
   }
 
-  async function applyStatus(b: AdminBusiness, newStatus: BusinessStatus) {
-    if (await api("/api/admin/businesses", "PATCH", { id: b.id, status: newStatus }))
-      update(b.id, { status: newStatus });
+  async function runWith(loadingId: string, fn: () => Promise<boolean>) {
+    setBusyId(loadingId);
+    try {
+      return await fn();
+    } finally {
+      setBusyId(null);
+    }
   }
-  async function setPlan(b: AdminBusiness, plan: PlanType) {
-    if (await api("/api/admin/businesses", "PATCH", { id: b.id, plan }))
-      update(b.id, { plan });
+
+  function applyStatus(b: AdminBusiness, newStatus: BusinessStatus) {
+    void runWith(b.id, () =>
+      api("/api/admin/businesses", "PATCH", { id: b.id, status: newStatus }).then((ok) => {
+        if (ok) update(b.id, { status: newStatus });
+        return ok;
+      }),
+    );
   }
-  async function setVerification(b: AdminBusiness, verification_status: VerificationStatus) {
-    if (
-      await api("/api/admin/businesses", "PATCH", {
+  function setPlan(b: AdminBusiness, plan: PlanType) {
+    void runWith(b.id, () =>
+      api("/api/admin/businesses", "PATCH", { id: b.id, plan }).then((ok) => {
+        if (ok) update(b.id, { plan });
+        return ok;
+      }),
+    );
+  }
+  function setVerification(b: AdminBusiness, verification_status: VerificationStatus) {
+    void runWith(b.id, () =>
+      api("/api/admin/businesses", "PATCH", {
         id: b.id,
         verification_status,
-      })
-    )
-      update(b.id, { verification_status, verified: verification_status === "verified" });
+      }).then((ok) => {
+        if (ok) update(b.id, { verification_status, verified: verification_status === "verified" });
+        return ok;
+      }),
+    );
   }
-  async function remove(b: AdminBusiness) {
+  function remove(b: AdminBusiness) {
     if (!confirm(t("confirmDelete"))) return;
-    if (await api(`/api/admin/businesses?id=${b.id}`, "DELETE"))
-      setRows((prev) => prev.filter((x) => x.id !== b.id));
+    void runWith(b.id, () =>
+      api(`/api/admin/businesses?id=${b.id}`, "DELETE").then((ok) => {
+        if (ok) setRows((prev) => prev.filter((x) => x.id !== b.id));
+        return ok;
+      }),
+    );
   }
 
   const statusBadge = (s: BusinessStatus) => {
@@ -104,6 +126,27 @@ export function BusinessesTable({ businesses, locale }: Props) {
     return <Badge variant={map[s]}>{t(s)}</Badge>;
   };
 
+  const dateFmt = (v: string) =>
+    new Intl.DateTimeFormat(locale === "ar" ? "ar-MA" : locale, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(v));
+
+  function PreviewButton({ b, label }: { b: AdminBusiness; label: string }) {
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setPreview({ id: b.id })}
+        title={label}
+      >
+        <Eye className="size-4" />
+        <span className="hidden sm:inline">{label}</span>
+      </Button>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -113,18 +156,22 @@ export function BusinessesTable({ businesses, locale }: Props) {
           placeholder={t("searchPlaceholder")}
           className="h-10 min-w-0 flex-1 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring sm:max-w-xs"
         />
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as "all" | BusinessStatus)}
-          className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="all">{t("all")}</option>
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {t(s)}
-            </option>
+        <div className="flex flex-wrap gap-2">
+          {(["all", ...STATUSES] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatus(s)}
+              className={
+                "rounded-full px-3 py-1.5 text-sm font-medium transition-colors " +
+                (status === s
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-foreground/75 hover:bg-muted/70")
+              }
+            >
+              {s === "all" ? t("all") : t(s)}
+            </button>
           ))}
-        </select>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -133,82 +180,123 @@ export function BusinessesTable({ businesses, locale }: Props) {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-3xl border bg-card">
-          <table className="w-full min-w-[820px] text-sm">
+          <table className="w-full min-w-[980px] text-sm">
             <thead className="border-b bg-muted/50">
               <tr>
                 <th className="px-4 py-3 text-start font-medium">{t("name")}</th>
                 <th className="px-4 py-3 text-start font-medium">{t("category")}</th>
+                <th className="px-4 py-3 text-start font-medium">{t("city")}</th>
                 <th className="px-4 py-3 text-start font-medium">{t("owner")}</th>
-                <th className="px-4 py-3 text-start font-medium">{t("plan")}</th>
                 <th className="px-4 py-3 text-start font-medium">{t("status")}</th>
-                <th className="px-4 py-3 text-start font-medium">{t("verify")}</th>
+                <th className="px-4 py-3 text-start font-medium">{t("created")}</th>
                 <th className="px-4 py-3 text-end font-medium">{t("actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {filtered.map((b) => (
                 <tr key={b.id}>
-                  <td className="px-4 py-3 font-medium">{b.name}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="relative size-10 shrink-0 overflow-hidden rounded-lg border bg-muted">
+                        {b.logo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={b.logo_url}
+                            alt={b.name}
+                            className="size-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="grid size-full place-items-center text-muted-foreground">
+                            <Store className="size-5" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="max-w-[220px] truncate font-medium">{b.name}</p>
+                        {b.slug && (
+                          <p className="max-w-[220px] truncate text-xs text-muted-foreground" dir="ltr">
+                            /{b.slug}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </td>
                   <td className="px-4 py-3">
                     {b.categories ? localizedName(b.categories, locale) : "—"}
                   </td>
+                  <td className="px-4 py-3">{b.city ?? "—"}</td>
                   <td className="px-4 py-3">{b.profiles?.full_name ?? "—"}</td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={b.plan}
-                      disabled={busy}
-                      onChange={(e) => setPlan(b, e.target.value as PlanType)}
-                      className="h-8 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-                    >
-                      {PLANS.map((p) => (
-                        <option key={p} value={p}>
-                          {p}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
                   <td className="px-4 py-3">{statusBadge(b.status)}</td>
-                  <td className="px-4 py-3">
-                    {b.verification_status === "verified" ? (
-                      <span className="inline-flex items-center gap-1 text-sm font-medium text-success">
-                        <BadgeCheck className="size-4" />
-                        {t("markVerified")}
-                      </span>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={busy}
-                        onClick={() => setVerification(b, "verified")}
-                      >
-                        <ShieldCheck className="size-4" />
-                        {t("verify")}
-                      </Button>
-                    )}
+                  <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
+                    {dateFmt(b.created_at)}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex justify-end gap-1">
+                    <div className="flex flex-wrap items-center justify-end gap-1">
+                      <PreviewButton b={b} label={t("preview")} />
+
+                      {b.status !== "approved" && (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          disabled={busyId === b.id}
+                          onClick={() => applyStatus(b, "approved")}
+                          className="text-xs"
+                        >
+                          {busyId === b.id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <BadgeCheck className="size-4" />
+                          )}
+                          <span className="hidden lg:inline">{t("approve")}</span>
+                        </Button>
+                      )}
+                      {b.status !== "rejected" && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={busyId === b.id}
+                          onClick={() => setPreview({ id: b.id, action: "reject" })}
+                          className="text-xs"
+                        >
+                          <XCircle className="size-4" />
+                          <span className="hidden lg:inline">{t("reject")}</span>
+                        </Button>
+                      )}
+
                       <select
-                        value={b.status}
-                        disabled={busy}
-                        onChange={(e) => applyStatus(b, e.target.value as BusinessStatus)}
-                        className="h-8 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+                        value={b.plan}
+                        disabled={busyId === b.id}
+                        onChange={(e) => setPlan(b, e.target.value as PlanType)}
+                        className="h-8 rounded-md border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+                        title={t("plan")}
                       >
-                        {STATUSES.map((s) => (
-                          <option key={s} value={s}>
-                            {t(s)}
+                        {PLANS.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
                           </option>
                         ))}
                       </select>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => remove(b)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
+
+                      {b.verification_status === "verified" ? (
+                        <span
+                          className="inline-flex items-center gap-1 text-xs font-medium text-success"
+                          title={t("markVerified")}
+                        >
+                          <BadgeCheck className="size-4" />
+                        </span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={busyId === b.id}
+                          onClick={() => setVerification(b, "verified")}
+                          title={t("verify")}
+                        >
+                          <ShieldCheck className="size-4" />
+                        </Button>
+                      )}
+
                       <Link
                         href={businessHref(b)}
                         target="_blank"
@@ -218,6 +306,16 @@ export function BusinessesTable({ businesses, locale }: Props) {
                         <Banknote className="size-4" />
                         <span className="sr-only">{t("viewPage")}</span>
                       </Link>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={busyId === b.id}
+                        onClick={() => remove(b)}
+                        className="text-destructive hover:text-destructive"
+                        title={t("delete")}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -225,6 +323,19 @@ export function BusinessesTable({ businesses, locale }: Props) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {preview && (
+        <BusinessPreviewDrawer
+          key={preview.id}
+          open
+          businessId={preview.id}
+          fallbackName={rows.find((r) => r.id === preview.id)?.name ?? ""}
+          locale={locale}
+          initialAction={preview.action}
+          onClose={() => setPreview(null)}
+          onModerated={(id, newStatus) => update(id, { status: newStatus })}
+        />
       )}
     </div>
   );

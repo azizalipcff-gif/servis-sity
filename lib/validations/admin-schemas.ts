@@ -18,13 +18,22 @@ export const businessPatchSchema = z
     plan: z.enum(["free", "premium", "pro"]).optional(),
     verification_status: z.enum(["none", "pending", "verified", "rejected"]).optional(),
     verified: z.boolean().optional(),
+    /** Moderation note (e.g. rejection reason). Trimmed, length-capped. */
+    status_note: z
+      .union([
+        z.string().trim().min(1).max(500),
+        z.null(),
+        z.undefined(),
+      ])
+      .optional(),
   })
   .refine(
     (v) =>
       v.status !== undefined ||
       v.plan !== undefined ||
       v.verification_status !== undefined ||
-      v.verified !== undefined,
+      v.verified !== undefined ||
+      v.status_note !== undefined,
     { message: "empty_patch" },
   );
 

@@ -644,7 +644,8 @@
       "completenessVerification": "شارة التوثيق",
       "completenessVerificationHint": "أرسل مستنداتك للحصول على التوثيق",
       "billingLink": "الفوترة والاشتراك"
-    }
+    },
+    "whatsappInvalid": "أدخل رقم واتساب مغربيًا صحيحًا، مثال: +212 6XX XXX XXX"
   },
   "admin": {
     "title": "لوحة الإدارة",

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { sanitizeText, sanitizeUrl } from "../security/sanitize.ts";
 import { isValidMoroccanPhone } from "./phone.ts";
+import { normalizeMoroccanWhatsApp } from "../whatsapp/index.ts";
 
 /** Standard UUID string (Postgres uuid). */
 export const uuidSchema = z.string().uuid("invalidId");
@@ -27,6 +28,20 @@ export const phoneSchema = z
   .min(8, "minLength")
   .max(24, "maxLength")
   .refine(isValidMoroccanPhone, "invalidPhone");
+
+/**
+ * WhatsApp numbers are normalized to the single canonical `+212xxxxxxxxx`
+ * shape, so the database never holds the same number in multiple formats.
+ * `""` (field absent) and `undefined` are allowed.
+ */
+export const whatsappSchema = z
+  .string()
+  .min(8, "minLength")
+  .max(24, "maxLength")
+  .refine((v) => normalizeMoroccanWhatsApp(v) !== null, "invalidPhone")
+  .transform((v) => normalizeMoroccanWhatsApp(v) as string);
+
+export const whatsappOptionalSchema = whatsappSchema.optional().or(z.literal(""));
 
 export const loginSchema = z.object({
   email: emailSchema,
@@ -55,7 +70,7 @@ export const businessSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "invalidSlug"),
   description: z.string().max(3000).optional().or(z.literal("")),
   phone: phoneSchema.optional().or(z.literal("")),
-  whatsapp: phoneSchema.optional().or(z.literal("")),
+  whatsapp: whatsappOptionalSchema,
   address: z.string().max(300).optional().or(z.literal("")),
   city: z.string().max(80).optional().or(z.literal("")),
   lat: z.number().nullable().optional(),

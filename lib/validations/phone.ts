@@ -15,7 +15,7 @@ import { z } from "zod";
  */
 
 /** Tolerated separators anywhere in the raw input. */
-const SEPARATOR_REGEX = /[\s.\-()]/g;
+export const SEPARATOR_REGEX = /[\s.\-()]/g;
 
 const AREA_CLEAN = /^[5-7]\d{8}$/;
 const NATIONAL_CLEAN = /^0[5-7]\d{8}$/;

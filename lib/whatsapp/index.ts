@@ -1,15 +1,16 @@
-import {
-  normalizeMoroccanPhone,
-  toE164Digits,
-} from "@/lib/validations/phone";
+import { SEPARATOR_REGEX } from "../validations/phone.ts";
 
 /**
  * WhatsApp public-link helpers.
  *
+ * WhatsApp numbers are stored in ONE canonical shape: `+212xxxxxxxxx`
+ * (E.164 with leading +). `normalizeMoroccanWhatsApp` is the single
+ * normalization function used on load and on save, so the same number can
+ * never be persisted in multiple formats.
+ *
  * The DEFAULT WhatsApp button is deactivated until the owner explicitly
- * enables it (`whatsapp_enabled`). When enabled, the link uses the stored
- * `whatsapp_url` (a `wa.me/<E.164>` link computed when the number is saved)
- * and falls back to normalizing the raw `whatsapp` number.
+ * enables it (`whatsapp_enabled`). When enabled, the public link is always
+ * rebuilt from the normalized number — never from a hand-built string.
  */
 
 export type WhatsAppSource = {
@@ -18,16 +19,45 @@ export type WhatsAppSource = {
   whatsapp_enabled?: boolean | null;
 };
 
-/** E.164 digits for the number, preferring the stored wa.me URL. */
+/**
+ * Canonicalize a Moroccan WhatsApp (mobile) number to `+212xxxxxxxxx`.
+ *
+ * Accepts national (`0659785764`) and international (`+212659785764`,
+ * including separators like `+212 659 785 764`). Rejects `00212…`, doubled
+ * country codes (`+212212659785764`) and any malformed value. Returns null
+ * when the number is not a well-formed Moroccan mobile.
+ */
+export function normalizeMoroccanWhatsApp(
+  value: string | null | undefined,
+): string | null {
+  if (!value) return null;
+  const clean = value.replace(SEPARATOR_REGEX, "");
+  const m = /^(\+212|0)([5-7]\d{8})$/.exec(clean);
+  return m ? `+212${m[2]}` : null;
+}
+
+/** Canonical wa.me digits (no leading +) for a raw number, or null. */
+function e164Digits(value: string | null | undefined): string | null {
+  const normalized = normalizeMoroccanWhatsApp(value);
+  return normalized ? normalized.slice(1) : null;
+}
+
+/** E.164 digits for the number, preferring (and re-normalizing) the stored URL. */
 export function whatsappE164Digits(business: WhatsAppSource): string | null {
   const url = business.whatsapp_url?.trim();
   if (url) {
     const m = /(?:wa\.me|api\.whatsapp\.com\/send)\/?([\d+]+)/.exec(url);
-    if (m) return m[1];
+    if (m) {
+      // Legacy URLs may embed a stray `+` or a national format — strip and
+      // re-normalize so we never emit `wa.me/+212…` or `wa.me/06…`.
+      const digits = m[1].replace(/\D/g, "");
+      const restored = digits.startsWith("212") ? `+${digits}` : digits;
+      const normalized = normalizeMoroccanWhatsApp(restored);
+      if (normalized) return normalized.slice(1);
+    }
   }
   if (!business.whatsapp) return null;
-  const normalized = normalizeMoroccanPhone(business.whatsapp);
-  return normalized ? toE164Digits(normalized) : null;
+  return e164Digits(business.whatsapp);
 }
 
 /** A shareable wa.me link, or null when the business has no valid number. */

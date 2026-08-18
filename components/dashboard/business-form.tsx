@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { businessSchema } from "@/lib/validations/schemas";
 import { slugify } from "@/lib/slug";
 import { localizedName, type Locale } from "@/lib/translations";
-import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { buildWhatsAppUrl, normalizeMoroccanWhatsApp } from "@/lib/whatsapp";
 import { MOROCCAN_CITIES } from "@/lib/constants";
 import type { BusinessDetail } from "@/lib/queries";
 import type { Category } from "@/lib/supabase/database.types";
@@ -60,7 +60,11 @@ export function BusinessForm({ business, categories, userId, locale }: Props) {
   const [categoryId, setCategoryId] = useState(business?.category_id ?? "");
   const [description, setDescription] = useState(business?.description ?? "");
   const [phone, setPhone] = useState(business?.phone ?? "");
-  const [whatsapp, setWhatsapp] = useState(business?.whatsapp ?? "");
+  const [whatsapp, setWhatsapp] = useState(
+    business?.whatsapp
+      ? (normalizeMoroccanWhatsApp(business.whatsapp) ?? business.whatsapp)
+      : "",
+  );
   const [whatsappEnabled, setWhatsappEnabled] = useState(
     business?.whatsapp_enabled ?? false,
   );
@@ -68,6 +72,8 @@ export function BusinessForm({ business, categories, userId, locale }: Props) {
   const whatsappLink = whatsapp.trim()
     ? buildWhatsAppUrl({ whatsapp })
     : null;
+  const whatsappError =
+    whatsapp.trim() !== "" && normalizeMoroccanWhatsApp(whatsapp) === null;
   const [address, setAddress] = useState(business?.address ?? "");
   const [city, setCity] = useState(business?.city ?? "");
   const [logoUrl, setLogoUrl] = useState(business?.logo_url ?? "");
@@ -108,15 +114,19 @@ export function BusinessForm({ business, categories, userId, locale }: Props) {
     setLoading(true);
     try {
       const supabase = createClient();
+      const whatsappNumber = parsed.data.whatsapp || null;
+      const whatsappUrl = whatsappNumber
+        ? buildWhatsAppUrl({ whatsapp: whatsappNumber })
+        : null;
       const payload = {
         name: parsed.data.name,
         category_id: parsed.data.category_id,
         slug: parsed.data.slug,
         description: parsed.data.description || null,
         phone: parsed.data.phone || null,
-        whatsapp: parsed.data.whatsapp || null,
-        whatsapp_url: whatsappLink || null,
-        whatsapp_enabled: Boolean(whatsappLink) && whatsappEnabled,
+        whatsapp: whatsappNumber,
+        whatsapp_url: whatsappUrl,
+        whatsapp_enabled: Boolean(whatsappUrl) && whatsappEnabled,
         address: parsed.data.address || null,
         city: parsed.data.city || null,
         logo_url: logoUrl || null,
@@ -237,9 +247,19 @@ export function BusinessForm({ business, categories, userId, locale }: Props) {
                     id="whatsapp"
                     type="tel"
                     dir="ltr"
+                    placeholder="+212 6XX XXX XXX"
+                    inputMode="tel"
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value)}
+                    onBlur={(e) => {
+                      const normalized = normalizeMoroccanWhatsApp(e.target.value);
+                      if (normalized) setWhatsapp(normalized);
+                    }}
+                    aria-invalid={whatsappError || undefined}
                   />
+                  {whatsappError && (
+                    <p className="text-xs text-destructive">{t("whatsappInvalid")}</p>
+                  )}
                 </div>
               </div>
 

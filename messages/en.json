@@ -644,7 +644,8 @@
       "completenessVerification": "Verified badge",
       "completenessVerificationHint": "Submit documents to get verified",
       "billingLink": "Billing & subscription"
-    }
+    },
+    "whatsappInvalid": "Enter a valid Moroccan WhatsApp number, e.g. +212 6XX XXX XXX"
   },
   "admin": {
     "title": "Admin panel",

@@ -5,9 +5,14 @@ import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import type { AnalyticsSummary } from "@/lib/queries";
 
-export function AnalyticsPanel({ analytics }: { analytics: AnalyticsSummary }) {
+export function AnalyticsPanel({
+  analytics,
+  bookingsCount = 0,
+}: {
+  analytics: AnalyticsSummary;
+  bookingsCount?: number;
+}) {
   const t = useTranslations("dashboard.dash");
-  const u = useTranslations("business");
 
   const max = useMemo(
     () => Math.max(1, ...analytics.series.map((s) => s.views)),
@@ -15,16 +20,17 @@ export function AnalyticsPanel({ analytics }: { analytics: AnalyticsSummary }) {
   );
 
   const stats = [
-    { label: u("openNow"), value: analytics.views },
+    { label: t("visitors"), value: analytics.views },
     { label: t("leads"), value: analytics.leads },
     { label: t("whatsappClicks"), value: analytics.whatsapp_clicks },
     { label: t("callClicks"), value: analytics.call_clicks },
     { label: t("photoViews"), value: analytics.photo_views },
+    { label: t("bookingsReceived"), value: bookingsCount },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {stats.map((s, i) => (
           <motion.div
             key={s.label}

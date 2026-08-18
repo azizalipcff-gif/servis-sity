@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { businessHref } from "@/lib/business/url";
 import type { BusinessDetail } from "@/lib/queries";
+import { buildWhatsAppUrl, isWhatsAppEnabled } from "@/lib/whatsapp";
+import { trackLead } from "@/lib/analytics/client";
 import { useBusinessChat } from "./use-business-chat";
 
 export function StickyActionBar({ business }: { business: BusinessDetail }) {
@@ -15,7 +17,8 @@ export function StickyActionBar({ business }: { business: BusinessDetail }) {
     business.slug,
     businessHref(business),
   );
-  const waNumber = business.whatsapp?.replace(/\D/g, "");
+  const whatsappEnabled = isWhatsAppEnabled(business);
+  const whatsappLink = buildWhatsAppUrl(business);
 
   type MobileAction = {
     icon: typeof Phone;
@@ -36,8 +39,8 @@ export function StickyActionBar({ business }: { business: BusinessDetail }) {
     {
       icon: MessageCircle,
       label: t("whatsapp"),
-      href: waNumber ? `https://wa.me/${waNumber}` : undefined,
-      enabled: Boolean(waNumber),
+      href: whatsappLink ?? undefined,
+      enabled: whatsappEnabled,
     },
     {
       icon: MessageSquare,
@@ -97,7 +100,18 @@ export function StickyActionBar({ business }: { business: BusinessDetail }) {
               asChild={action.enabled}
             >
               {action.enabled && action.href ? (
-                <a href={action.href} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={action.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    if (action.label === t("whatsapp")) {
+                      trackLead(business.id, "whatsapp");
+                    } else if (action.label === t("call")) {
+                      trackLead(business.id, "call");
+                    }
+                  }}
+                >
                   <action.icon className="size-4" />
                   {action.label}
                 </a>

@@ -182,6 +182,7 @@ export default async function ProductPage({ params }: Props) {
               <Gallery
                 images={product.images.map((url) => ({ id: url, url }))}
                 title={product.name}
+                businessId={product.business?.id ?? ""}
               />
             ) : (
               <div className="grid aspect-square w-full place-items-center overflow-hidden rounded-2xl bg-muted">

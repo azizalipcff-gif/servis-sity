@@ -4,8 +4,22 @@ import { getCurrentUser } from "@/lib/supabase/user";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 import { verificationRequestSchema } from "@/lib/validations/schemas";
+import { VERIFICATION_BUCKET } from "@/lib/verification/docs";
 
 export const dynamic = "force-dynamic";
+
+/** Storage paths must sit inside the signed-in owner's own folder. */
+function assertOwnVerificationPaths(
+  values: (string | null | undefined)[],
+  userId: string,
+): boolean {
+  const prefix = `${VERIFICATION_BUCKET}/${userId}/`;
+  return values.every((value) => {
+    if (!value) return true;
+    if (!value.startsWith(`${VERIFICATION_BUCKET}/`)) return true; // hosted URL
+    return value.startsWith(prefix);
+  });
+}
 
 export async function POST(req: NextRequest) {
   return withErrorCapture("billing.verification", async () => {
@@ -27,6 +41,21 @@ export async function POST(req: NextRequest) {
       .eq("owner_id", user.id)
       .maybeSingle();
     if (!owner) return jsonError(403, "forbidden");
+
+    // Reject storage paths that reference another user's verification folder.
+    if (
+      !assertOwnVerificationPaths(
+        [
+          parsed.data.idDocumentUrl,
+          parsed.data.activityDocumentUrl,
+          parsed.data.licenseUrl,
+          parsed.data.taxDocumentUrl,
+        ],
+        user.id,
+      )
+    ) {
+      return jsonError(403, "forbidden");
+    }
 
     const { data: existing } = await supabase
       .from("verification_requests")

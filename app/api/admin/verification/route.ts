@@ -4,6 +4,11 @@ import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 import { notifyUser } from "@/lib/notifications";
 import { verificationPatchSchema } from "@/lib/validations/admin-schemas";
+import {
+  VERIFICATION_FIELD_COLUMNS,
+  VERIFICATION_BUCKET,
+  parseVerificationPath,
+} from "@/lib/verification/docs";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +28,40 @@ export async function GET() {
       .select("*")
       .order("created_at", { ascending: false })
       .limit(100);
-    return jsonOk({ requests: data ?? [] });
+
+    // Documents live in a private bucket; mint short-lived signed URLs so the
+    // admin review UI can preview/review them without public exposure.
+    const requests = await Promise.all(
+      (data ?? []).map(async (row) => {
+        const docFields = Object.values(VERIFICATION_FIELD_COLUMNS);
+        const docs: Record<
+          string,
+          { url: string | null; key: string | null; path: string | null }
+        > = {};
+        for (const column of docFields) {
+          const value = (row as Record<string, unknown>)[column];
+          if (typeof value !== "string" || !value) continue;
+          const parsed = parseVerificationPath(value);
+          if (!parsed) {
+            docs[column] = { url: value, key: null, path: null };
+            continue;
+          }
+          const signed =
+            parsed.bucket === VERIFICATION_BUCKET
+              ? await auth.supabase.storage
+                  .from(parsed.bucket)
+                  .createSignedUrl(parsed.key, 3600)
+              : null;
+          docs[column] = {
+            url: signed?.data?.signedUrl ?? null,
+            key: parsed.key,
+            path: value,
+          };
+        }
+        return { ...row, docs };
+      }),
+    );
+    return jsonOk({ requests });
   });
 }
 

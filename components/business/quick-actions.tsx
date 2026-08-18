@@ -13,6 +13,8 @@ import {
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { BusinessDetail } from "@/lib/queries";
+import { buildWhatsAppUrl, isWhatsAppEnabled } from "@/lib/whatsapp";
+import { trackLead } from "@/lib/analytics/client";
 import { FollowButton } from "@/components/follow-button";
 import { useBusinessChat } from "./use-business-chat";
 import { useFavorite } from "@/components/favorites/use-favorite";
@@ -34,7 +36,8 @@ export function QuickActions({
     businessHref(business),
   );
 
-  const waNumber = business.whatsapp?.replace(/\D/g, "");
+  const whatsappEnabled = isWhatsAppEnabled(business);
+  const whatsappLink = buildWhatsAppUrl(business);
   const directionsHref = (() => {
     if (business.lat && business.lng)
       return `https://www.google.com/maps/dir/?api=1&destination=${business.lat},${business.lng}`;
@@ -83,14 +86,14 @@ export function QuickActions({
       enabled: Boolean(business.phone),
       href: business.phone ? `tel:${business.phone}` : undefined,
       external: false,
-      priority: waNumber ? "secondary" : "primary",
+      priority: whatsappEnabled ? "secondary" : "primary",
     },
     {
       key: "whatsapp",
       label: t("whatsapp"),
       icon: MessageCircle,
-      enabled: Boolean(waNumber),
-      href: waNumber ? `https://wa.me/${waNumber}` : undefined,
+      enabled: whatsappEnabled,
+      href: whatsappLink ?? undefined,
       external: true,
       priority: "primary",
     },
@@ -180,11 +183,11 @@ export function QuickActions({
             target={a.enabled && a.external ? "_blank" : undefined}
             rel={a.enabled && a.external ? "noopener noreferrer" : undefined}
             aria-disabled={!a.enabled}
-            onClick={() =>
-              window.dispatchEvent(
-                new CustomEvent("tt:lead", { detail: { type: a.key } }),
-              )
-            }
+            onClick={() => {
+              if (a.enabled && (a.key === "call" || a.key === "whatsapp")) {
+                trackLead(business.id, a.key === "whatsapp" ? "whatsapp" : "call");
+              }
+            }}
             className={shared}
           >
             {inner}
@@ -198,9 +201,6 @@ export function QuickActions({
             transition={{ delay: 0.22 + i * 0.05 }}
             onClick={() => {
               a.onClick?.();
-              window.dispatchEvent(
-                new CustomEvent("tt:lead", { detail: { type: a.key } }),
-              );
             }}
             aria-label={a.label}
             aria-pressed={a.key === "save" ? saved : undefined}

@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, X, ZoomIn } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { SmartImage } from "@/components/smart-image";
+import { trackInteraction } from "@/lib/analytics/client";
 import { cn } from "@/lib/utils";
 
 type ImageItem = { id: string; url: string };
@@ -12,9 +13,11 @@ type ImageItem = { id: string; url: string };
 export function Gallery({
   images,
   title,
+  businessId,
 }: {
   images: ImageItem[];
   title: string;
+  businessId: string;
 }) {
   const t = useTranslations("business");
   const [selected, setSelected] = useState<number | null>(null);
@@ -61,7 +64,10 @@ export function Gallery({
           <button
             key={image.id}
             type="button"
-            onClick={() => setSelected(index)}
+            onClick={() => {
+              setSelected(index);
+              trackInteraction(businessId, "photo_view");
+            }}
             className={cn(
               "group relative overflow-hidden rounded-2xl bg-muted",
               index === 0 ? "aspect-square sm:col-span-2 sm:row-span-2" : "aspect-square",

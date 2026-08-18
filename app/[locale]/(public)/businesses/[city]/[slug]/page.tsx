@@ -192,7 +192,7 @@ export default async function BusinessPage({ params }: Props) {
           {images.length > 0 && (
             <div id="gallery" className={sectionCls}>
               <FadeIn>
-                <Gallery images={images} title={business.name} />
+                <Gallery images={images} title={business.name} businessId={business.id} />
               </FadeIn>
             </div>
           )}

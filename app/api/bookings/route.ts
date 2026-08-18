@@ -50,6 +50,20 @@ export async function POST(request: Request) {
       }
       return jsonError(500, "insert_failed");
     }
+
+    // Record a booking_created analytics event (best-effort — the booking
+    // already succeeded, RLS allows public inserts).
+    try {
+      await supabase
+        .from("analytics_events")
+        .insert({
+          business_id: parsed.data.business_id,
+          event_type: "booking_created",
+        } as never);
+    } catch {
+      // best-effort
+    }
+
     return jsonOk();
   });
 }

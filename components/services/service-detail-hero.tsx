@@ -26,6 +26,8 @@ import { businessHref } from "@/lib/business/url";
 import { formatPrice, type Locale } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import type { ServiceDetail } from "@/lib/queries";
+import { buildWhatsAppUrl, isWhatsAppEnabled } from "@/lib/whatsapp";
+import { trackLead } from "@/lib/analytics/client";
 
 export function ServiceDetailHero({ service }: { service: ServiceDetail }) {
   const t = useTranslations("business");
@@ -34,7 +36,8 @@ export function ServiceDetailHero({ service }: { service: ServiceDetail }) {
   const locale = useLocale() as Locale;
 
   const biz = service.business;
-  const waNumber = biz?.whatsapp?.replace(/\D/g, "");
+  const whatsappEnabled = isWhatsAppEnabled(biz ?? {});
+  const whatsappLink = buildWhatsAppUrl(biz ?? {});
   const bookHref = biz?.slug ? `${businessHref(biz)}#book` : undefined;
 
   const { startChat, busy: chatBusy, isOwner } = useBusinessChat(
@@ -130,9 +133,29 @@ export function ServiceDetailHero({ service }: { service: ServiceDetail }) {
 
               <div className="shrink-0 rounded-xl border border-white/30 bg-black/30 px-3 py-2 text-end shadow-lg backdrop-blur md:px-4 md:py-2.5">
                 {service.price != null ? (
-                  <p className="text-xl font-bold tabular-nums tracking-tight text-white md:text-2xl">
-                    {formatPrice(service.price, locale)}
-                  </p>
+                  <div className="flex flex-col items-end">
+                    {service.old_price != null &&
+                      service.old_price > service.price && (
+                        <s className="text-xs text-white/80">
+                          {formatPrice(service.old_price, locale)}
+                        </s>
+                      )}
+                    <p className="flex items-center gap-2 text-xl font-bold tabular-nums tracking-tight text-white md:text-2xl">
+                      {formatPrice(service.price, locale)}
+                      {service.old_price != null &&
+                        service.old_price > service.price && (
+                          <span className="rounded-md bg-gold px-1.5 py-0.5 text-xs font-bold leading-none text-black">
+                            −
+                            {Math.round(
+                              ((service.old_price - service.price) /
+                                service.old_price) *
+                                100,
+                            )}
+                            %
+                          </span>
+                        )}
+                    </p>
+                  </div>
                 ) : (
                   <p className="text-sm font-semibold text-white">
                     {ts("priceOnRequest")}
@@ -161,12 +184,13 @@ export function ServiceDetailHero({ service }: { service: ServiceDetail }) {
             {t("chat")}
           </Button>
 
-          {waNumber && (
+          {whatsappEnabled && whatsappLink && (
             <Button asChild variant="outline" className="h-11 shrink-0">
               <a
-                href={`https://wa.me/${waNumber}`}
+                href={whatsappLink}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => biz?.id && trackLead(biz.id, "whatsapp")}
               >
                 <MessageCircle className="size-4" />
                 {t("whatsapp")}
@@ -176,7 +200,10 @@ export function ServiceDetailHero({ service }: { service: ServiceDetail }) {
 
           {biz?.phone && (
             <Button asChild variant="outline" className="h-11 shrink-0">
-              <a href={`tel:${biz.phone}`}>
+              <a
+                href={`tel:${biz.phone}`}
+                onClick={() => trackLead(biz.id, "call")}
+              >
                 <Phone className="size-4" />
                 {t("call")}
               </a>

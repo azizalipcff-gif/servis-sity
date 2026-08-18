@@ -171,6 +171,7 @@ export default async function ServicePage({ params }: Props) {
               <Gallery
                 images={imagesOf(service).map((url) => ({ id: url, url }))}
                 title={service.name}
+                businessId={service.business?.id ?? ""}
               />
             ) : (
               <div className="grid aspect-square w-full place-items-center overflow-hidden rounded-2xl bg-muted">

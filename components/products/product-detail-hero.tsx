@@ -23,6 +23,8 @@ import { businessHref } from "@/lib/business/url";
 import { formatPrice, type Locale } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import type { ProductDetail } from "@/lib/queries";
+import { buildWhatsAppUrl, isWhatsAppEnabled } from "@/lib/whatsapp";
+import { trackLead } from "@/lib/analytics/client";
 
 export function ProductDetailHero({ product }: { product: ProductDetail }) {
   const t = useTranslations("business");
@@ -31,7 +33,8 @@ export function ProductDetailHero({ product }: { product: ProductDetail }) {
   const locale = useLocale() as Locale;
 
   const biz = product.business;
-  const waNumber = biz?.whatsapp?.replace(/\D/g, "");
+  const whatsappEnabled = isWhatsAppEnabled(biz ?? {});
+  const whatsappLink = buildWhatsAppUrl(biz ?? {});
 
   const { startChat, busy: chatBusy, isOwner } = useBusinessChat(
     biz?.id ?? "",
@@ -173,12 +176,13 @@ export function ProductDetailHero({ product }: { product: ProductDetail }) {
             {t("chat")}
           </Button>
 
-          {waNumber && (
+          {whatsappEnabled && whatsappLink && (
             <Button asChild variant="outline" className="h-11 shrink-0">
               <a
-                href={`https://wa.me/${waNumber}`}
+                href={whatsappLink}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => biz?.id && trackLead(biz.id, "whatsapp")}
               >
                 <MessageCircle className="size-4" />
                 {t("whatsapp")}

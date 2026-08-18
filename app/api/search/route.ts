@@ -211,6 +211,7 @@ function hybridRowToItem(
         name: String(p.name ?? ""),
         slug: p.slug != null ? String(p.slug) : null,
         price: toNullableNumber(p.price),
+        old_price: toNullableNumber(p.old_price),
         duration_minutes: toNullableNumber(p.duration_minutes),
         photo_url: p.photo_url != null ? String(p.photo_url) : null,
         description: p.description != null ? String(p.description) : null,
@@ -463,7 +464,7 @@ function toMinutes(time: string): number {
  * ========================================================================== */
 
 const SERVICE_SELECT =
-  "id, name, price, duration_minutes, photo_url, description, updated_at, business:businesses(id, name, slug, logo_url, city, city_id, verified, rating_avg, reviews_count, plan, category_id, cities!businesses_city_id_fkey(slug))";
+  "id, name, price, old_price, duration_minutes, photo_url, description, updated_at, business:businesses(id, name, slug, logo_url, city, city_id, verified, rating_avg, reviews_count, plan, category_id, cities!businesses_city_id_fkey(slug))";
 
 async function searchServices(
   params: SearchParams,
@@ -506,6 +507,7 @@ async function searchServices(
       name: s.name,
       slug: null,
       price: s.price,
+      old_price: s.old_price,
       duration_minutes: s.duration_minutes,
       photo_url: s.photo_url,
       description: s.description,

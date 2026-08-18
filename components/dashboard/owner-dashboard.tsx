@@ -14,11 +14,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BusinessDetail } from "@/lib/queries";
+import type { CompletenessInput, DashboardTab } from "@/lib/business/completeness";
 import { AnalyticsPanel } from "./analytics-panel";
 import { BookingsManager } from "./bookings-manager";
 import { ReviewsManager } from "./reviews-manager";
 import { GalleryManager } from "./gallery-manager";
-import { PlanPanel, VerificationPanel } from "./plan-panels";
+import { PlanPanel } from "./plan-panels";
+import { ProfileCompletenessCard } from "./profile-completeness";
+import { VerificationPanel } from "./verification-panel";
 
 type BookingRow = {
   id: string;
@@ -30,8 +33,20 @@ type BookingRow = {
   services: { name: string } | null;
 };
 
+const KNOWN_TABS = [
+  "analytics",
+  "bookings",
+  "reviews",
+  "gallery",
+  "services",
+  "products",
+  "plan",
+  "verification",
+] as const;
+
 export function OwnerDashboard({
   business,
+  userId,
   analytics,
   bookings,
   servicesEditor,
@@ -40,6 +55,7 @@ export function OwnerDashboard({
   initialTab,
 }: {
   business: BusinessDetail;
+  userId: string;
   analytics: Parameters<typeof AnalyticsPanel>[0]["analytics"];
   bookings: BookingRow[];
   servicesEditor: React.ReactNode;
@@ -48,21 +64,26 @@ export function OwnerDashboard({
   initialTab?: string;
 }) {
   const t = useTranslations("dashboard.dash");
-  const KNOWN_TABS = [
-    "analytics",
-    "bookings",
-    "reviews",
-    "gallery",
-    "services",
-    "products",
-    "plan",
-    "verification",
-  ] as const;
   const [tab, setTab] = useState<string>(
     initialTab && (KNOWN_TABS as readonly string[]).includes(initialTab)
       ? initialTab
       : "analytics",
   );
+
+  const navigate = (next: DashboardTab) => setTab(next);
+
+  const completeness: CompletenessInput = {
+    description: business.description,
+    logo_url: business.logo_url,
+    cover_url: business.cover_url,
+    phone: business.phone,
+    whatsapp: business.whatsapp,
+    address: business.address,
+    city_id: business.city_id,
+    verification_status: business.verification_status,
+    servicesCount: business.services?.length ?? 0,
+    hoursCount: business.hours?.length ?? 0,
+  };
 
   const tabs: { key: string; label: string; icon: typeof BarChart3 }[] = [
     { key: "analytics", label: t("analytics"), icon: BarChart3 },
@@ -76,22 +97,26 @@ export function OwnerDashboard({
   ];
 
   const panels: Record<string, React.ReactNode> = {
-    analytics: <AnalyticsPanel analytics={analytics} />,
-    bookings: <BookingsManager bookings={bookings} />,
+    analytics: <AnalyticsPanel analytics={analytics} bookingsCount={bookings.length} />,
+    bookings: <BookingsManager bookings={bookings} business={business} />,
     reviews: <ReviewsManager reviews={business.reviews} />,
     gallery: <GalleryManager business={business} />,
     services: servicesEditor,
     products: productsEditor,
     plan: (
       <div className="grid gap-4 lg:grid-cols-2">
-        <PlanPanel plan={business.plan} />
+        <div className="space-y-4">
+          <PlanPanel plan={business.plan} />
+          <ProfileCompletenessCard data={completeness} onNavigate={navigate} />
+        </div>
         {businessEditor}
       </div>
     ),
     verification: (
       <VerificationPanel
-        status={business.verification_status}
-        verified={business.verified}
+        businessId={business.id}
+        userId={userId}
+        verificationStatus={business.verification_status}
       />
     ),
   };

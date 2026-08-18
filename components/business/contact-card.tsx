@@ -19,12 +19,15 @@ import {
   weekdayName,
 } from "@/lib/hours";
 import type { BusinessDetail } from "@/lib/queries";
+import { buildWhatsAppUrl, isWhatsAppEnabled } from "@/lib/whatsapp";
+import { trackLead } from "@/lib/analytics/client";
 
 export function ContactCard({ business }: { business: BusinessDetail }) {
   const t = useTranslations("business");
   const dt = useTranslations("business.detail");
   const locale = useLocale();
-  const waNumber = business.whatsapp?.replace(/\D/g, "");
+  const whatsappEnabled = isWhatsAppEnabled(business);
+  const whatsappLink = buildWhatsAppUrl(business);
   const open = isOpenNow(business.hours);
   const today = hoursForDay(business.hours, new Date().getDay());
 
@@ -34,12 +37,6 @@ export function ContactCard({ business }: { business: BusinessDetail }) {
       label: dt("phone"),
       value: business.phone,
       href: business.phone ? `tel:${business.phone}` : undefined,
-    },
-    {
-      icon: MessageCircle,
-      label: t("whatsapp"),
-      value: waNumber ? `+${waNumber}` : undefined,
-      href: waNumber ? `https://wa.me/${waNumber}` : undefined,
     },
     {
       icon: MapPin,
@@ -108,17 +105,21 @@ export function ContactCard({ business }: { business: BusinessDetail }) {
         {/* Primary actions */}
         <div className="grid gap-2 p-4">
           <Button asChild className="w-full gap-2">
-            <a href={`tel:${business.phone}`}>
+            <a
+              href={`tel:${business.phone}`}
+              onClick={() => trackLead(business.id, "call")}
+            >
               <Phone className="size-4" />
               {t("call")}
             </a>
           </Button>
-          {waNumber && (
+          {whatsappEnabled && whatsappLink && (
             <Button asChild variant="outline" className="w-full gap-2">
               <a
-                href={`https://wa.me/${waNumber}`}
+                href={whatsappLink}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackLead(business.id, "whatsapp")}
               >
                 <MessageCircle className="size-4 text-success" />
                 {t("whatsapp")}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight, BadgeCheck, Home, MapPin, Sparkles, Star, Store } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -8,12 +9,17 @@ import { SmartImage } from "@/components/smart-image";
 import { DEFAULT_PLACEHOLDER_IMAGES } from "@/lib/constants";
 import { localizedName, type Locale } from "@/lib/translations";
 import type { BusinessDetail } from "@/lib/queries";
+import { trackBusinessView } from "@/lib/analytics/client";
 import { QuickActions } from "./quick-actions";
 
 export function BusinessHero({ business }: { business: BusinessDetail }) {
   const t = useTranslations("business");
   const bCard = useTranslations("businessCard");
   const locale = useLocale() as Locale;
+
+  useEffect(() => {
+    trackBusinessView(business.id);
+  }, [business.id]);
 
   const browseHref = business.categories
     ? `/business?category=${business.categories.slug}`

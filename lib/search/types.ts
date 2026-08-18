@@ -95,6 +95,7 @@ export type SearchServiceItem = {
   name: string;
   slug: string | null;
   price: number | null;
+  old_price: number | null;
   duration_minutes: number | null;
   photo_url: string | null;
   description: string | null;

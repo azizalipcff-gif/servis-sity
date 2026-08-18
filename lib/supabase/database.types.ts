@@ -16,7 +16,8 @@ export type AnalyticsEventType =
   | "whatsapp_click"
   | "call_click"
   | "lead"
-  | "photo_view";
+  | "photo_view"
+  | "booking_created";
 
 export interface Database {
   public: {
@@ -200,6 +201,8 @@ export interface Database {
           cover_url: string | null;
           phone: string | null;
           whatsapp: string | null;
+          whatsapp_url: string | null;
+          whatsapp_enabled: boolean;
           address: string | null;
           city: string | null;
           lat: number | null;
@@ -240,6 +243,8 @@ export interface Database {
           cover_url?: string | null;
           phone?: string | null;
           whatsapp?: string | null;
+          whatsapp_url?: string | null;
+          whatsapp_enabled?: boolean;
           address?: string | null;
           city?: string | null;
           lat?: number | null;
@@ -279,6 +284,8 @@ export interface Database {
           cover_url?: string | null;
           phone?: string | null;
           whatsapp?: string | null;
+          whatsapp_url?: string | null;
+          whatsapp_enabled?: boolean;
           address?: string | null;
           city?: string | null;
           lat?: number | null;
@@ -336,6 +343,9 @@ export interface Database {
           business_id: string;
           name: string;
           price: number | null;
+          category_id: string | null;
+          tags: string[];
+          old_price: number | null;
           description: string | null;
           photo_url: string | null;
           duration_minutes: number | null;
@@ -346,23 +356,29 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          business_id: string;
-          name: string;
-          price?: number | null;
-          description?: string | null;
-          photo_url?: string | null;
-          duration_minutes?: number | null;
+business_id: string;
+            name: string;
+            price?: number | null;
+            category_id?: string | null;
+            tags?: string[];
+            old_price?: number | null;
+            description?: string | null;
+            photo_url?: string | null;
+            duration_minutes?: number | null;
           status?: string;
           gallery?: string[];
           featured?: boolean;
           updated_at?: string;
         };
         Update: {
-          name?: string;
-          price?: number | null;
-          description?: string | null;
-          photo_url?: string | null;
-          duration_minutes?: number | null;
+name?: string;
+            price?: number | null;
+            category_id?: string | null;
+            tags?: string[];
+            old_price?: number | null;
+            description?: string | null;
+            photo_url?: string | null;
+            duration_minutes?: number | null;
           status?: string;
           gallery?: string[];
           featured?: boolean;
@@ -1571,12 +1587,14 @@ export interface Database {
           id: string;
           business_id: string;
           event_type: AnalyticsEventType;
+          visitor_key: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           business_id: string;
           event_type: AnalyticsEventType;
+          visitor_key?: string | null;
           created_at?: string;
         };
         Update: Record<string, never>;

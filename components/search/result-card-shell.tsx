@@ -112,7 +112,7 @@ export function ResultCardShell({
             {t("premium")}
           </span>
         )}
-        {data.kind === "product" && data.discountPct != null && (
+        {data.kind !== "business" && data.discountPct != null && (
           <span className="absolute bottom-2.5 start-2.5 z-10 inline-flex items-center rounded-md bg-gold px-1.5 py-0.5 text-[11px] font-bold leading-none text-black">
             −{data.discountPct}%
           </span>

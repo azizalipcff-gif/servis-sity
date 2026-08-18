@@ -225,7 +225,7 @@ export const getBusinessBySlug = cache(
     const [services, media, reviews, hours] = await Promise.all([
     supabase
       .from("services")
-      .select("id, business_id, name, price, duration_minutes, description, photo_url, status, gallery, featured, updated_at")
+.select("id, business_id, name, price, duration_minutes, description, photo_url, status, gallery, featured, updated_at, category_id, tags, old_price")
       .eq("business_id", business.id)
       .order("updated_at", { ascending: true }),
       supabase
@@ -385,7 +385,7 @@ export async function getMyBusiness(ownerId: string): Promise<BusinessDetail | n
   const [services, media, hours, reviews] = await Promise.all([
       supabase
         .from("services")
-.select("id, business_id, name, price, duration_minutes, description, photo_url, status, gallery, featured, updated_at")
+.select("id, business_id, name, price, category_id, tags, old_price, duration_minutes, description, photo_url, status, gallery, featured, updated_at")
         .eq("business_id", business.id)
         .order("updated_at", { ascending: true }),
       supabase
@@ -422,7 +422,7 @@ export const getProductsForBusiness = cache(
     const { data, error } = await supabase
       .from("products")
       .select(
-        `*, business:businesses(id, name, slug, logo_url, cover_url, city, verified, whatsapp, phone, owner_id, rating_avg, reviews_count, plan)`,
+        `*, business:businesses(id, name, slug, logo_url, cover_url, city, verified, whatsapp, whatsapp_url, whatsapp_enabled, phone, owner_id, rating_avg, reviews_count, plan)`,
       )
       .eq("business_id", businessId)
       .order("created_at", { ascending: false });
@@ -484,6 +484,8 @@ export type ProductBusiness = Pick<
   | "city_id"
   | "verified"
   | "whatsapp"
+  | "whatsapp_url"
+  | "whatsapp_enabled"
   | "phone"
   | "owner_id"
   | "rating_avg"
@@ -513,7 +515,7 @@ export type ProductListFilters = {
   offset?: number;
 };
 
-const PRODUCT_BUSINESS_SELECT = `id, name, slug, logo_url, cover_url, city, city_id, verified, whatsapp, phone, owner_id, rating_avg, reviews_count, plan, ${CITY_SLUG_JOIN}`;
+const PRODUCT_BUSINESS_SELECT = `id, name, slug, logo_url, cover_url, city, city_id, verified, whatsapp, whatsapp_url, whatsapp_enabled, phone, owner_id, rating_avg, reviews_count, plan, ${CITY_SLUG_JOIN}`;
 
 /** Single published product by slug, with its seller (and category resolved separately). */
 export const getProductBySlug = cache(

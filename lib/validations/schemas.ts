@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { sanitizeText, sanitizeUrl } from "../security/sanitize.ts";
+import { isValidMoroccanPhone } from "./phone.ts";
 
 /** Standard UUID string (Postgres uuid). */
 export const uuidSchema = z.string().uuid("invalidId");
@@ -24,8 +25,8 @@ export const passwordSchema = z
 export const phoneSchema = z
   .string()
   .min(8, "minLength")
-  .max(20)
-  .regex(/^[0-9+ ]+$/, "invalidPhone");
+  .max(24, "maxLength")
+  .refine(isValidMoroccanPhone, "invalidPhone");
 
 export const loginSchema = z.object({
   email: emailSchema,
@@ -63,11 +64,33 @@ export const businessSchema = z.object({
 
 export type BusinessInput = z.infer<typeof businessSchema>;
 
-export const serviceSchema = z.object({
-  name: z.string().min(1, "required").max(120),
-  price: z.coerce.number().min(0).nullable().optional(),
-  duration_minutes: z.coerce.number().int().min(0).nullable().optional(),
-});
+export const serviceSchema = z
+  .object({
+    name: z.string().min(1, "required").max(120),
+    category_id: z.string().uuid("invalidCategory").nullable().optional(),
+    price: z.coerce.number().min(0).nullable().optional(),
+    old_price: z.coerce.number().min(0).nullable().optional(),
+    duration_minutes: z.coerce.number().int().min(0).nullable().optional(),
+    tags: z
+      .array(z.string().trim().min(1, "required").max(40, "maxLength"))
+      .max(10, "maxTags")
+      .optional(),
+    image_url: httpUrlSchema.nullable().optional(),
+  })
+  .superRefine((val, ctx) => {
+    // A discount applies only when old_price is strictly greater than price.
+    if (
+      val.old_price != null &&
+      val.price != null &&
+      val.old_price <= val.price
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["old_price"],
+        message: "oldPriceInvalid",
+      });
+    }
+  });
 
 export type ServiceInput = z.infer<typeof serviceSchema>;
 
@@ -139,12 +162,35 @@ export const verificationSchema = z.object({
   notes: z.string().max(2000).optional(),
 });
 
+/**
+ * Storage object path stored by the verification upload feature. The path must
+ * live in the (private) verification-documents bucket under an owner folder:
+ * `verification-documents/{owner_uid}/docs/{name}.{ext}`. The submit route
+ * additionally asserts the uid segment matches the signed-in user.
+ */
+export const verificationStoragePathSchema = z
+  .string()
+  .max(500, "maxLength")
+  .regex(
+    /^verification-documents\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\/docs\/[A-Za-z0-9_.-]+$/,
+    "invalidStoragePath",
+  );
+
+/**
+ * A verification document is either a hosted URL or an object path in the
+ * private verification-documents bucket. Never accept arbitrary schemes.
+ */
+export const verificationDocumentFieldSchema = z
+  .union([httpUrlSchema, verificationStoragePathSchema])
+  .nullable()
+  .optional();
+
 export const verificationRequestSchema = z.object({
   businessId: uuidSchema,
-  idDocumentUrl: httpUrlSchema.nullable().optional(),
-  activityDocumentUrl: httpUrlSchema.nullable().optional(),
-  licenseUrl: httpUrlSchema.nullable().optional(),
-  taxDocumentUrl: httpUrlSchema.nullable().optional(),
+  idDocumentUrl: verificationDocumentFieldSchema,
+  activityDocumentUrl: verificationDocumentFieldSchema,
+  licenseUrl: verificationDocumentFieldSchema,
+  taxDocumentUrl: verificationDocumentFieldSchema,
   notes: z.string().max(2000).optional(),
 });
 

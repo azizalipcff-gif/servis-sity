@@ -74,11 +74,12 @@ export default async function DashboardPage({ params, searchParams }: Props) {
 
       <OwnerDashboard
         business={business}
+        userId={user?.id ?? ""}
         analytics={analytics}
         bookings={bookings}
         initialTab={typeof tab === "string" ? tab : undefined}
         servicesEditor={
-          <ServicesManager business={business} />
+          <ServicesManager business={business} categories={categories} ownerId={user?.id ?? ""} />
         }
         productsEditor={
           <ProductsManager

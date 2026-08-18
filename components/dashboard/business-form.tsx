@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { businessSchema } from "@/lib/validations/schemas";
 import { slugify } from "@/lib/slug";
 import { localizedName, type Locale } from "@/lib/translations";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { MOROCCAN_CITIES } from "@/lib/constants";
 import type { BusinessDetail } from "@/lib/queries";
 import type { Category } from "@/lib/supabase/database.types";
+import { cn } from "@/lib/utils";
 import { Stagger, StaggerItem } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +61,13 @@ export function BusinessForm({ business, categories, userId, locale }: Props) {
   const [description, setDescription] = useState(business?.description ?? "");
   const [phone, setPhone] = useState(business?.phone ?? "");
   const [whatsapp, setWhatsapp] = useState(business?.whatsapp ?? "");
+  const [whatsappEnabled, setWhatsappEnabled] = useState(
+    business?.whatsapp_enabled ?? false,
+  );
+
+  const whatsappLink = whatsapp.trim()
+    ? buildWhatsAppUrl({ whatsapp })
+    : null;
   const [address, setAddress] = useState(business?.address ?? "");
   const [city, setCity] = useState(business?.city ?? "");
   const [logoUrl, setLogoUrl] = useState(business?.logo_url ?? "");
@@ -106,6 +115,8 @@ export function BusinessForm({ business, categories, userId, locale }: Props) {
         description: parsed.data.description || null,
         phone: parsed.data.phone || null,
         whatsapp: parsed.data.whatsapp || null,
+        whatsapp_url: whatsappLink || null,
+        whatsapp_enabled: Boolean(whatsappLink) && whatsappEnabled,
         address: parsed.data.address || null,
         city: parsed.data.city || null,
         logo_url: logoUrl || null,
@@ -230,6 +241,45 @@ export function BusinessForm({ business, categories, userId, locale }: Props) {
                     onChange={(e) => setWhatsapp(e.target.value)}
                   />
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 rounded-2xl border bg-muted/30 p-3">
+                <div className="flex items-center gap-3">
+                  <MessageCircle className="size-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">{t("whatsappButton")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("whatsappButtonHint")}
+                    </p>
+                    {whatsappLink ? (
+                      <span dir="ltr" className="mt-0.5 block text-xs text-muted-foreground">
+                        {whatsappLink}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={Boolean(whatsappLink) && whatsappEnabled}
+                  disabled={!whatsappLink}
+                  onClick={() => setWhatsappEnabled((v) => !v)}
+                  className={cn(
+                    "relative h-6 w-11 shrink-0 rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-40",
+                    Boolean(whatsappLink) && whatsappEnabled
+                      ? "bg-primary"
+                      : "bg-muted-foreground/30",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "absolute top-0.5 size-4 rounded-full bg-background shadow transition-all",
+                      Boolean(whatsappLink) && whatsappEnabled
+                        ? "ltr:left-6 rtl:right-6"
+                        : "ltr:left-0.5 rtl:right-0.5",
+                    )}
+                  />
+                </button>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">

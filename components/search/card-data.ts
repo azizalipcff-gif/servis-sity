@@ -49,12 +49,26 @@ export type ServiceCardInput = {
   id: string;
   name: string;
   price: number | null;
+  old_price?: number | null;
   duration_minutes: number | null;
   photo_url: string | null;
   gallery?: string[];
   description?: string | null;
   business?: ResultSellerInput | null;
 };
+
+/** Discount debit computed from a real old price (strictly above current). */
+function discountFrom(
+  price: number | null,
+  oldPrice: number | null | undefined,
+): { compareAt: number; pct: number } | null {
+  if (price == null || oldPrice == null) return null;
+  if (oldPrice <= 0 || oldPrice <= price) return null;
+  return {
+    compareAt: oldPrice,
+    pct: Math.round(((oldPrice - price) / oldPrice) * 100),
+  };
+}
 
 export type ProductCardInput = {
   id: string;
@@ -103,6 +117,7 @@ export function toServiceItemData(
 ): ResultItemData {
   const seller = toSeller(service.business ?? sellerInput);
   const rating = seller.rating_avg ?? 0;
+  const discount = discountFrom(service.price, service.old_price);
   return {
     kind: "service",
     id: service.id,
@@ -118,8 +133,8 @@ export function toServiceItemData(
     durationMinutes: service.duration_minutes ?? null,
     priceValue: service.price ?? null,
     priceMode: service.price != null ? "exact" : "request",
-    compareAtPrice: null,
-    discountPct: null,
+    compareAtPrice: discount?.compareAt ?? null,
+    discountPct: discount?.pct ?? null,
     outOfStock: false,
   };
 }
@@ -175,6 +190,7 @@ export function fromSearchItem(item: SearchItem): ResultItemData {
       return toBusinessItemData(item);
     case "service": {
       const seller = item.business;
+      const discount = discountFrom(item.price, item.old_price);
       return {
         kind: "service",
         id: item.id,
@@ -190,8 +206,8 @@ export function fromSearchItem(item: SearchItem): ResultItemData {
         durationMinutes: item.duration_minutes ?? null,
         priceValue: item.price ?? null,
         priceMode: item.price != null ? "exact" : "request",
-        compareAtPrice: null,
-        discountPct: null,
+        compareAtPrice: discount?.compareAt ?? null,
+        discountPct: discount?.pct ?? null,
         outOfStock: false,
       };
     }

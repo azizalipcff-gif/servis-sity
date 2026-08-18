@@ -89,8 +89,16 @@ async function ServiceRow({
         )}
         <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
           {service.price != null && (
-            <span className="font-semibold text-foreground">
-              {formatPrice(service.price, locale)}
+            <span className="flex items-center gap-1.5">
+              <span className="font-semibold text-foreground">
+                {formatPrice(service.price, locale)}
+              </span>
+              {service.old_price != null &&
+                service.old_price > service.price && (
+                  <s className="text-muted-foreground/70">
+                    {formatPrice(service.old_price, locale)}
+                  </s>
+                )}
             </span>
           )}
           <span className="inline-flex items-center gap-1">

@@ -256,7 +256,7 @@ function schema(business: BusinessDetail, locale: string) {
     "@type": business.verified ? "LocalBusiness" : "Business",
     name: business.name,
     description: business.description ?? undefined,
-    image: business.cover_url ?? undefined,
+    image: imageUrl(business.cover_url) || undefined,
     telephone: business.phone ?? undefined,
     url: base,
     address: business.address

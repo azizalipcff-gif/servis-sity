@@ -6,7 +6,7 @@ export function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.NEXT_PUBLIC_SITE_URL ??
-    "https://service-city.com"
+    "https://servis-sity-iwtr.vercel.app"
   ).replace(/\/$/, "");
 }
 

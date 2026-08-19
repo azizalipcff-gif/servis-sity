@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { routing } from "@/i18n/routing";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -6,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Service City",
     description:
       "Service City — connect with local service providers across Moroccan cities.",
-    start_url: "/en",
+    start_url: `/${routing.defaultLocale}`,
     display: "standalone",
     background_color: "#ffffff",
     theme_color: "#e07a2d",

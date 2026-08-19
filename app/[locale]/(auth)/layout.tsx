@@ -19,5 +19,6 @@ export async function generateMetadata({ params }: Props) {
   const t = await getTranslations({ locale, namespace: "auth" });
   return {
     title: t("metaTitle"),
+    robots: { index: false, follow: false },
   };
 }

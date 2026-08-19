@@ -227,6 +227,7 @@ export const getBusinessBySlug = cache(
       .from("services")
 .select("id, business_id, name, price, duration_minutes, description, photo_url, status, gallery, featured, updated_at, category_id, tags, old_price")
       .eq("business_id", business.id)
+      .eq("status", "published")
       .order("updated_at", { ascending: true }),
       supabase
         .from("media")

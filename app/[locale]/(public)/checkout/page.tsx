@@ -1,5 +1,6 @@
 ﻿import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
 import { redirect } from "@/i18n/navigation";
 import type { Locale } from "@/lib/translations";
 import { getCurrentUser } from "@/lib/supabase/user";
@@ -9,6 +10,10 @@ import type { Interval } from "@/lib/billing/money";
 import { CheckoutClient } from "@/components/billing/checkout-client";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { robots: { index: false, follow: false }, title: "Checkout" };
+}
 
 const VALID: Interval[] = ["monthly", "quarterly", "yearly", "lifetime"];
 

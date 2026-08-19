@@ -20,13 +20,13 @@ export async function POST(request: Request) {
     if (!parsed.success) return jsonError(400, "bad_request");
 
     // Non-fatal, centralized persistence. Client crash reports only store a
-    // sanitized message + digest, never internal stack traces. Written via the
-    // server-only client because `system_logs` carries no anon write policy
-    // (migration 0032 drops the world-writable `system_logs_insert_any`).
+    // sanitized message + digest, never internal stack traces. Prefer the
+    // server-only client (system_logs has no anon write policy after migration
+    // 0032); fall back to the session/anon client until the service key is
+    // configured in the environment.
     try {
-      const { createServiceClient } = await import("@/lib/supabase/server");
-      const supabase = createServiceClient();
-      if (!supabase) return jsonError(500, "service_role_unconfigured");
+      const { createClient, createServiceClient } = await import("@/lib/supabase/server");
+      const supabase = createServiceClient() ?? (await createClient());
       await supabase.from("system_logs").insert({
         context: parsed.data.context ?? "client",
         level: "error",

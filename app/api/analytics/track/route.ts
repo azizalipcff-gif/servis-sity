@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
@@ -43,7 +43,13 @@ export async function POST(req: NextRequest) {
     const parsed = trackSchema.safeParse(body);
     if (!parsed.success) return jsonError(400, "bad_request");
 
-    const result = await recordTrackEvent(createServiceClient(), {
+    // Prefer the server-only client (RSL-independent, hardened after migration
+    // 0032); fall back to the session/anon client when SUPABASE_SERVICE_ROLE_KEY
+    // is not configured in this environment yet. In all cases the approved
+    // business gate is enforced before any write.
+    const supabase = createServiceClient() ?? (await createClient());
+
+    const result = await recordTrackEvent(supabase, {
       business_id: parsed.data.business_id,
       event_type: parsed.data.event_type,
       visitor_key: parsed.data.visitor_key,

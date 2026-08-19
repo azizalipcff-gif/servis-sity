@@ -52,19 +52,17 @@ export async function POST(request: Request) {
     }
 
     // Record a booking_created analytics event (best-effort — the booking
-    // already succeeded; written via the server-only client since
-    // `analytics_events` carries no anon write policy after migration 0032).
+    // already succeeded; prefer the server-only client since `analytics_events`
+    // carries no anon write policy after migration 0032).
     try {
       const { createServiceClient } = await import("@/lib/supabase/server");
-      const srv = createServiceClient();
-      if (srv) {
-        await srv
-          .from("analytics_events")
-          .insert({
-            business_id: parsed.data.business_id,
-            event_type: "booking_created",
-          } as never);
-      }
+      const srv = createServiceClient() ?? supabase;
+      await srv
+        .from("analytics_events")
+        .insert({
+          business_id: parsed.data.business_id,
+          event_type: "booking_created",
+        } as never);
     } catch {
       // best-effort
     }

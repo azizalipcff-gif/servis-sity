@@ -4,14 +4,12 @@ import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { serviceSchema } from "@/lib/validations/schemas";
-import { formatPrice, localizedName, type Locale } from "@/lib/translations";
+import { formatPrice, type Locale } from "@/lib/translations";
 import type { BusinessDetail } from "@/lib/queries";
-import type { Category } from "@/lib/supabase/database.types";
+import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/empty-state";
 import {
   Card,
   CardContent,
@@ -19,14 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ImageUploadField } from "./image-upload";
 
 type ServiceRow = NonNullable<BusinessDetail["services"]>[number];
 
@@ -36,270 +26,48 @@ function discountPercent(price: number | null, oldPrice: number | null): number 
   return Math.round(((oldPrice - price) / oldPrice) * 100);
 }
 
-export function ServicesManager({
-  business,
-  categories,
-  ownerId,
-}: {
-  business: BusinessDetail | null;
-  categories: Category[];
-  ownerId: string;
-}) {
+export function ServicesManager({ business }: { business: BusinessDetail }) {
   const t = useTranslations("dashboard");
-  const tCommon = useTranslations("common");
   const tBusiness = useTranslations("business");
   const locale = useLocale() as Locale;
 
-  const [services, setServices] = useState<ServiceRow[]>(business?.services ?? []);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [price, setPrice] = useState("");
-  const [oldPrice, setOldPrice] = useState("");
-  const [duration, setDuration] = useState("");
-  const [tagsText, setTagsText] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  if (!business) return null;
-
-  const businessId = business.id;
-
-  function resetForm() {
-    setEditingId(null);
-    setName("");
-    setCategoryId("");
-    setPrice("");
-    setOldPrice("");
-    setDuration("");
-    setTagsText("");
-    setImageUrl("");
-    setError(null);
-  }
-
-  function startEdit(service: ServiceRow) {
-    setEditingId(service.id);
-    setName(service.name);
-    setCategoryId(service.category_id ?? "");
-    setPrice(service.price?.toString() ?? "");
-    setOldPrice(service.old_price?.toString() ?? "");
-    setDuration(service.duration_minutes?.toString() ?? "");
-    setTagsText((service.tags ?? []).join(", "));
-    setImageUrl(service.photo_url ?? "");
-  }
-
-  function parseTags(text: string): string[] {
-    return Array.from(
-      new Set(
-        text
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean)
-          .slice(0, 10),
-      ),
-    ).slice(0, 10);
-  }
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-
-    const parsed = serviceSchema.safeParse({
-      name,
-      category_id: categoryId || null,
-      price: price === "" ? null : Number(price),
-      old_price: oldPrice === "" ? null : Number(oldPrice),
-      duration_minutes: duration === "" ? null : Number(duration),
-      tags: parseTags(tagsText),
-      image_url: imageUrl || null,
-    });
-
-    if (!parsed.success) {
-      const issue = parsed.error.issues[0];
-      setError(
-        issue?.path[0] === "old_price" ? t("oldPriceError") : tCommon("error"),
-      );
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const supabase = createClient();
-      const payload = {
-        name: parsed.data.name,
-        category_id: parsed.data.category_id ?? null,
-        price: parsed.data.price ?? null,
-        old_price: parsed.data.old_price ?? null,
-        duration_minutes: parsed.data.duration_minutes ?? null,
-        tags: parsed.data.tags ?? [],
-        photo_url: parsed.data.image_url || null,
-      };
-
-      if (editingId) {
-        const { error: updateError } = await supabase
-          .from("services")
-          .update(payload)
-          .eq("id", editingId);
-        if (updateError) {
-          setError(tCommon("error"));
-          return;
-        }
-        setServices((prev) =>
-          prev.map((s) => (s.id === editingId ? { ...s, ...payload } : s)),
-        );
-      } else {
-        const { data, error: insertError } = await supabase
-          .from("services")
-          .insert({ ...payload, business_id: businessId })
-          .select(
-            "id, business_id, name, price, category_id, tags, old_price, duration_minutes, description, photo_url, status, gallery, featured, updated_at",
-          )
-          .single();
-
-        if (insertError || !data) {
-          setError(tCommon("error"));
-          return;
-        }
-        setServices((prev) => [...prev, data as ServiceRow]);
-      }
-
-      resetForm();
-    } catch {
-      setError(tCommon("error"));
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [services, setServices] = useState<ServiceRow[]>(business.services ?? []);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function handleDelete(id: string) {
+    setDeletingId(id);
     const supabase = createClient();
     const { error } = await supabase.from("services").delete().eq("id", id);
     if (!error) {
       setServices((prev) => prev.filter((s) => s.id !== id));
-      if (editingId === id) resetForm();
     }
+    setDeletingId(null);
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{t("services")}</CardTitle>
-        <CardDescription>
-          {services.length === 0 ? t("servicesEmpty") : `${services.length}`}
-        </CardDescription>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <div>
+          <CardTitle>{t("services")}</CardTitle>
+          <CardDescription>
+            {services.length === 0 ? t("servicesEmpty") : `${services.length}`}
+          </CardDescription>
+        </div>
+        <Button asChild size="sm">
+          <Link href="/dashboard/services/new">
+            <Plus className="size-4" />
+            {t("addService")}
+          </Link>
+        </Button>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSave} className="mb-6 space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>{t("serviceName")}</Label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t("serviceNamePlaceholder")}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("serviceCategory")}</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {localizedName(c, locale)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label>{t("servicePrice")}</Label>
-              <Input
-                type="number"
-                min={0}
-                dir="ltr"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("serviceOldPrice")}</Label>
-              <Input
-                type="number"
-                min={0}
-                dir="ltr"
-                value={oldPrice}
-                onChange={(e) => setOldPrice(e.target.value)}
-                placeholder={t("serviceOldPricePlaceholder")}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("serviceDuration")}</Label>
-              <Input
-                type="number"
-                min={0}
-                dir="ltr"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>{t("serviceTags")}</Label>
-            <Input
-              value={tagsText}
-              onChange={(e) => setTagsText(e.target.value)}
-              placeholder={t("serviceTagsPlaceholder")}
-            />
-          </div>
-
-          <ImageUploadField
-            label={t("serviceImage")}
-            hint={t("uploadHint")}
-            userId={ownerId}
-            bucket="business-gallery"
-            value={imageUrl}
-            onChange={setImageUrl}
+        {services.length === 0 ? (
+          <EmptyState
+            icon={<Plus className="size-5" />}
+            title={t("services")}
+            description={t("servicesEmpty")}
           />
-
-          {error && (
-            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
-            </p>
-          )}
-
-          <div className="flex gap-2">
-            <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="size-4 animate-spin" />}
-              {editingId ? (
-                <>
-                  <Pencil className="size-4" />
-                  {t("saveService")}
-                </>
-              ) : (
-                <>
-                  <Plus className="size-4" />
-                  {t("addService")}
-                </>
-              )}
-            </Button>
-            {editingId && (
-              <Button type="button" variant="ghost" onClick={resetForm}>
-                {tCommon("cancel")}
-              </Button>
-            )}
-          </div>
-        </form>
-
-        {services.length > 0 && (
+        ) : (
           <ul className="divide-y">
             {services.map((service) => {
               const percent = discountPercent(service.price, service.old_price);
@@ -358,16 +126,24 @@ export function ServicesManager({
                     <Button
                       variant="ghost"
                       size="iconSm"
-                      onClick={() => startEdit(service)}
+                      asChild
+                      aria-label={t("editService")}
                     >
-                      <Pencil className="size-4" />
+                      <Link href={`/dashboard/services/${service.id}/edit`}>
+                        <Pencil className="size-4" />
+                      </Link>
                     </Button>
                     <Button
                       variant="ghost"
                       size="iconSm"
                       onClick={() => handleDelete(service.id)}
+                      disabled={deletingId === service.id}
                     >
-                      <Trash2 className="size-4" />
+                      {deletingId === service.id ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-4" />
+                      )}
                     </Button>
                   </div>
                 </li>

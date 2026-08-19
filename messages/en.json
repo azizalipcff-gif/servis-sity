@@ -645,7 +645,36 @@
       "completenessVerificationHint": "Submit documents to get verified",
       "billingLink": "Billing & subscription"
     },
-    "whatsappInvalid": "Enter a valid Moroccan WhatsApp number, e.g. +212 6XX XXX XXX"
+    "whatsappInvalid": "Enter a valid Moroccan WhatsApp number, e.g. +212 6XX XXX XXX",
+    "serviceDescription": "Service description",
+    "serviceDescriptionPlaceholder": "Describe what this service includes, how long it takes, and what the customer gets...",
+    "serviceStatus": "Status",
+    "hours": "Opening hours",
+    "hoursHint": "Set when customers can reach you",
+    "hoursOpen": "Open",
+    "hoursClose": "Closing",
+    "hoursClosed": "Closed",
+    "saveHours": "Save hours",
+    "hoursSaved": "Opening hours saved",
+    "hoursError": "Could not save opening hours",
+    "savedService": "Service saved successfully",
+    "wizard": {
+      "businessNewTitle": "Create your business",
+      "businessNewDesc": "Set up your business page so customers can find you on Service City.",
+      "businessEditTitle": "Edit your business",
+      "businessEditDesc": "Update your business information.",
+      "serviceNewTitle": "Add a service",
+      "serviceNewDesc": "Publish a service you offer through your business.",
+      "serviceEditTitle": "Edit service",
+      "serviceEditDesc": "Update your service details.",
+      "productNewTitle": "Add a product",
+      "productNewDesc": "Publish a product to the marketplace.",
+      "productEditTitle": "Edit product",
+      "productEditDesc": "Update your product details.",
+      "backDashboard": "Back to Dashboard",
+      "backServices": "Back to Services",
+      "backProducts": "Back to Products"
+    }
   },
   "admin": {
     "title": "Admin panel",
@@ -982,7 +1011,8 @@
     "imagesHint": "Upload images (PNG, JPEG, WebP)",
     "saved": "Saved",
     "confirmDelete": "Delete this product?",
-    "stockEmpty": "Out of stock"
+    "stockEmpty": "Out of stock",
+    "category": "Category"
   },
   "product": {
     "outOfStock": "Out of stock",

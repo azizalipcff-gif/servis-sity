@@ -36,6 +36,25 @@ export function normalizeMoroccanWhatsApp(
   return m ? `+212${m[2]}` : null;
 }
 
+/**
+ * Editable-input helper: reduce whatever the user typed/pasted to the 9-digit
+ * national portion (`6XXXXXXXX`/`7XXXXXXXX`). Drops separators, a leading `0`
+ * national digit, and a leading country-code `212` (pastable full numbers).
+ */
+export function whatsappNationalDigits(value: string): string {
+  let digits = value.replace(/\D/g, "");
+  digits = digits.replace(/^0+/, "");
+  while (digits.length > 9 && digits.startsWith("212")) {
+    digits = digits.slice(3);
+  }
+  return digits.slice(0, 9);
+}
+
+/** Display helper: group the national digit portion as `6XX XXX XXX`. */
+export function formatWhatsAppNational(digits: string): string {
+  return digits.replace(/(\d{3})(?=\d)/g, "$1 ");
+}
+
 /** Canonical wa.me digits (no leading +) for a raw number, or null. */
 function e164Digits(value: string | null | undefined): string | null {
   const normalized = normalizeMoroccanWhatsApp(value);

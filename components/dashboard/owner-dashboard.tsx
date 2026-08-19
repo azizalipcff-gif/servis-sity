@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import {
   BarChart3,
   CalendarCheck,
@@ -14,7 +15,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BusinessDetail } from "@/lib/queries";
-import type { CompletenessInput, DashboardTab } from "@/lib/business/completeness";
+import {
+  DASHBOARD_TABS,
+  type CompletenessInput,
+  type DashboardTab,
+} from "@/lib/business/completeness";
 import { AnalyticsPanel } from "./analytics-panel";
 import { BookingsManager } from "./bookings-manager";
 import { ReviewsManager } from "./reviews-manager";
@@ -22,6 +27,7 @@ import { GalleryManager } from "./gallery-manager";
 import { PlanPanel } from "./plan-panels";
 import { ProfileCompletenessCard } from "./profile-completeness";
 import { VerificationPanel } from "./verification-panel";
+import { BusinessHoursEditor } from "./business-hours-editor";
 
 type BookingRow = {
   id: string;
@@ -33,17 +39,6 @@ type BookingRow = {
   services: { name: string } | null;
 };
 
-const KNOWN_TABS = [
-  "analytics",
-  "bookings",
-  "reviews",
-  "gallery",
-  "services",
-  "products",
-  "plan",
-  "verification",
-] as const;
-
 export function OwnerDashboard({
   business,
   userId,
@@ -52,7 +47,6 @@ export function OwnerDashboard({
   servicesEditor,
   businessEditor,
   productsEditor,
-  initialTab,
 }: {
   business: BusinessDetail;
   userId: string;
@@ -61,16 +55,31 @@ export function OwnerDashboard({
   servicesEditor: React.ReactNode;
   businessEditor: React.ReactNode;
   productsEditor?: React.ReactNode;
-  initialTab?: string;
 }) {
   const t = useTranslations("dashboard.dash");
-  const [tab, setTab] = useState<string>(
-    initialTab && (KNOWN_TABS as readonly string[]).includes(initialTab)
-      ? initialTab
-      : "analytics",
-  );
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const navigate = (next: DashboardTab) => setTab(next);
+  // The URL is the single source of truth for the active section. Deriving the
+  // tab directly from `?tab=` (instead of duplicating it in local state) keeps
+  // the URL and the rendered panel in lockstep for direct links, refresh,
+  // Back/Forward and client-side navigation alike. Invalid or absent values
+  // fall back deterministically to Analytics.
+  const urlTab = searchParams.get("tab");
+  const tab: DashboardTab =
+    (DASHBOARD_TABS as readonly string[]).includes(urlTab ?? "")
+      ? (urlTab as DashboardTab)
+      : "analytics";
+
+  /** Switch section and persist `?tab=...` so the URL always reflects the panel. */
+  const selectTab = (key: DashboardTab) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", key);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const navigate = selectTab;
 
   const completeness: CompletenessInput = {
     description: business.description,
@@ -85,7 +94,7 @@ export function OwnerDashboard({
     hoursCount: business.hours?.length ?? 0,
   };
 
-  const tabs: { key: string; label: string; icon: typeof BarChart3 }[] = [
+  const tabs: { key: DashboardTab; label: string; icon: typeof BarChart3 }[] = [
     { key: "analytics", label: t("analytics"), icon: BarChart3 },
     { key: "bookings", label: t("bookings"), icon: CalendarCheck },
     { key: "reviews", label: t("reviews"), icon: MessageSquareQuote },
@@ -96,7 +105,7 @@ export function OwnerDashboard({
     { key: "verification", label: t("verification"), icon: ShieldCheck },
   ];
 
-  const panels: Record<string, React.ReactNode> = {
+  const panels: Record<DashboardTab, React.ReactNode> = {
     analytics: <AnalyticsPanel analytics={analytics} bookingsCount={bookings.length} />,
     bookings: <BookingsManager bookings={bookings} business={business} />,
     reviews: <ReviewsManager reviews={business.reviews} />,
@@ -108,6 +117,7 @@ export function OwnerDashboard({
         <div className="space-y-4">
           <PlanPanel plan={business.plan} />
           <ProfileCompletenessCard data={completeness} onNavigate={navigate} />
+          <BusinessHoursEditor business={business} />
         </div>
         {businessEditor}
       </div>
@@ -131,7 +141,7 @@ export function OwnerDashboard({
             <button
               key={item.key}
               type="button"
-              onClick={() => setTab(item.key)}
+              onClick={() => selectTab(item.key)}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors",

@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 import { getCurrentUser, getCurrentProfile } from "@/lib/supabase/user";
 import {
   getCategories,
@@ -8,7 +9,9 @@ import {
   getBookingsForOwner,
   getProductsForBusiness,
 } from "@/lib/queries";
+import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/lib/translations";
+import { Button } from "@/components/ui/button";
 import { BusinessForm } from "@/components/dashboard/business-form";
 import { ServicesManager } from "@/components/dashboard/services-manager";
 import { ProductsManager } from "@/components/dashboard/products-manager";
@@ -18,13 +21,11 @@ export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ tab?: string | string[] }>;
 };
 
-export default async function DashboardPage({ params, searchParams }: Props) {
+export default async function DashboardPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const { tab } = await searchParams;
 
   const user = await getCurrentUser();
 
@@ -46,13 +47,10 @@ export default async function DashboardPage({ params, searchParams }: Props) {
         </p>
         <div className="rounded-3xl border border-dashed border-primary/30 bg-card/40 p-10 text-center">
           <p className="text-muted-foreground">{t("noBusiness")}</p>
+          <Button asChild className="mt-5">
+            <Link href="/dashboard/business/new">{t("createBusiness")}</Link>
+          </Button>
         </div>
-        <BusinessForm
-          business={null}
-          categories={categories}
-          userId={user?.id ?? ""}
-          locale={locale as Locale}
-        />
       </div>
     );
   }
@@ -72,31 +70,31 @@ export default async function DashboardPage({ params, searchParams }: Props) {
         {business.name ? ` — ${business.name}` : ""}
       </p>
 
-      <OwnerDashboard
-        business={business}
-        userId={user?.id ?? ""}
-        analytics={analytics}
-        bookings={bookings}
-        initialTab={typeof tab === "string" ? tab : undefined}
-        servicesEditor={
-          <ServicesManager business={business} categories={categories} ownerId={user?.id ?? ""} />
-        }
-        productsEditor={
-          <ProductsManager
-            businessId={business.id}
-            ownerId={business.owner_id}
-            initial={products}
-          />
-        }
-        businessEditor={
-          <BusinessForm
-            business={business}
-            categories={categories}
-            userId={user?.id ?? ""}
-            locale={locale as Locale}
-          />
-        }
-      />
+      <Suspense fallback={null}>
+        <OwnerDashboard
+          business={business}
+          userId={user?.id ?? ""}
+          analytics={analytics}
+          bookings={bookings}
+          servicesEditor={
+            <ServicesManager business={business} />
+          }
+          productsEditor={
+            <ProductsManager
+              businessId={business.id}
+              initial={products}
+            />
+          }
+          businessEditor={
+            <BusinessForm
+              business={business}
+              categories={categories}
+              userId={user?.id ?? ""}
+              locale={locale as Locale}
+            />
+          }
+        />
+      </Suspense>
     </div>
   );
 }

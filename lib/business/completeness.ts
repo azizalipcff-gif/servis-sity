@@ -19,6 +19,18 @@ export type DashboardTab =
   | "plan"
   | "verification";
 
+/** Single source of truth for dashboard sections (URL `?tab=` values). */
+export const DASHBOARD_TABS: readonly DashboardTab[] = [
+  "analytics",
+  "bookings",
+  "reviews",
+  "gallery",
+  "services",
+  "products",
+  "plan",
+  "verification",
+] as const;
+
 export type CompletenessItemKey =
   | "description"
   | "logo"

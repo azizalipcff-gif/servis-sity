@@ -26,7 +26,7 @@ export default async function ProfileServicesPage({ params }: Props) {
 
   const data = await getWorkspaceData(user?.id ?? "");
   const hasBusiness = data.businesses.length > 0;
-  const addHref = hasBusiness ? "/dashboard?tab=services" : "/dashboard";
+  const addHref = "/dashboard/services/new";
 
   return (
     <div className="space-y-6">
@@ -50,9 +50,13 @@ export default async function ProfileServicesPage({ params }: Props) {
             hasBusiness ? t("services.emptyDesc") : t("pagesServices.noBusinessDesc")
           }
           action={
-            <Button asChild>
-              <Link href={addHref}>{t("services.add")}</Link>
-            </Button>
+            hasBusiness ? (
+              <Button asChild>
+                <Link href={addHref}>{t("services.add")}</Link>
+              </Button>
+            ) : (
+              <Button disabled>{t("services.add")}</Button>
+            )
           }
         />
       ) : (
@@ -133,7 +137,7 @@ function ServiceCard({
             </Link>
           </Button>
           <Button variant="outline" size="sm" className="flex-1" asChild>
-            <Link href="/dashboard?tab=services">
+            <Link href={`/dashboard/services/${service.id}/edit`}>
               <Pencil className="size-3.5" />
               {t("services.edit")}
             </Link>

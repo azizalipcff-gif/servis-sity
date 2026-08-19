@@ -98,7 +98,7 @@ export function AddContentButton({ hasBusiness }: { hasBusiness: boolean }) {
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <AddOption
-                  href="/dashboard"
+                  href={hasBusiness ? "/dashboard/business/edit" : "/dashboard/business/new"}
                   icon={Building2}
                   title={t("add.businessTitle")}
                   description={t("add.businessDesc")}
@@ -107,7 +107,7 @@ export function AddContentButton({ hasBusiness }: { hasBusiness: boolean }) {
                   }
                 />
                 <AddOption
-                  href={hasBusiness ? "/dashboard?tab=services" : "/dashboard"}
+                  href="/dashboard/services/new"
                   icon={Wrench}
                   title={t("add.serviceTitle")}
                   description={t("add.serviceDesc")}
@@ -116,7 +116,7 @@ export function AddContentButton({ hasBusiness }: { hasBusiness: boolean }) {
                   lockHint={t("add.needBusiness")}
                 />
                 <AddOption
-                  href={hasBusiness ? "/dashboard?tab=products" : "/dashboard"}
+                  href="/dashboard/products/new"
                   icon={Package}
                   title={t("add.productTitle")}
                   description={t("add.productDesc")}
@@ -150,12 +150,8 @@ function AddOption({
   locked?: boolean;
   lockHint?: string;
 }) {
-  return (
-    <Link
-      href={href}
-      className={cnCard(locked)}
-      aria-label={title}
-    >
+  const card = (
+    <>
       <span className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
         <Icon className="size-6" />
       </span>
@@ -173,6 +169,20 @@ function AddOption({
           <ArrowRight className="size-4 rtl:rotate-180" />
         </span>
       )}
+    </>
+  );
+
+  if (locked) {
+    return (
+      <div className={cnCard(true)} aria-disabled="true">
+        {card}
+      </div>
+    );
+  }
+
+  return (
+    <Link href={href} className={cnCard(false)} aria-label={title}>
+      {card}
     </Link>
   );
 }

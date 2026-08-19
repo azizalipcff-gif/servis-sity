@@ -645,7 +645,36 @@
       "completenessVerificationHint": "أرسل مستنداتك للحصول على التوثيق",
       "billingLink": "الفوترة والاشتراك"
     },
-    "whatsappInvalid": "أدخل رقم واتساب مغربيًا صحيحًا، مثال: +212 6XX XXX XXX"
+    "whatsappInvalid": "أدخل رقم واتساب مغربيًا صحيحًا، مثال: +212 6XX XXX XXX",
+    "serviceDescription": "وصف الخدمة",
+    "serviceDescriptionPlaceholder": "صف ما تتضمنه الخدمة ومدتها وما يحصل عليه العميل...",
+    "serviceStatus": "الحالة",
+    "hours": "ساعات العمل",
+    "hoursHint": "حدد متى يمكن للعملاء الوصول إليك",
+    "hoursOpen": "الافتتاح",
+    "hoursClose": "الإغلاق",
+    "hoursClosed": "مغلق",
+    "saveHours": "حفظ الساعات",
+    "hoursSaved": "تم حفظ ساعات العمل",
+    "hoursError": "تعذر حفظ ساعات العمل",
+    "savedService": "تم حفظ الخدمة بنجاح",
+    "wizard": {
+      "businessNewTitle": "إنشاء نشاطك التجاري",
+      "businessNewDesc": "أنشئ صفحة نشاطك التجاري حتى يتمكن العملاء من العثور عليك على Service City.",
+      "businessEditTitle": "تعديل نشاطك التجاري",
+      "businessEditDesc": "حدّث معلومات نشاطك التجاري.",
+      "serviceNewTitle": "إضافة خدمة",
+      "serviceNewDesc": "انشر خدمة تقدمها من خلال نشاطك التجاري.",
+      "serviceEditTitle": "تعديل الخدمة",
+      "serviceEditDesc": "حدّث تفاصيل الخدمة.",
+      "productNewTitle": "إضافة منتج",
+      "productNewDesc": "انشر منتجًا في السوق.",
+      "productEditTitle": "تعديل المنتج",
+      "productEditDesc": "حدّث تفاصيل المنتج.",
+      "backDashboard": "العودة إلى لوحة التحكم",
+      "backServices": "العودة إلى الخدمات",
+      "backProducts": "العودة إلى المنتجات"
+    }
   },
   "admin": {
     "title": "لوحة الإدارة",
@@ -982,7 +1011,8 @@
     "imagesHint": "ارفع الصور (PNG, JPEG, WebP)",
     "saved": "تم الحفظ",
     "confirmDelete": "حذف هذا المنتج؟",
-    "stockEmpty": "نفدت الكمية"
+    "stockEmpty": "نفدت الكمية",
+    "category": "الفئة"
   },
   "product": {
     "outOfStock": "نفدت الكمية",

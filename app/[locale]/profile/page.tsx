@@ -116,7 +116,7 @@ export default async function ProfileOverviewPage({ params }: Props) {
             description={t("business.emptyDesc")}
             action={
               <Button asChild>
-                <Link href="/dashboard">
+                <Link href="/dashboard/business/new">
                   <PlusIcon />
                   {t("business.create")}
                 </Link>
@@ -152,14 +152,25 @@ export default async function ProfileOverviewPage({ params }: Props) {
           <EmptyCard
             icon={<Wrench className="size-6" />}
             title={t("services.emptyTitle")}
-            description={t("services.emptyDesc")}
+            description={
+              data.businesses.length > 0
+                ? t("services.emptyDesc")
+                : t("pagesServices.noBusinessDesc")
+            }
             action={
-              <Button asChild>
-                <Link href={data.businesses.length ? "/dashboard?tab=services" : "/dashboard"}>
+              data.businesses.length > 0 ? (
+                <Button asChild>
+                  <Link href="/dashboard/services/new">
+                    <PlusIcon />
+                    {t("services.add")}
+                  </Link>
+                </Button>
+              ) : (
+                <Button disabled>
                   <PlusIcon />
                   {t("services.add")}
-                </Link>
-              </Button>
+                </Button>
+              )
             }
           />
         )}
@@ -183,14 +194,25 @@ export default async function ProfileOverviewPage({ params }: Props) {
           <EmptyCard
             icon={<Package className="size-6" />}
             title={t("products.emptyTitle")}
-            description={t("products.emptyDesc")}
+            description={
+              data.businesses.length > 0
+                ? t("products.emptyDesc")
+                : t("pagesProducts.noBusinessDesc")
+            }
             action={
-              <Button asChild>
-                <Link href={data.businesses.length ? "/dashboard?tab=products" : "/dashboard"}>
+              data.businesses.length > 0 ? (
+                <Button asChild>
+                  <Link href="/dashboard/products/new">
+                    <PlusIcon />
+                    {t("products.add")}
+                  </Link>
+                </Button>
+              ) : (
+                <Button disabled>
                   <PlusIcon />
                   {t("products.add")}
-                </Link>
-              </Button>
+                </Button>
+              )
             }
           />
         )}

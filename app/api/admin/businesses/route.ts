@@ -77,7 +77,7 @@ export async function PATCH(request: Request) {
         type: "admin",
         title: current.name ?? "",
         body: "APPROVED",
-        link: `/dashboard?tab=business`,
+        link: `/dashboard?tab=plan`,
       });
     }
 

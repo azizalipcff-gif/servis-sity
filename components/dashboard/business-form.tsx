@@ -1,13 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useRouter as useLocaleRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { CheckCircle2, Loader2, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { businessSchema } from "@/lib/validations/schemas";
 import { slugify } from "@/lib/slug";
 import { localizedName, type Locale } from "@/lib/translations";
-import { buildWhatsAppUrl, normalizeMoroccanWhatsApp } from "@/lib/whatsapp";
+import {
+  buildWhatsAppUrl,
+  normalizeMoroccanWhatsApp,
+  whatsappNationalDigits,
+  formatWhatsAppNational,
+} from "@/lib/whatsapp";
 import { MOROCCAN_CITIES } from "@/lib/constants";
 import type { BusinessDetail } from "@/lib/queries";
 import type { Category } from "@/lib/supabase/database.types";
@@ -38,6 +45,7 @@ type Props = {
   categories: Category[];
   userId: string;
   locale: Locale;
+  successHref?: string;
 };
 
 function SectionHeading({ title, hint }: { title: string; hint: string }) {
@@ -51,29 +59,36 @@ function SectionHeading({ title, hint }: { title: string; hint: string }) {
   );
 }
 
-export function BusinessForm({ business, categories, userId, locale }: Props) {
+export function BusinessForm({ business, categories, userId, locale, successHref }: Props) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
+  const router = useRouter();
+  const localeRouter = useLocaleRouter();
 
   const [name, setName] = useState(business?.name ?? "");
   const [slug, setSlug] = useState(business?.slug ?? "");
   const [categoryId, setCategoryId] = useState(business?.category_id ?? "");
   const [description, setDescription] = useState(business?.description ?? "");
   const [phone, setPhone] = useState(business?.phone ?? "");
-  const [whatsapp, setWhatsapp] = useState(
-    business?.whatsapp
-      ? (normalizeMoroccanWhatsApp(business.whatsapp) ?? business.whatsapp)
-      : "",
-  );
+  const [whatsappDigits, setWhatsappDigits] = useState(() => {
+    const stored = business?.whatsapp;
+    if (!stored) return "";
+    return formatWhatsAppNational(
+      whatsappNationalDigits(normalizeMoroccanWhatsApp(stored) ?? stored),
+    );
+  });
   const [whatsappEnabled, setWhatsappEnabled] = useState(
     business?.whatsapp_enabled ?? false,
   );
 
-  const whatsappLink = whatsapp.trim()
-    ? buildWhatsAppUrl({ whatsapp })
+  // digits are the national portion (6XXXXXXXX); +212 is a fixed visible prefix.
+  const digits = whatsappDigits.replace(/\s/g, "");
+  const whatsappValue = digits ? `+212${digits}` : "";
+  const whatsappLink = whatsappValue
+    ? buildWhatsAppUrl({ whatsapp: whatsappValue })
     : null;
   const whatsappError =
-    whatsapp.trim() !== "" && normalizeMoroccanWhatsApp(whatsapp) === null;
+    digits !== "" && !/^[5-7]\d{8}$/.test(digits);
   const [address, setAddress] = useState(business?.address ?? "");
   const [city, setCity] = useState(business?.city ?? "");
   const [logoUrl, setLogoUrl] = useState(business?.logo_url ?? "");
@@ -101,7 +116,7 @@ export function BusinessForm({ business, categories, userId, locale }: Props) {
       slug,
       description,
       phone: phone || undefined,
-      whatsapp: whatsapp || undefined,
+      whatsapp: whatsappValue || undefined,
       address: address || undefined,
       city: city || undefined,
     });
@@ -145,6 +160,8 @@ export function BusinessForm({ business, categories, userId, locale }: Props) {
       }
 
       setSaved(true);
+      router.refresh();
+      if (successHref) localeRouter.push(successHref);
     } catch {
       setError(tCommon("error"));
     } finally {
@@ -243,20 +260,35 @@ export function BusinessForm({ business, categories, userId, locale }: Props) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="whatsapp">{t("whatsapp")}</Label>
-                  <Input
-                    id="whatsapp"
-                    type="tel"
-                    dir="ltr"
-                    placeholder="+212 6XX XXX XXX"
-                    inputMode="tel"
-                    value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value)}
-                    onBlur={(e) => {
-                      const normalized = normalizeMoroccanWhatsApp(e.target.value);
-                      if (normalized) setWhatsapp(normalized);
-                    }}
-                    aria-invalid={whatsappError || undefined}
-                  />
+                  <div
+                    className={cn(
+                      "flex h-10 w-full items-center rounded-xl border border-input bg-background px-3 text-sm shadow-sm transition-colors",
+                      "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 focus-within:ring-offset-background",
+                    )}
+                  >
+                    <span
+                      dir="ltr"
+                      className="shrink-0 select-none text-sm text-muted-foreground"
+                    >
+                      +212
+                    </span>
+                    <input
+                      id="whatsapp"
+                      type="tel"
+                      inputMode="numeric"
+                      dir="ltr"
+                      value={whatsappDigits}
+                      onChange={(e) =>
+                        setWhatsappDigits(whatsappNationalDigits(e.target.value))
+                      }
+                      onBlur={() =>
+                        setWhatsappDigits(formatWhatsAppNational(digits))
+                      }
+                      placeholder="6XX XXX XXX"
+                      aria-invalid={whatsappError || undefined}
+                      className="min-w-0 flex-1 border-0 bg-transparent px-1.5 py-2 text-sm outline-none placeholder:text-muted-foreground"
+                    />
+                  </div>
                   {whatsappError && (
                     <p className="text-xs text-destructive">{t("whatsappInvalid")}</p>
                   )}

@@ -645,7 +645,36 @@
       "completenessVerificationHint": "Soumettez des documents pour être vérifié",
       "billingLink": "Facturation & abonnement"
     },
-    "whatsappInvalid": "Entrez un numéro WhatsApp marocain valide, ex. +212 6XX XXX XXX"
+    "whatsappInvalid": "Entrez un numéro WhatsApp marocain valide, ex. +212 6XX XXX XXX",
+    "serviceDescription": "Description du service",
+    "serviceDescriptionPlaceholder": "Décrivez ce que ce service inclut, sa durée et ce que le client reçoit...",
+    "serviceStatus": "Statut",
+    "hours": "Horaires d'ouverture",
+    "hoursHint": "Indiquez quand vos clients peuvent vous joindre",
+    "hoursOpen": "Ouverture",
+    "hoursClose": "Fermeture",
+    "hoursClosed": "Fermé",
+    "saveHours": "Enregistrer les horaires",
+    "hoursSaved": "Horaires enregistrés",
+    "hoursError": "Impossible d'enregistrer les horaires",
+    "savedService": "Service enregistré avec succès",
+    "wizard": {
+      "businessNewTitle": "Créez votre entreprise",
+      "businessNewDesc": "Créez votre page entreprise pour que les clients puissent vous trouver sur Service City.",
+      "businessEditTitle": "Modifier votre entreprise",
+      "businessEditDesc": "Mettez à jour les informations de votre entreprise.",
+      "serviceNewTitle": "Ajouter un service",
+      "serviceNewDesc": "Publiez un service que vous proposez via votre entreprise.",
+      "serviceEditTitle": "Modifier le service",
+      "serviceEditDesc": "Mettez à jour les détails de votre service.",
+      "productNewTitle": "Ajouter un produit",
+      "productNewDesc": "Publiez un produit sur le marché.",
+      "productEditTitle": "Modifier le produit",
+      "productEditDesc": "Mettez à jour les détails de votre produit.",
+      "backDashboard": "Retour au tableau de bord",
+      "backServices": "Retour aux services",
+      "backProducts": "Retour aux produits"
+    }
   },
   "admin": {
     "title": "Panneau d'administration",
@@ -982,7 +1011,8 @@
     "imagesHint": "Téléchargez des images (PNG, JPEG, WebP)",
     "saved": "Enregistré",
     "confirmDelete": "Supprimer ce produit ?",
-    "stockEmpty": "Rupture de stock"
+    "stockEmpty": "Rupture de stock",
+    "category": "Catégorie"
   },
   "product": {
     "outOfStock": "Rupture de stock",

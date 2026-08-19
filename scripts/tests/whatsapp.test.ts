@@ -8,6 +8,8 @@
 import { run, finish, assertEqual, assert } from "./suite.ts";
 import {
   normalizeMoroccanWhatsApp,
+  whatsappNationalDigits,
+  formatWhatsAppNational,
   buildWhatsAppUrl,
 } from "../../lib/whatsapp/index.ts";
 import {
@@ -129,6 +131,51 @@ await run("whatsapp: empty / absent whatsapp is allowed", () => {
   });
   assert(ok.success, "business schema parses without whatsapp");
   assert(ok.success && ok.data.whatsapp === undefined, "absent whatsapp ok");
+});
+
+// ── Editable-input helpers (fixed +212 prefix) ───────────────────────────
+
+await run("whatsapp input: 659785764 -> canonical +212659785764", () => {
+  assertEqual(whatsappNationalDigits("659785764"), "659785764");
+  assertEqual(formatWhatsAppNational("659785764"), "659 785 764");
+  assertEqual(normalizeMoroccanWhatsApp(`+212${whatsappNationalDigits("659785764")}`), "+212659785764");
+});
+
+await run("whatsapp input: 712345678 -> canonical +212712345678", () => {
+  assertEqual(whatsappNationalDigits("712345678"), "712345678");
+  assertEqual(formatWhatsAppNational("712345678"), "712 345 678");
+  assertEqual(normalizeMoroccanWhatsApp(`+212${whatsappNationalDigits("712345678")}`), "+212712345678");
+});
+
+await run("whatsapp input: 0659785764 cleans to national digits", () => {
+  assertEqual(whatsappNationalDigits("0659785764"), "659785764");
+  assertEqual(formatWhatsAppNational("659785764"), "659 785 764");
+  assertEqual(normalizeMoroccanWhatsApp("0659785764"), "+212659785764");
+});
+
+await run("whatsapp input: +212 / pasted numbers load to 9 national digits", () => {
+  assertEqual(whatsappNationalDigits("+212659785764"), "659785764");
+  assertEqual(whatsappNationalDigits("+212 659 785 764"), "659785764");
+  assertEqual(whatsappNationalDigits("00212659785764"), "659785764");
+  assertEqual(whatsappNationalDigits("+212212659785764"), "659785764");
+  assertEqual(formatWhatsAppNational("659785764"), "659 785 764");
+});
+
+await run("whatsapp input: rejects letters and clamps to 9 digits", () => {
+  assertEqual(whatsappNationalDigits("659785764123"), "659785764");
+  assertEqual(whatsappNationalDigits("abc6597def"), "6597");
+  assertEqual(whatsappNationalDigits(""), "");
+  assertEqual(formatWhatsAppNational(""), "");
+  assertEqual(formatWhatsAppNational("6597"), "659 7");
+});
+
+await run("whatsapp input: schema rejects invalid input, URL stays canonical", () => {
+  const digits = whatsappNationalDigits("659785764");
+  const full = `+212${digits}`;
+  assertEqual(full, "+212659785764");
+  assertEqual(whatsappSchema.parse(full), "+212659785764");
+  assertEqual(buildWhatsAppUrl({ whatsapp: full }), "https://wa.me/212659785764");
+  assert(!whatsappSchema.safeParse("+212459785764").success, "non 5-7 prefix rejected");
 });
 
 await finish();

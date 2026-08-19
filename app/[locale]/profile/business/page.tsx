@@ -47,7 +47,7 @@ export default async function ProfileBusinessPage({ params }: Props) {
           description={t("pagesBusiness.noBusinessDesc")}
           action={
             <Button asChild>
-              <Link href="/dashboard">{t("business.create")}</Link>
+              <Link href="/dashboard/business/new">{t("business.create")}</Link>
             </Button>
           }
         />

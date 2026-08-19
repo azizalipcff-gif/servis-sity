@@ -69,8 +69,12 @@ async function report(opts: {
 
   if (typeof window !== "undefined") return;
   try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
+    // Persist via the server-only client — `system_logs` has no anon write
+    // policy (migration 0032 removes the world-writable insert policy), and
+    // server-side logs must not depend on the session role.
+    const { createServiceClient } = await import("@/lib/supabase/server");
+    const supabase = createServiceClient();
+    if (!supabase) return;
     await supabase.from("system_logs").insert({
       context: entry.context,
       level: entry.level,

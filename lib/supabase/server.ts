@@ -46,10 +46,15 @@ export async function createClient() {
 }
 
 /**
- * Server-only client that bypasses RLS (service role). Used exclusively by
- * gateway webhook handlers, which must record provider-confirmed payment state
- * without a user session. Never call this from user-facing routes — mutations
- * there must stay on the session client so RLS still applies.
+ * Server-only client that bypasses RLS (service role). Used by gateway webhook
+ * handlers (record provider-confirmed payment state without a user session)
+ * and by bounded, fully-validated event-ingestion writers: /api/analytics/track,
+ * /api/log, lib/security/logger and the bookings analytics side-effect. Those
+ * writers must not depend on anon RLS INSERT grants, because `analytics_events`
+ * and `system_logs` intentionally carry none (migration 0032).
+ *
+ * Never call this from general user-facing mutations — those must stay on the
+ * session client so RLS still applies.
  */
 export function createServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

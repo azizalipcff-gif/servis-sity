@@ -7,14 +7,17 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node scripts/tests/search-quality.test.ts && node scripts/tests/billing.test.ts && node scripts/tests/billing-security.test.ts && node scripts/tests/validation.test.ts && node scripts/tests/url.test.ts && node scripts/tests/whatsapp.test.ts && node scripts/tests/analytics-lead.test.ts && node scripts/tests/workspace-state.test.ts",
+    "test": "node scripts/tests/search-quality.test.ts && node scripts/tests/billing.test.ts && node scripts/tests/billing-security.test.ts && node scripts/tests/validation.test.ts && node scripts/tests/url.test.ts && node scripts/tests/whatsapp.test.ts && node scripts/tests/analytics-lead.test.ts && node scripts/tests/analytics-track.test.ts && node scripts/tests/csrf.test.ts && node scripts/tests/ip.test.ts && node scripts/tests/workspace-state.test.ts",
     "test:search": "node scripts/tests/search-quality.test.ts",
     "test:billing": "node scripts/tests/billing.test.ts",
     "test:billing-security": "node scripts/tests/billing-security.test.ts",
     "test:validation": "node scripts/tests/validation.test.ts",
     "test:url": "node scripts/tests/url.test.ts",
     "test:analytics": "node scripts/tests/analytics-lead.test.ts",
-    "test:whatsapp": "node scripts/tests/whatsapp.test.ts"
+    "test:analytics-track": "node scripts/tests/analytics-track.test.ts",
+    "test:csrf": "node scripts/tests/csrf.test.ts",
+    "test:whatsapp": "node scripts/tests/whatsapp.test.ts",
+    "test:ip": "node scripts/tests/ip.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",

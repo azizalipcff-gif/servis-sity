@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/supabase/user";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 import { isConversationMember } from "@/lib/messenger";
+import { uuidSchema } from "@/lib/validations/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!user) return jsonError(401, "unauthorized");
 
     const { id } = await params;
+    if (!uuidSchema.safeParse(id).success) return jsonError(400, "bad_request");
     if (!(await isConversationMember(supabase, user.id, id))) {
       return jsonError(403, "forbidden");
     }
@@ -77,6 +79,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (!user) return jsonError(401, "unauthorized");
 
     const { id } = await params;
+    if (!uuidSchema.safeParse(id).success) return jsonError(400, "bad_request");
     // Leave conversation (archive for the member).
     const { error } = await supabase
       .from("conversation_members")

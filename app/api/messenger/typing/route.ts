@@ -5,6 +5,7 @@ import { assertSameOrigin } from "@/lib/security/csrf";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 import { isConversationMember } from "@/lib/messenger";
+import { uuidSchema } from "@/lib/validations/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
       isTyping?: boolean;
     };
     const conversationId = body.conversationId;
-    if (!conversationId) return jsonError(400, "bad_request");
+    if (!conversationId || !uuidSchema.safeParse(conversationId).success) return jsonError(400, "bad_request");
     if (!(await isConversationMember(supabase, user.id, conversationId))) {
       return jsonError(403, "forbidden");
     }

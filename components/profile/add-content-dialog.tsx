@@ -14,6 +14,11 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import {
+  WORKSPACE_ADD_PRODUCT_HREF,
+  WORKSPACE_ADD_SERVICE_HREF,
+  WORKSPACE_CREATE_BUSINESS_HREF,
+} from "@/lib/workspace/actions";
 
 export function AddContentButton({ hasBusiness }: { hasBusiness: boolean }) {
   const t = useTranslations("workspace");
@@ -98,7 +103,11 @@ export function AddContentButton({ hasBusiness }: { hasBusiness: boolean }) {
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <AddOption
-                  href={hasBusiness ? "/dashboard/business/edit" : "/dashboard/business/new"}
+                  href={
+                    hasBusiness
+                      ? "/dashboard/business/edit"
+                      : WORKSPACE_CREATE_BUSINESS_HREF
+                  }
                   icon={Building2}
                   title={t("add.businessTitle")}
                   description={t("add.businessDesc")}
@@ -107,7 +116,7 @@ export function AddContentButton({ hasBusiness }: { hasBusiness: boolean }) {
                   }
                 />
                 <AddOption
-                  href="/dashboard/services/new"
+                  href={WORKSPACE_ADD_SERVICE_HREF}
                   icon={Wrench}
                   title={t("add.serviceTitle")}
                   description={t("add.serviceDesc")}
@@ -116,7 +125,7 @@ export function AddContentButton({ hasBusiness }: { hasBusiness: boolean }) {
                   lockHint={t("add.needBusiness")}
                 />
                 <AddOption
-                  href="/dashboard/products/new"
+                  href={WORKSPACE_ADD_PRODUCT_HREF}
                   icon={Package}
                   title={t("add.productTitle")}
                   description={t("add.productDesc")}

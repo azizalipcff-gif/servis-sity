@@ -1,7 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
-import { getCurrentUser, getCurrentProfile } from "@/lib/supabase/user";
-import { countMyBusinesses } from "@/lib/workspace";
+import { getCurrentProfile } from "@/lib/supabase/user";
+import { getWorkspaceState } from "@/lib/workspace";
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { ProfileNav } from "@/components/profile/profile-nav";
 
@@ -20,23 +20,20 @@ export default async function ProfileLayout({ children, params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const user = await getCurrentUser();
+  const state = await getWorkspaceState();
+  const user = state.user;
   if (!user) {
     return redirect({ href: "/login", locale: locale as "ar" | "fr" | "en" });
   }
-  const userId = user.id;
 
-  const [profile, businessCount] = await Promise.all([
-    getCurrentProfile(),
-    countMyBusinesses(userId),
-  ]);
+  const profile = await getCurrentProfile();
 
   return (
     <div className="container-site pb-20">
       <div className="mx-auto max-w-6xl">
         <ProfileHeader
           profile={profile}
-          hasBusiness={businessCount > 0}
+          hasBusiness={state.hasBusiness}
           locale={locale}
         />
         <div className="mt-6">

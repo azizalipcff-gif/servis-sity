@@ -1,12 +1,16 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { ArrowUpRight, Clock, Pencil, Wrench } from "lucide-react";
-import { getCurrentUser } from "@/lib/supabase/user";
-import { getWorkspaceData, type WorkspaceService } from "@/lib/workspace";
+import {
+  getWorkspaceData,
+  getWorkspaceState,
+  type WorkspaceService,
+} from "@/lib/workspace";
+import { WORKSPACE_ADD_SERVICE_HREF } from "@/lib/workspace/actions";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { SmartImage } from "@/components/smart-image";
 import { StatusBadge } from "@/components/profile/status-badge";
-import { EmptyCard } from "@/components/profile/empty-card";
+import { WorkspaceEmptyState } from "@/components/profile/workspace-empty-state";
 import { formatPrice, type Locale } from "@/lib/translations";
 import { businessHref } from "@/lib/business/url";
 
@@ -20,13 +24,14 @@ export default async function ProfileServicesPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const user = await getCurrentUser();
+  const state = await getWorkspaceState();
   const t = await getTranslations("workspace");
   const tBiz = await getTranslations("business");
 
-  const data = await getWorkspaceData(user?.id ?? "");
-  const hasBusiness = data.businesses.length > 0;
-  const addHref = "/dashboard/services/new";
+  if (!state.user) return null;
+
+  const data = await getWorkspaceData(state);
+  const addHref = WORKSPACE_ADD_SERVICE_HREF;
 
   return (
     <div className="space-y-6">
@@ -43,21 +48,10 @@ export default async function ProfileServicesPage({ params }: Props) {
       </header>
 
       {data.services.length === 0 ? (
-        <EmptyCard
-          icon={<Wrench className="size-6" />}
-          title={t("services.emptyTitle")}
-          description={
-            hasBusiness ? t("services.emptyDesc") : t("pagesServices.noBusinessDesc")
-          }
-          action={
-            hasBusiness ? (
-              <Button asChild>
-                <Link href={addHref}>{t("services.add")}</Link>
-              </Button>
-            ) : (
-              <Button disabled>{t("services.add")}</Button>
-            )
-          }
+        <WorkspaceEmptyState
+          hasBusiness={state.hasBusiness}
+          entity="services"
+          error={state.error}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

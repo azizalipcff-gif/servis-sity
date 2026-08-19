@@ -1,12 +1,16 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { ArrowUpRight, Package, Pencil } from "lucide-react";
-import { getCurrentUser } from "@/lib/supabase/user";
-import { getWorkspaceData, type WorkspaceProduct } from "@/lib/workspace";
+import {
+  getWorkspaceData,
+  getWorkspaceState,
+  type WorkspaceProduct,
+} from "@/lib/workspace";
+import { WORKSPACE_ADD_PRODUCT_HREF } from "@/lib/workspace/actions";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { SmartImage } from "@/components/smart-image";
 import { StatusBadge } from "@/components/profile/status-badge";
-import { EmptyCard } from "@/components/profile/empty-card";
+import { WorkspaceEmptyState } from "@/components/profile/workspace-empty-state";
 import { formatPrice, type Locale } from "@/lib/translations";
 
 export const dynamic = "force-dynamic";
@@ -19,12 +23,13 @@ export default async function ProfileProductsPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const user = await getCurrentUser();
+  const state = await getWorkspaceState();
   const t = await getTranslations("workspace");
 
-  const data = await getWorkspaceData(user?.id ?? "");
-  const hasBusiness = data.businesses.length > 0;
-  const addHref = "/dashboard/products/new";
+  if (!state.user) return null;
+
+  const data = await getWorkspaceData(state);
+  const addHref = WORKSPACE_ADD_PRODUCT_HREF;
 
   return (
     <div className="space-y-6">
@@ -41,21 +46,10 @@ export default async function ProfileProductsPage({ params }: Props) {
       </header>
 
       {data.products.length === 0 ? (
-        <EmptyCard
-          icon={<Package className="size-6" />}
-          title={t("products.emptyTitle")}
-          description={
-            hasBusiness ? t("products.emptyDesc") : t("pagesProducts.noBusinessDesc")
-          }
-          action={
-            hasBusiness ? (
-              <Button asChild>
-                <Link href={addHref}>{t("products.add")}</Link>
-              </Button>
-            ) : (
-              <Button disabled>{t("products.add")}</Button>
-            )
-          }
+        <WorkspaceEmptyState
+          hasBusiness={state.hasBusiness}
+          entity="products"
+          error={state.error}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

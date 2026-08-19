@@ -1,13 +1,17 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { ArrowUpRight, Building2, MapPin } from "lucide-react";
-import { getCurrentUser } from "@/lib/supabase/user";
-import { getWorkspaceData, type BusinessSummary } from "@/lib/workspace";
+import {
+  getWorkspaceData,
+  getWorkspaceState,
+  type BusinessSummary,
+} from "@/lib/workspace";
+import { WORKSPACE_MANAGE_BUSINESS_HREF } from "@/lib/workspace/actions";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { RatingStars } from "@/components/rating-stars";
 import { SmartImage } from "@/components/smart-image";
 import { StatusBadge } from "@/components/profile/status-badge";
-import { EmptyCard } from "@/components/profile/empty-card";
+import { WorkspaceEmptyState } from "@/components/profile/workspace-empty-state";
 import { localizedName, type Locale } from "@/lib/translations";
 import { businessHref } from "@/lib/business/url";
 
@@ -21,10 +25,12 @@ export default async function ProfileBusinessPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const user = await getCurrentUser();
+  const state = await getWorkspaceState();
   const t = await getTranslations("workspace");
 
-  const data = await getWorkspaceData(user?.id ?? "");
+  if (!state.user) return null;
+
+  const data = await getWorkspaceData(state);
 
   return (
     <div className="space-y-6">
@@ -35,21 +41,16 @@ export default async function ProfileBusinessPage({ params }: Props) {
         </div>
         {data.businesses.length > 0 && (
           <Button asChild>
-            <Link href="/dashboard">{t("business.manage")}</Link>
+            <Link href={WORKSPACE_MANAGE_BUSINESS_HREF}>{t("business.manage")}</Link>
           </Button>
         )}
       </header>
 
       {data.businesses.length === 0 ? (
-        <EmptyCard
-          icon={<Building2 className="size-6" />}
-          title={t("pagesBusiness.noBusinessTitle")}
-          description={t("pagesBusiness.noBusinessDesc")}
-          action={
-            <Button asChild>
-              <Link href="/dashboard/business/new">{t("business.create")}</Link>
-            </Button>
-          }
+        <WorkspaceEmptyState
+          hasBusiness={state.hasBusiness}
+          entity="business"
+          error={state.error}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

@@ -11,20 +11,21 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
-import { getCurrentUser } from "@/lib/supabase/user";
 import {
   getWorkspaceData,
+  getWorkspaceState,
   profileCompletion,
   type BusinessSummary,
   type WorkspaceProduct,
   type WorkspaceService,
 } from "@/lib/workspace";
+import { WORKSPACE_MANAGE_BUSINESS_HREF } from "@/lib/workspace/actions";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { RatingStars } from "@/components/rating-stars";
 import { SmartImage } from "@/components/smart-image";
 import { StatusBadge } from "@/components/profile/status-badge";
-import { EmptyCard } from "@/components/profile/empty-card";
+import { WorkspaceEmptyState } from "@/components/profile/workspace-empty-state";
 import { localizedName, formatPrice, type Locale } from "@/lib/translations";
 import { businessHref } from "@/lib/business/url";
 
@@ -38,11 +39,13 @@ export default async function ProfileOverviewPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const user = await getCurrentUser();
+  const state = await getWorkspaceState();
   const t = await getTranslations("workspace");
   const tBiz = await getTranslations("business");
 
-  const data = await getWorkspaceData(user?.id ?? "");
+  if (!state.user) return null;
+
+  const data = await getWorkspaceData(state);
   const completion = profileCompletion(data.profile);
 
   const displayName =
@@ -59,164 +62,120 @@ export default async function ProfileOverviewPage({ params }: Props) {
         </p>
       </header>
 
-      {/* Real stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard
-          icon={Building2}
-          value={data.businesses.length}
-          label={t("overview.statBusinesses")}
-          href="/profile/business"
-        />
-        <StatCard
-          icon={Wrench}
-          value={data.services.length}
-          label={t("overview.statServices")}
-          href="/profile/services"
-        />
-        <StatCard
-          icon={Package}
-          value={data.products.length}
-          label={t("overview.statProducts")}
-          href="/profile/products"
-        />
-        <StatCard
-          icon={MessageSquare}
-          value={data.unreadMessages}
-          label={t("overview.statMessages")}
-          href="/messenger"
-          highlight={data.unreadMessages > 0}
-        />
-        <StatCard
-          icon={Heart}
-          value={data.favoritesCount}
-          label={t("overview.statFavorites")}
-          href="/profile/favorites"
-        />
-      </div>
+      {state.error ? (
+        <WorkspaceEmptyState hasBusiness={false} error={state.error} entity="overview" />
+      ) : (
+        <>
+          {/* Real stats */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <StatCard
+              icon={Building2}
+              value={data.businesses.length}
+              label={t("overview.statBusinesses")}
+              href="/profile/business"
+            />
+            <StatCard
+              icon={Wrench}
+              value={data.services.length}
+              label={t("overview.statServices")}
+              href="/profile/services"
+            />
+            <StatCard
+              icon={Package}
+              value={data.products.length}
+              label={t("overview.statProducts")}
+              href="/profile/products"
+            />
+            <StatCard
+              icon={MessageSquare}
+              value={data.unreadMessages}
+              label={t("overview.statMessages")}
+              href="/messenger"
+              highlight={data.unreadMessages > 0}
+            />
+            <StatCard
+              icon={Heart}
+              value={data.favoritesCount}
+              label={t("overview.statFavorites")}
+              href="/profile/favorites"
+            />
+          </div>
 
-      {/* Completion + My Business */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <CompletionCard
-          done={completion.done}
-          total={completion.total}
-          pct={completion.pct}
-          t={t as (key: string) => string}
-        />
+          {/* Completion + My Business */}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <CompletionCard
+              done={completion.done}
+              total={completion.total}
+              pct={completion.pct}
+              t={t as (key: string) => string}
+            />
 
-        {data.businesses.length > 0 ? (
-          <BusinessSummaryCard
-            business={data.businesses[0]}
-            locale={locale as Locale}
-            t={t as (key: string) => string}
-          />
-        ) : (
-          <EmptyCard
-            icon={<Building2 className="size-6" />}
-            title={t("business.emptyTitle")}
-            description={t("business.emptyDesc")}
-            action={
-              <Button asChild>
-                <Link href="/dashboard/business/new">
-                  <PlusIcon />
-                  {t("business.create")}
-                </Link>
-              </Button>
-            }
-          />
-        )}
-      </div>
+            {data.businesses.length > 0 ? (
+              <BusinessSummaryCard
+                business={data.businesses[0]}
+                locale={locale as Locale}
+                t={t as (key: string) => string}
+              />
+            ) : (
+              <WorkspaceEmptyState hasBusiness={state.hasBusiness} entity="business" />
+            )}
+          </div>
 
-      {/* Services + Products */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {data.services.length > 0 ? (
-          <CollectionCard
-            icon={Wrench}
-            title={t("services.title")}
-            count={data.services.length}
-            unit={t("services.unit")}
-            href="/profile/services"
-            viewAll={t("services.viewAll")}
-          >
-            <ul className="space-y-2">
-              {data.services.slice(0, 3).map((s) => (
-                <ServiceRow
-                  key={s.id}
-                  service={s}
-                  locale={locale as Locale}
-                  minutes={tBiz("minutes")}
-                />
-              ))}
-            </ul>
-          </CollectionCard>
-        ) : (
-          <EmptyCard
-            icon={<Wrench className="size-6" />}
-            title={t("services.emptyTitle")}
-            description={
-              data.businesses.length > 0
-                ? t("services.emptyDesc")
-                : t("pagesServices.noBusinessDesc")
-            }
-            action={
-              data.businesses.length > 0 ? (
-                <Button asChild>
-                  <Link href="/dashboard/services/new">
-                    <PlusIcon />
-                    {t("services.add")}
-                  </Link>
-                </Button>
-              ) : (
-                <Button disabled>
-                  <PlusIcon />
-                  {t("services.add")}
-                </Button>
-              )
-            }
-          />
-        )}
+          {/* Services + Products */}
+          <div className="grid gap-4 lg:grid-cols-2">
+            {data.services.length > 0 ? (
+              <CollectionCard
+                icon={Wrench}
+                title={t("services.title")}
+                count={data.services.length}
+                unit={t("services.unit")}
+                href="/profile/services"
+                viewAll={t("services.viewAll")}
+              >
+                <ul className="space-y-2">
+                  {data.services.slice(0, 3).map((s) => (
+                    <ServiceRow
+                      key={s.id}
+                      service={s}
+                      locale={locale as Locale}
+                      minutes={tBiz("minutes")}
+                    />
+                  ))}
+                </ul>
+              </CollectionCard>
+            ) : (
+              <WorkspaceEmptyState
+                hasBusiness={state.hasBusiness}
+                entity="services"
+                error={state.error}
+              />
+            )}
 
-        {data.products.length > 0 ? (
-          <CollectionCard
-            icon={Package}
-            title={t("products.title")}
-            count={data.products.length}
-            unit={t("products.unit")}
-            href="/profile/products"
-            viewAll={t("products.viewAll")}
-          >
-            <ul className="space-y-2">
-              {data.products.slice(0, 3).map((p) => (
-                <ProductRow key={p.id} product={p} locale={locale as Locale} />
-              ))}
-            </ul>
-          </CollectionCard>
-        ) : (
-          <EmptyCard
-            icon={<Package className="size-6" />}
-            title={t("products.emptyTitle")}
-            description={
-              data.businesses.length > 0
-                ? t("products.emptyDesc")
-                : t("pagesProducts.noBusinessDesc")
-            }
-            action={
-              data.businesses.length > 0 ? (
-                <Button asChild>
-                  <Link href="/dashboard/products/new">
-                    <PlusIcon />
-                    {t("products.add")}
-                  </Link>
-                </Button>
-              ) : (
-                <Button disabled>
-                  <PlusIcon />
-                  {t("products.add")}
-                </Button>
-              )
-            }
-          />
-        )}
-      </div>
+            {data.products.length > 0 ? (
+              <CollectionCard
+                icon={Package}
+                title={t("products.title")}
+                count={data.products.length}
+                unit={t("products.unit")}
+                href="/profile/products"
+                viewAll={t("products.viewAll")}
+              >
+                <ul className="space-y-2">
+                  {data.products.slice(0, 3).map((p) => (
+                    <ProductRow key={p.id} product={p} locale={locale as Locale} />
+                  ))}
+                </ul>
+              </CollectionCard>
+            ) : (
+              <WorkspaceEmptyState
+                hasBusiness={state.hasBusiness}
+                entity="products"
+                error={state.error}
+              />
+            )}
+          </div>
+        </>
+      )}
 
       {/* Messages + Favorites */}
       <div className="grid gap-4 lg:grid-cols-2">
@@ -242,22 +201,6 @@ export default async function ProfileOverviewPage({ params }: Props) {
 }
 
 /* ------------------------------ building blocks ------------------------------ */
-
-function PlusIcon() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      className="size-4"
-    >
-      <path d="M12 5v14M5 12h14" />
-    </svg>
-  );
-}
 
 function StatCard({
   icon: Icon,
@@ -404,7 +347,7 @@ function BusinessSummaryCard({
 
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
         <Button size="sm" asChild>
-          <Link href="/dashboard">{t("business.manage")}</Link>
+          <Link href={WORKSPACE_MANAGE_BUSINESS_HREF}>{t("business.manage")}</Link>
         </Button>
         {pageHref && (
           <Button variant="outline" size="sm" asChild>

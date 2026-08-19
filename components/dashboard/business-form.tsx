@@ -148,13 +148,21 @@ export function BusinessForm({ business, categories, userId, locale, successHref
         cover_url: coverUrl || null,
       };
 
-      const { error: saveError } = business
+      const result = business
         ? await supabase.from("businesses").update(payload).eq("id", business.id)
         : await supabase
             .from("businesses")
-            .insert({ ...payload, owner_id: userId });
+            .insert({ ...payload, owner_id: userId })
+            .select("id, owner_id")
+            .maybeSingle();
 
-      if (saveError) {
+      const saveError = result.error;
+      const inserted = business ? null : result.data;
+
+      // Backend protection: the INSERT must have bound THIS authenticated user
+      // as owner. Never navigate on an unverified write — an owner mismatch or a
+      // rejected insert keeps the user on the form with a visible error.
+      if (saveError || (!business && (!inserted || inserted.owner_id !== userId))) {
         setError(tCommon("error"));
         return;
       }

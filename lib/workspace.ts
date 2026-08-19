@@ -1,5 +1,9 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile, getCurrentUser } from "@/lib/supabase/user";
 import { listConversations } from "@/lib/messenger";
+import { deriveWorkspaceState } from "@/lib/workspace/state";
+import type { User } from "@supabase/supabase-js";
 import type {
   Profile,
   Business,
@@ -46,24 +50,64 @@ export type WorkspaceData = {
   unreadMessages: number;
 };
 
+/** The canonical, cached picture of the workspace: who the user is, which
+ * businesses they own, and whether that query failed — so pages can render a
+ * retry state instead of a fabricated "empty". */
+export type WorkspaceState = {
+  user: User | null;
+  businesses: WorkspaceBusiness[];
+  hasBusiness: boolean;
+  error: string | null;
+};
+
 const BUSINESS_SELECT =
   "*, categories!businesses_category_id_fkey(slug, name_ar, name_fr, name_en)";
 
-/** Everything the profile workspace renders, assembled from the current user's own rows. */
-export async function getWorkspaceData(userId: string): Promise<WorkspaceData> {
+const EMPTY_STATE: WorkspaceState = {
+  user: null,
+  businesses: [],
+  hasBusiness: false,
+  error: null,
+};
+
+/**
+ * Single fetch per request of everything the workspace needs to know about the
+ * current user. Cached with React's `cache`, so the layout, overview, services,
+ * products and business pages all agree on one state.
+ */
+export const getWorkspaceState = cache(async (): Promise<WorkspaceState> => {
+  const user = await getCurrentUser();
+  if (!user) return EMPTY_STATE;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("businesses")
+    .select(BUSINESS_SELECT)
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: true });
+
+  // Canonical ownership derivation: only rows where owner_id === auth.uid()
+  // count (defense in depth over the RLS query filter). A query error is
+  // surfaced as such and never as "no business".
+  const ownership = deriveWorkspaceState({
+    userId: user.id,
+    businesses: (data ?? []) as WorkspaceBusiness[],
+    error: error?.message ?? null,
+  });
+
+  return {
+    user,
+    businesses: ownership.businesses,
+    hasBusiness: ownership.hasBusiness,
+    error: ownership.error,
+  };
+});
+
+/** Everything the profile workspace pages render, derived from cached state. */
+export async function getWorkspaceData(state: WorkspaceState): Promise<WorkspaceData> {
   const supabase = await createClient();
 
-  const [profileResult, businessResult] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
-    supabase
-      .from("businesses")
-      .select(BUSINESS_SELECT)
-      .eq("owner_id", userId)
-      .order("created_at", { ascending: true }),
-  ]);
-
-  const profile = (profileResult.data as Profile | null) ?? null;
-  const rawBusinesses = (businessResult.data ?? []) as WorkspaceBusiness[];
+  const profile = await getCurrentProfile();
 
   const empty: WorkspaceData = {
     profile,
@@ -74,9 +118,13 @@ export async function getWorkspaceData(userId: string): Promise<WorkspaceData> {
     unreadMessages: 0,
   };
 
-  const businessIds = rawBusinesses.map((b) => b.id);
+  const businessIds = state.businesses.map((b) => b.id);
   if (businessIds.length === 0) {
-    empty.businesses = rawBusinesses.map((b) => ({ ...b, servicesCount: 0, productsCount: 0 }));
+    empty.businesses = state.businesses.map((b) => ({
+      ...b,
+      servicesCount: 0,
+      productsCount: 0,
+    }));
     return empty;
   }
 
@@ -96,8 +144,8 @@ export async function getWorkspaceData(userId: string): Promise<WorkspaceData> {
     supabase
       .from("favorites")
       .select("id", { count: "exact", head: true })
-      .eq("user_id", userId),
-    listConversations(supabase, userId, false),
+      .eq("user_id", state.user?.id ?? ""),
+    listConversations(supabase, state.user?.id ?? "", false),
   ]);
 
   const services = (servicesResult.data ?? []) as WorkspaceService[];
@@ -112,7 +160,7 @@ export async function getWorkspaceData(userId: string): Promise<WorkspaceData> {
     productsByBusiness.set(p.business_id, (productsByBusiness.get(p.business_id) ?? 0) + 1);
   }
 
-  const businesses: BusinessSummary[] = rawBusinesses.map((b) => ({
+  const businesses: BusinessSummary[] = state.businesses.map((b) => ({
     ...b,
     servicesCount: servicesByBusiness.get(b.id) ?? 0,
     productsCount: productsByBusiness.get(b.id) ?? 0,
@@ -161,13 +209,3 @@ export function profileCompletion(profile: Profile | null): {
 }
 
 export { statusTone } from "@/lib/status";
-
-/** Lightweight count of businesses the user owns — used by the shell/header. */
-export async function countMyBusinesses(ownerId: string): Promise<number> {
-  const supabase = await createClient();
-  const { count, error } = await supabase
-    .from("businesses")
-    .select("id", { count: "exact", head: true })
-    .eq("owner_id", ownerId);
-  return error ? 0 : (count ?? 0);
-}

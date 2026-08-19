@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node scripts/tests/search-quality.test.ts && node scripts/tests/billing.test.ts && node scripts/tests/billing-security.test.ts && node scripts/tests/validation.test.ts && node scripts/tests/url.test.ts && node scripts/tests/whatsapp.test.ts && node scripts/tests/analytics-lead.test.ts",
+    "test": "node scripts/tests/search-quality.test.ts && node scripts/tests/billing.test.ts && node scripts/tests/billing-security.test.ts && node scripts/tests/validation.test.ts && node scripts/tests/url.test.ts && node scripts/tests/whatsapp.test.ts && node scripts/tests/analytics-lead.test.ts && node scripts/tests/workspace-state.test.ts",
     "test:search": "node scripts/tests/search-quality.test.ts",
     "test:billing": "node scripts/tests/billing.test.ts",
     "test:billing-security": "node scripts/tests/billing-security.test.ts",

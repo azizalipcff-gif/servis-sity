@@ -26,6 +26,7 @@ import {
 import { RatingStars } from "@/components/rating-stars";
 import { SmartImage } from "@/components/smart-image";
 import { DEFAULT_PLACEHOLDER_IMAGES } from "@/lib/constants";
+import { getCategoryIcon } from "@/components/category-icon";
 import { businessHref } from "@/lib/business/url";
 import { formatPrice, localizedName, type Locale } from "@/lib/translations";
 import type {
@@ -33,6 +34,7 @@ import type {
   SearchItem,
   SearchResultType,
 } from "@/lib/search/types";
+import type { Category } from "@/lib/supabase/database.types";
 
 export function ResultsView({
   items,
@@ -51,6 +53,8 @@ export function ResultsView({
   hasQuery,
   type,
   setType,
+  categories,
+  onCategory,
 }: {
   items: SearchItem[];
   total: number;
@@ -68,6 +72,8 @@ export function ResultsView({
   hasQuery: boolean;
   type: SearchResultType;
   setType: (t: SearchResultType) => void;
+  categories: Category[];
+  onCategory: (slug: string) => void;
 }) {
   const t = useTranslations("search");
   const locale = useLocale() as Locale;
@@ -180,23 +186,56 @@ export function ResultsView({
 
       {/* Empty state */}
       {!isLoading && !isError && items.length === 0 && (
-        <StateCard
-          icon={<SearchX className="size-8 text-muted-foreground" />}
-          title={t("noResults")}
-          description={
-            hasQuery
-              ? t("noResultsHint")
-              : t("emptyHint")
-          }
-          action={
-            activeCount > 0 || hasQuery ? (
-              <Button variant="outline" size="sm" onClick={onReset}>
-                <RotateCcw className="size-3.5" />
-                {t("resetFilters")}
-              </Button>
-            ) : undefined
-          }
-        />
+        <>
+          <StateCard
+            icon={<SearchX className="size-8 text-muted-foreground" />}
+            title={t("noResults")}
+            description={
+              hasQuery
+                ? t("noResultsHint")
+                : t("emptyHint")
+            }
+            action={
+              activeCount > 0 || hasQuery ? (
+                <Button variant="outline" size="sm" onClick={onReset}>
+                  <RotateCcw className="size-3.5" />
+                  {t("resetFilters")}
+                </Button>
+              ) : undefined
+            }
+          />
+
+          {/* Related categories — rescue the dead-end empty state */}
+          {hasQuery && categories && categories.length > 0 && (
+            <div className="mt-6 rounded-2xl border border-border bg-card px-5 py-6 shadow-sm">
+              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                <MapPin className="size-4" />
+                {t("relatedCategories")}
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t("relatedHint")}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {categories.map((c) => {
+                  const Icon = getCategoryIcon(c.icon ?? "store");
+                  const label =
+                    localizedName(c, locale) || c.name_en;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => onCategory(c.slug)}
+                      className="group inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground/80 transition-colors hover:border-primary/40 hover:text-primary"
+                    >
+                      <Icon className="size-3.5 text-muted-foreground transition-colors group-hover:text-primary" />
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Results */}

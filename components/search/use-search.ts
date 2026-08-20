@@ -25,7 +25,10 @@ function useDebouncedValue<T>(value: T, delay = 300): T {
   return debounced;
 }
 
-export function useSearch(initial: Partial<SearchState>) {
+export function useSearch(
+  initial: Partial<SearchState>,
+  options?: { landingEnabled?: boolean },
+) {
   const locale = useLocale();
   const queryClient = useQueryClient();
 
@@ -45,6 +48,26 @@ export function useSearch(initial: Partial<SearchState>) {
 
   const debouncedQ = useDebouncedValue(q, 350);
   const [pending, setPending] = useState(false);
+
+  /**
+   * Pure empty-landing state: no query, no city and no meaningful filters.
+   * When the SearchIndex UI is active there is nothing to fetch — the missing
+   * request is the whole point, so we must not call `/api/search` at all.
+   * Any filter (including a city) exits landing mode and must run the query.
+   */
+  const isLandingEmpty =
+    options?.landingEnabled === true &&
+    debouncedQ === "" &&
+    !filters.city &&
+    filters.type === "all" &&
+    !filters.category &&
+    filters.minRating === 0 &&
+    filters.minPrice == null &&
+    filters.maxPrice == null &&
+    !filters.verifiedOnly &&
+    !filters.premiumOnly &&
+    !filters.openNowOnly &&
+    filters.sort === "recommended";
 
   const queryKey = useMemo(
     () =>
@@ -102,6 +125,7 @@ export function useSearch(initial: Partial<SearchState>) {
     getNextPageParam: (last) =>
       last.hasMore ? last.offset + last.limit : undefined,
     staleTime: 30_000,
+    enabled: !isLandingEmpty,
   });
 
   // Keep the URL in sync with committed filters (SEO + shareable + back).

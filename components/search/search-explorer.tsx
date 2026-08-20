@@ -2,21 +2,21 @@
 
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { categoryLabel } from "@/lib/constants";
 import { SearchBar } from "@/components/search/search-bar";
-import { AiSearchBar } from "@/components/search/ai-search-bar";
 import { FilterSidebar } from "@/components/search/filter-sidebar";
 import { MobileFilterSheet } from "@/components/search/mobile-filter-sheet";
 import { ResultsView } from "@/components/search/results-view";
+import { SearchIndex } from "@/components/search/search-index";
 import {
   useSearch,
   type SearchFilterState,
 } from "@/components/search/use-search";
 import type { ParsedFilters } from "@/lib/search/types";
+import type { SearchIndexData } from "@/lib/search/index";
 import type { Category } from "@/lib/supabase/database.types";
 
 const MapPanel = dynamic(
@@ -29,35 +29,82 @@ type Initial = Partial<SearchFilterState> & { q?: string };
 export function SearchExplorer({
   initial,
   categories,
+  index,
 }: {
   initial: Initial;
   categories: Category[];
+  index: SearchIndexData | null;
 }) {
   const t = useTranslations("search");
 
-  const search = useSearch(initial);
+  const search = useSearch(initial, { landingEnabled: index != null });
   const [view, setView] = useState<"grid" | "list">("grid");
   const [mapVisible, setMapVisible] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [aiOpen, setAiOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const filter = search.filters;
   const hasAnyQuery = Boolean(search.q) || search.activeFilterCount > 0;
+
+  /**
+   * Landing mode: only a truly empty search (no query, no city, no filters)
+   * shows the SearchIndex. Any filter — including a city — activates the
+   * normal results mode.
+   */
+  const hasActiveFilters =
+    filter.type !== "all" ||
+    Boolean(filter.city) ||
+    Boolean(filter.category) ||
+    filter.minRating > 0 ||
+    filter.minPrice != null ||
+    filter.maxPrice != null ||
+    filter.verifiedOnly ||
+    filter.premiumOnly ||
+    filter.openNowOnly ||
+    filter.sort !== "recommended";
+  const showIndex = index != null && !search.q && !hasActiveFilters;
 
   const mapBusinesses = useMemo(
     () => search.items.filter((i) => i.kind === "business"),
     [search.items],
   );
 
+  async function runSmartSearch(raw: string) {
+    const text = raw.trim();
+    if (!text || aiLoading) return;
+    // Always run the plain-text search; the AI parse enriches it when possible.
+    search.setQ(text);
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const res = await fetch("/api/ai/search-parse", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ query: text }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.filters) {
+        setAiError(t("aiFailed"));
+        return;
+      }
+      applyFilters(data.filters as ParsedFilters);
+    } catch {
+      setAiError(t("aiFailed"));
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
   function applyFilters(parsed: ParsedFilters) {
-    if (parsed.q) search.setQ(parsed.q);
     if (parsed.city) search.setFilter("city", parsed.city);
     if (parsed.category) search.setFilter("category", parsed.category);
     if (parsed.minRating) search.setFilter("minRating", parsed.minRating);
+    if (parsed.minPrice != null) search.setFilter("minPrice", parsed.minPrice);
+    if (parsed.maxPrice != null) search.setFilter("maxPrice", parsed.maxPrice);
     if (parsed.verifiedOnly) search.setFilter("verifiedOnly", true);
     if (parsed.premiumOnly) search.setFilter("premiumOnly", true);
     if (parsed.openNow) search.setFilter("openNowOnly", true);
-    setAiOpen(false);
   }
 
   return (
@@ -70,33 +117,24 @@ export function SearchExplorer({
         </div>
       </div>
 
-      {/* Search + AI */}
-      <div className="max-w-3xl space-y-4 py-6">
+      {/* Single search input — plain text + AI-assisted filters */}
+      <div className="max-w-3xl py-6">
         <SearchBar
           q={search.q}
           onQChange={search.setQ}
-          onSearch={() => undefined}
+          onSearch={runSmartSearch}
           onCategory={(slug) => search.setFilter("category", slug)}
+          onCity={(city) => search.setFilter("city", city)}
+          categories={categories}
+          submitting={aiLoading}
         />
-
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <button
-            type="button"
-            onClick={() => setAiOpen((v) => !v)}
-            className={cn(
-              "inline-flex items-center gap-2 text-sm font-medium transition-colors",
-              aiOpen
-                ? "text-primary"
-                : "text-foreground/80 underline-offset-4 hover:text-primary hover:underline",
-            )}
-          >
-            {t("aiHeading")}
-          </button>
-          <span className="text-sm text-muted-foreground">{t("aiExample")}</span>
-        </div>
-        <AnimatePresence>
-          {aiOpen && <AiSearchBar onApply={applyFilters} />}
-        </AnimatePresence>
+        {aiError && (
+          <p className="mt-2 text-sm text-destructive">{aiError}</p>
+        )}
+        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+          <span className="font-medium text-foreground/80">{t("aiHeading")}</span>
+          <span>{t("aiExample")}</span>
+        </p>
       </div>
 
       {/* Active filter chips */}
@@ -113,79 +151,92 @@ export function SearchExplorer({
         )}
       </div>
 
-      {/* Layout */}
-      <div
-        className={cn(
-          "mt-6 grid gap-6 pb-16",
-          mapVisible
-            ? "lg:grid-cols-[280px_minmax(0,1fr)_340px]"
-            : "lg:grid-cols-[280px_minmax(0,1fr)]",
-        )}
-      >
-        <aside className="hidden lg:block">
-          <FilterSidebar
+      {showIndex && index ? (
+        <div className="pb-16">
+          <SearchIndex
+            data={index}
+            onCategory={(slug) => search.setFilter("category", slug)}
+          />
+        </div>
+      ) : (
+        <>
+          {/* Layout */}
+          <div
+            className={cn(
+              "mt-6 grid gap-6 pb-16",
+              mapVisible
+                ? "lg:grid-cols-[280px_minmax(0,1fr)_340px]"
+                : "lg:grid-cols-[280px_minmax(0,1fr)]",
+            )}
+          >
+            <aside className="hidden lg:block">
+              <FilterSidebar
+                filters={filter}
+                setFilter={search.setFilter}
+                categories={categories}
+                onReset={search.resetAll}
+                activeCount={search.activeFilterCount}
+              />
+            </aside>
+
+            <div className="min-w-0">
+              <ResultsView
+                items={search.items}
+                total={search.total}
+                view={view}
+                setView={setView}
+                mapVisible={mapVisible}
+                onToggleMap={() => setMapVisible((v) => !v)}
+                isLoading={search.isLoading}
+                isError={search.isError}
+                hasMore={search.hasMore}
+                isFetchingNextPage={search.isFetchingNextPage}
+                loadMore={() => search.loadMore()}
+                onReset={search.resetAll}
+                activeCount={search.activeFilterCount}
+                hasQuery={hasAnyQuery}
+                type={filter.type}
+                setType={(type) => search.setFilter("type", type)}
+                categories={categories}
+                onCategory={(slug) => search.setFilter("category", slug)}
+              />
+            </div>
+
+            {mapVisible && (
+              <MapPanel
+                businesses={mapBusinesses}
+                onClose={() => setMapVisible(false)}
+              />
+            )}
+          </div>
+
+          {/* Mobile filter button */}
+          <button
+            type="button"
+            onClick={() => setSheetOpen(true)}
+            className="fixed bottom-24 end-5 z-40 flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lift transition-transform hover:scale-105 active:scale-95 lg:hidden"
+          >
+            <SlidersHorizontal className="size-4" />
+            {t("filters")}
+            {search.activeFilterCount > 0 && (
+              <span className="grid size-5 place-items-center rounded-full bg-white/25 text-xs">
+                {search.activeFilterCount}
+              </span>
+            )}
+          </button>
+
+          <MobileFilterSheet
+            open={sheetOpen}
+            onOpenChange={setSheetOpen}
             filters={filter}
             setFilter={search.setFilter}
             categories={categories}
             onReset={search.resetAll}
             activeCount={search.activeFilterCount}
+            onApply={() => undefined}
           />
-        </aside>
-
-        <div className="min-w-0">
-          <ResultsView
-            items={search.items}
-            total={search.total}
-            view={view}
-            setView={setView}
-            mapVisible={mapVisible}
-            onToggleMap={() => setMapVisible((v) => !v)}
-            isLoading={search.isLoading}
-            isError={search.isError}
-            hasMore={search.hasMore}
-            isFetchingNextPage={search.isFetchingNextPage}
-            loadMore={() => search.loadMore()}
-            onReset={search.resetAll}
-            activeCount={search.activeFilterCount}
-            hasQuery={hasAnyQuery}
-            type={filter.type}
-            setType={(type) => search.setFilter("type", type)}
-          />
-        </div>
-
-        {mapVisible && (
-          <MapPanel
-            businesses={mapBusinesses}
-            onClose={() => setMapVisible(false)}
-          />
-        )}
-      </div>
-
-      {/* Mobile filter button */}
-      <button
-        type="button"
-        onClick={() => setSheetOpen(true)}
-        className="fixed bottom-24 end-5 z-40 flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lift transition-transform hover:scale-105 active:scale-95 lg:hidden"
-      >
-        <SlidersHorizontal className="size-4" />
-        {t("filters")}
-        {search.activeFilterCount > 0 && (
-          <span className="grid size-5 place-items-center rounded-full bg-white/25 text-xs">
-            {search.activeFilterCount}
-          </span>
-        )}
-      </button>
-
-      <MobileFilterSheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        filters={filter}
-        setFilter={search.setFilter}
-        categories={categories}
-        onReset={search.resetAll}
-        activeCount={search.activeFilterCount}
-        onApply={() => undefined}
-      />
+        </>
+      )}
     </div>
   );
 }

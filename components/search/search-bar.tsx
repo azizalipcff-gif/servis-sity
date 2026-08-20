@@ -6,13 +6,20 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
   History,
+  Loader2,
+  MapPin,
   Search,
   Store,
   TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getCategoryIcon } from "@/components/category-icon";
-import { TRENDING_CATEGORIES } from "@/lib/constants";
+import {
+  MOROCCAN_CITIES,
+  TRENDING_CATEGORIES,
+} from "@/lib/constants";
+import type { Category } from "@/lib/supabase/database.types";
+import { localizedName } from "@/lib/translations";
 
 const RECENT_KEY = "service-city:recent-searches";
 
@@ -37,18 +44,25 @@ function writeRecent(term: string) {
 
 type Item =
   | { kind: "q"; label: string; icon: typeof History }
-  | { kind: "category"; slug: string; label: string; icon: typeof Store };
+  | { kind: "category"; slug: string; label: string; icon: typeof Store }
+  | { kind: "city"; label: string; icon: typeof MapPin };
 
 export function SearchBar({
   q,
   onQChange,
   onSearch,
   onCategory,
+  onCity,
+  categories = [],
+  submitting = false,
 }: {
   q: string;
   onQChange: (v: string) => void;
-  onSearch: () => void;
+  onSearch: (q: string) => void;
   onCategory: (slug: string) => void;
+  onCity: (city: string) => void;
+  categories?: Category[];
+  submitting?: boolean;
 }) {
   const t = useTranslations("search");
   const locale = useLocale();
@@ -61,6 +75,8 @@ export function SearchBar({
     setRecent(readRecent());
   }, []);
 
+  const trimmed = q.trim().toLowerCase();
+
   const trending = useMemo<Item[]>(
     () =>
       TRENDING_CATEGORIES.map((c) => ({
@@ -72,12 +88,40 @@ export function SearchBar({
     [locale],
   );
 
+  /** Quick category matches while typing — from the real category catalog. */
+  const categoryMatches = useMemo<Item[]>(() => {
+    if (!trimmed) return [];
+    return categories
+      .map((c) => ({
+        kind: "category" as const,
+        slug: c.slug,
+        label: localizedName(c, locale as "ar" | "fr" | "en") || c.slug,
+        icon: Store,
+      }))
+      .filter(
+        (c) =>
+          c.label.toLowerCase().includes(trimmed) ||
+          c.slug.toLowerCase().includes(trimmed),
+      )
+      .slice(0, 5);
+  }, [categories, trimmed, locale]);
+
+  /** Quick city matches while typing — from the canonical city list. */
+  const cityMatches = useMemo<Item[]>(() => {
+    if (!trimmed) return [];
+    return MOROCCAN_CITIES.filter((c) =>
+      c.toLowerCase().includes(trimmed),
+    )
+      .slice(0, 5)
+      .map((c) => ({ kind: "city" as const, label: c, icon: MapPin }));
+  }, [trimmed]);
+
   const recentItems = useMemo<Item[]>(() => {
     if (recent.length === 0) return [];
     return recent
-      .filter((r) => r.toLowerCase().includes(q.toLowerCase()))
+      .filter((r) => r.toLowerCase().includes(trimmed))
       .map((r) => ({ kind: "q" as const, label: r, icon: History }));
-  }, [recent, q]);
+  }, [recent, trimmed]);
 
   const list = useMemo<Item[]>(() => {
     const sections: Array<{ title: string; items: Item[]; icon: typeof TrendingUp }> = [];
@@ -87,9 +131,21 @@ export function SearchBar({
         items: recentItems,
         icon: History,
       });
+    if (categoryMatches.length > 0)
+      sections.push({
+        title: t("suggestions"),
+        items: categoryMatches,
+        icon: Store,
+      });
+    if (cityMatches.length > 0)
+      sections.push({
+        title: t("city"),
+        items: cityMatches,
+        icon: MapPin,
+      });
     sections.push({ title: t("trending"), items: trending, icon: TrendingUp });
     return sections.reduce<Item[]>((acc, s) => acc.concat(s.items), []);
-  }, [recentItems, trending, t]);
+  }, [recentItems, categoryMatches, cityMatches, trending, t]);
 
   const total = list.length;
   const [active, setActive] = useState(-1);
@@ -98,10 +154,12 @@ export function SearchBar({
   function onPick(item: Item) {
     if (item.kind === "category") {
       onCategory(item.slug);
+    } else if (item.kind === "city") {
+      onCity(item.label);
     } else {
       onQChange(item.label);
       writeRecent(item.label);
-      onSearch();
+      onSearch(item.label);
     }
     blur();
   }
@@ -112,9 +170,9 @@ export function SearchBar({
   }
 
   function submit() {
-    const trimmed = q.trim();
-    if (trimmed) writeRecent(trimmed);
-    onSearch();
+    const trimmedValue = q.trim();
+    if (trimmedValue) writeRecent(trimmedValue);
+    onSearch(trimmedValue);
     setActive(-1);
     blur();
   }
@@ -152,17 +210,22 @@ export function SearchBar({
           onBlur={() => setTimeout(() => setFocused(false), 120)}
           onKeyDown={onKeyDown}
           type="search"
-          aria-label={t("aiSearchPlaceholder")}
+          aria-label={t("searchPlaceholder")}
           placeholder={t("searchPlaceholder")}
           className="h-full flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground/50 [&::-webkit-search-cancel-button]:hidden"
         />
         <button
           type="button"
           onClick={submit}
+          disabled={submitting}
           aria-label={t("searchButton")}
-          className="inline-flex h-full w-12 shrink-0 items-center justify-center bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
+          className="inline-flex h-full w-12 shrink-0 items-center justify-center bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-70"
         >
-          <ArrowRight className="size-5 rtl:rotate-180" />
+          {submitting ? (
+            <Loader2 className="size-5 animate-spin" />
+          ) : (
+            <ArrowRight className="size-5 rtl:rotate-180" />
+          )}
         </button>
       </div>
 

@@ -297,7 +297,18 @@
     "showMore": "Show more ({count})",
     "showLess": "Show less",
     "aiNotConfigured": "AI search isn't enabled yet, use regular search.",
-    "aiFailed": "Something went wrong with AI search, please try again."
+    "aiFailed": "Something went wrong with AI search, please try again.",
+    "indexTitle": "Discover around you",
+    "indexForCity": "Popular businesses, services & products in {city}",
+    "indexGlobal": "Popular across Morocco — refreshed daily",
+    "indexBusinesses": "Popular businesses",
+    "indexServices": "Popular services",
+    "indexProducts": "Popular products",
+    "indexTrending": "Trending now",
+    "indexTopRated": "Highly rated",
+    "indexCategories": "Browse categories",
+    "relatedCategories": "Browse related categories",
+    "relatedHint": "Still looking? Try a related category to find nearby professionals."
   },
   "promo": {
     "eyebrow": "For businesses",

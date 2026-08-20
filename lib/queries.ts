@@ -800,6 +800,106 @@ export const getPopularServices = cache(
   },
 );
 
+/* ==========================================================================
+ * Unified search index — city-aware auto-population feeds
+ * Used by the /search landing (empty query) to show popular / trending /
+ * highly-rated content for the user's city, with a global fallback.
+ * ========================================================================== */
+
+export type IndexFilters = {
+  /** Canonical `cities.name_en` value (already resolved). */
+  city?: string;
+  limit?: number;
+  sort?: "newest" | "rating" | "reviews";
+};
+
+/** Popular/trending/highly-rated approved businesses, optionally city-scoped. */
+export const getIndexBusinesses = cache(
+  async (f: IndexFilters = {}): Promise<BusinessWithCategory[]> => {
+    const supabase = await createClient();
+    let q = supabase
+      .from("businesses")
+      .select(`*, categories!businesses_category_id_fkey(*), ${CITY_SLUG_JOIN}`)
+      .eq("status", "approved");
+    if (f.city) q = q.eq("city", f.city);
+
+    const col = f.sort ?? "reviews";
+    const order =
+      col === "rating"
+        ? { rating_avg: false }
+        : col === "newest"
+          ? { created_at: false }
+          : { reviews_count: false };
+    const entries = Object.entries(order) as [string, boolean][];
+    for (const [column, ascending] of entries) {
+      q = q.order(column, { ascending });
+    }
+    q = q.limit(f.limit ?? 8);
+
+    const { data, error } = await q;
+    if (error || !data) return [];
+    return (data ?? []).map(attachCitySlug) as unknown as BusinessWithCategory[];
+  },
+);
+
+/** Published services from approved providers, optionally city-scoped. */
+export const getIndexServices = cache(
+  async (f: IndexFilters = {}): Promise<ServiceWithBusiness[]> => {
+    const supabase = await createClient();
+    let q = supabase
+      .from("services")
+      .select(`*, business:businesses(${SERVICE_BUSINESS_SELECT})`)
+      .eq("status", "published")
+      .order("featured", { ascending: false })
+      .order("updated_at", { ascending: false })
+      .limit(f.limit ?? 8);
+    if (f.city) q = q.eq("business.city", f.city);
+
+    const { data, error } = await q;
+    if (error || !data) return [];
+    return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ServiceWithBusiness[];
+  },
+);
+
+/** Published products from approved sellers, optionally city-scoped. */
+export const getIndexProducts = cache(
+  async (f: IndexFilters = {}): Promise<ProductWithBusiness[]> => {
+    const supabase = await createClient();
+    let q = supabase
+      .from("products")
+      .select(`*, business:businesses(${PRODUCT_BUSINESS_SELECT})`)
+      .eq("status", "published")
+      .order("featured", { ascending: false })
+      .order("views", { ascending: false })
+      .limit(f.limit ?? 8);
+    if (f.city) q = q.eq("business.city", f.city);
+
+    const { data, error } = await q;
+    if (error || !data) return [];
+    return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[];
+  },
+);
+
+/** Approved business counts per category, optionally city-scoped. */
+export const getIndexCategoryCounts = cache(
+  async (city?: string): Promise<Record<string, number>> => {
+    const supabase = await createClient();
+    let q = supabase
+      .from("businesses")
+      .select("category_id")
+      .eq("status", "approved");
+    if (city) q = q.eq("city", city);
+
+    const { data, error } = await q;
+    if (error || !data) return {};
+    const counts: Record<string, number> = {};
+    for (const row of data) {
+      counts[row.category_id] = (counts[row.category_id] ?? 0) + 1;
+    }
+    return counts;
+  },
+);
+
 export async function getAdminBusinesses(): Promise<AdminBusiness[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -1012,7 +1112,7 @@ export async function getAdminDashboard(): Promise<AdminDashboardStats> {
   };
 }
 
-export async function getCities(): Promise<City[]> {
+export const getCities = cache(async (): Promise<City[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("cities")
@@ -1021,7 +1121,7 @@ export async function getCities(): Promise<City[]> {
 
   if (error || !data) return [];
   return data;
-}
+});
 
 export type AdminReport = Report & {
   businesses: Pick<Business, "name" | "slug" | "status"> | null;

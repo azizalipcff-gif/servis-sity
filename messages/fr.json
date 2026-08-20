@@ -297,7 +297,18 @@
     "showMore": "Voir plus ({count})",
     "showLess": "Voir moins",
     "aiNotConfigured": "La recherche IA n'est pas encore activée, utilisez la recherche classique.",
-    "aiFailed": "Une erreur est survenue dans la recherche intelligente, réessayez."
+    "aiFailed": "Une erreur est survenue dans la recherche intelligente, réessayez.",
+    "indexTitle": "Découvrez autour de vous",
+    "indexForCity": "Entreprises, services et produits populaires à {city}",
+    "indexGlobal": "Populaire au Maroc — mis à jour chaque jour",
+    "indexBusinesses": "Entreprises populaires",
+    "indexServices": "Services populaires",
+    "indexProducts": "Produits populaires",
+    "indexTrending": "Tendances du moment",
+    "indexTopRated": "Les mieux notés",
+    "indexCategories": "Parcourir les catégories",
+    "relatedCategories": "Parcourir les catégories connexes",
+    "relatedHint": "Toujours pas trouvé ? Essayez une catégorie connexe pour trouver des professionnels près de chez vous."
   },
   "promo": {
     "eyebrow": "Pour les professionnels",

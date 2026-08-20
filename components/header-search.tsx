@@ -3,15 +3,19 @@
 import { useState } from "react";
 import { MapPin, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { MOROCCAN_CITIES } from "@/lib/constants";
 
 export function HeaderSearch() {
   const t = useTranslations("nav");
   const tH = useTranslations("hero");
   const router = useRouter();
+  const pathname = usePathname();
   const [q, setQ] = useState("");
   const [city, setCity] = useState("");
+
+  // The /search page owns the single search input — avoid a duplicated bar.
+  if (pathname.endsWith("/search")) return null;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();

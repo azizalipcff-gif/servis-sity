@@ -1,8 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
-import { Search, MessageCircle, Pin, Volume2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import {
+  Archive,
+  Loader2,
+  MessageCircle,
+  MoreVertical,
+  Pin,
+  RefreshCcw,
+  Search,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import type { SupabaseClient, RealtimeChannel } from "@supabase/supabase-js";
 import type { ConversationSummary } from "@/lib/messenger";
 import type { Database } from "@/lib/supabase/database.types";
@@ -28,12 +38,15 @@ export function MessengerClient({
   initialConversationId?: string;
 }) {
   const t = useTranslations("messenger");
+  const locale = useLocale();
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [activeId, setActiveId] = useState<string | null>(
     initialConversationId ?? null,
   );
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [query, setQuery] = useState("");
+  const [menuForId, setMenuForId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const t0 = performance.now();
@@ -42,17 +55,29 @@ export function MessengerClient({
       // target thread is always available after getOrCreateConversation.
       const q = initialConversationId ? "?archived=1" : "";
       const res = await fetch(`/api/messenger/conversations${q}`, { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        setConversations(data.conversations ?? []);
-      }
+      if (!res.ok) throw new Error("list_failed");
+      const data = await res.json();
+      setConversations(data.conversations ?? []);
+      setLoadFailed(false);
     } catch {
-      /* ignore */
+      setLoadFailed(true);
     } finally {
       latencyLog("list.loadMs", `${Math.round(performance.now() - t0)}ms`);
       setLoading(false);
     }
   }, [initialConversationId]);
+
+  // Coalesce realtime bursts into one trailing refetch instead of one HTTP
+  // request per event (the messages INSERT subscription is intentionally
+  // unfiltered — RLS already scopes rows to my conversations).
+  const reloadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const throttledLoad = useCallback(() => {
+    if (reloadTimer.current) return;
+    reloadTimer.current = setTimeout(() => {
+      reloadTimer.current = null;
+      void load();
+    }, 700);
+  }, [load]);
 
   useEffect(() => {
     if (!userId) return;
@@ -74,14 +99,14 @@ export function MessengerClient({
         .channel(`messenger-list:${userId}`)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
           latencyLog("list.messages.insert");
-          void load();
+          throttledLoad();
         })
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "conversation_members" },
           (p) => {
             const row = p.new as { user_id?: string } | null;
-            if (row && row.user_id === userId) void load();
+            if (row && row.user_id === userId) throttledLoad();
           },
         )
         .subscribe();
@@ -89,17 +114,41 @@ export function MessengerClient({
 
     return () => {
       disposed = true;
+      if (reloadTimer.current) clearTimeout(reloadTimer.current);
       if (client && channel) client.removeChannel(channel);
     };
-  }, [userId, load]);
+  }, [userId, load, throttledLoad]);
+
+  async function memberAction(conversationId: string, action: string) {
+    setMenuForId(null);
+    try {
+      await fetch(`/api/messenger/conversations/${conversationId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+    } catch {
+      /* best-effort */
+    }
+    void load();
+  }
 
   const active = conversations.find((c) => c.id === activeId) ?? null;
   const filtered = query
-    ? conversations.filter((c) => displayName(c, userId).toLowerCase().includes(query.toLowerCase()))
+    ? conversations.filter((c) => matches(c, userId, query))
     : conversations;
 
   return (
     <div className="grid h-full overflow-hidden rounded-2xl border bg-card md:grid-cols-[minmax(280px,360px)_1fr]">
+      {menuForId && (
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-hidden
+          onClick={() => setMenuForId(null)}
+          className="fixed inset-0 z-10 cursor-default"
+        />
+      )}
       <aside className={active ? "hidden border-e md:flex md:flex-col" : "flex flex-col"}>
         <div className="flex items-center gap-2 border-b p-3">
           <div className="relative flex-1">
@@ -115,50 +164,103 @@ export function MessengerClient({
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {!loading && filtered.length === 0 && (
+          {loading && (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          {!loading && loadFailed && (
+            <div className="flex flex-col items-center gap-2 p-6 text-center text-sm text-muted-foreground">
+              <p>{t("loadFailed")}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoading(true);
+                  setLoadFailed(false);
+                  void load();
+                }}
+                className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium hover:bg-muted"
+              >
+                <RefreshCcw className="h-3 w-3" /> {t("retry")}
+              </button>
+            </div>
+          )}
+          {!loading && !loadFailed && filtered.length === 0 && (
             <div className="p-6 text-center text-sm text-muted-foreground">{t("empty")}</div>
           )}
           {filtered.map((c) => {
             const name = displayName(c, userId);
             const isActive = c.id === activeId;
+            const mutedActive = Boolean(c.muted_until && new Date(c.muted_until) > new Date());
             return (
-              <button
+              <div
                 key={c.id}
-                type="button"
-                onClick={() => setActiveId(c.id)}
-                className={`flex w-full items-center gap-3 px-3 py-3 text-start transition-colors hover:bg-muted ${
+                className={`relative flex w-full items-center gap-1 px-1 transition-colors hover:bg-muted ${
                   isActive ? "bg-muted" : ""
                 }`}
               >
-                <Avatar
-                  name={name}
-                  src={peerOf(c, userId)?.avatar_url ?? null}
-                  size="md"
-                  online={undefined}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-medium">{name}</span>
-                    <span className="shrink-0 text-[11px] text-muted-foreground">
-                      {c.last_message && formatListTime(c.last_message.created_at, t)}
-                    </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveId(c.id)}
+                  className="flex min-w-0 flex-1 items-center gap-3 px-2 py-3 text-start"
+                >
+                  <Avatar
+                    name={name}
+                    src={c.business?.logo_url ?? peerOf(c, userId)?.avatar_url ?? null}
+                    size="md"
+                    online={undefined}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm font-medium">{name}</span>
+                      <span className="shrink-0 text-[11px] text-muted-foreground" suppressHydrationWarning>
+                        {c.last_message && formatListTime(c.last_message.created_at, t, locale)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-xs text-muted-foreground">
+                        {preview(c, userId, t)}
+                      </span>
+                      <span className="flex shrink-0 items-center gap-1">
+                        {c.pinned_at && <Pin className="h-3 w-3 text-muted-foreground" />}
+                        {mutedActive && <VolumeX className="h-3 w-3 text-muted-foreground" />}
+                        {c.unread > 0 && (
+                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-background">
+                            {c.unread > 99 ? "99+" : c.unread}
+                          </span>
+                        )}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-xs text-muted-foreground">
-                      {preview(c, userId, t)}
-                    </span>
-                    <span className="flex shrink-0 items-center gap-1">
-                      {c.pinned_at && <Pin className="h-3 w-3 text-muted-foreground" />}
-                      {c.muted_until && <Volume2 className="h-3 w-3 text-muted-foreground" />}
-                      {c.unread > 0 && (
-                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-background">
-                          {c.unread > 99 ? "99+" : c.unread}
-                        </span>
-                      )}
-                    </span>
-                  </div>
+                </button>
+                <div className="relative shrink-0 self-start pt-3">
+                  <button
+                    type="button"
+                    aria-label={t("profile")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuForId(menuForId === c.id ? null : c.id);
+                    }}
+                    className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-background"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
+                  {menuForId === c.id && (
+                    <div className="absolute end-2 top-10 z-20 flex w-40 flex-col gap-0.5 rounded-xl border bg-card p-1 text-sm shadow-lg">
+                      <MenuItem onClick={() => void memberAction(c.id, c.pinned_at ? "unpin" : "pin")}>
+                        <Pin className="h-4 w-4" /> {c.pinned_at ? t("unpin") : t("pinToTop")}
+                      </MenuItem>
+                      <MenuItem onClick={() => void memberAction(c.id, mutedActive ? "unmute" : "mute")}>
+                        {mutedActive ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                        {mutedActive ? t("unmute") : t("mute")}
+                      </MenuItem>
+                      <MenuItem onClick={() => void memberAction(c.id, "archive")}>
+                        <Archive className="h-4 w-4" /> {t("archive")}
+                      </MenuItem>
+                    </div>
+                  )}
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -185,10 +287,35 @@ export function MessengerClient({
   );
 }
 
+function MenuItem({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-start hover:bg-muted"
+    >
+      {children}
+    </button>
+  );
+}
+
 function displayName(c: ConversationSummary, me: string): string {
   if (c.title) return c.title;
   const peer = c.participants.find((p) => p.id !== me);
   return peer?.name ?? "Conversation";
+}
+
+/** Search matches display name AND participant usernames/names. */
+function matches(c: ConversationSummary, me: string, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  if (displayName(c, me).toLowerCase().includes(q)) return true;
+  return c.participants.some(
+    (p) =>
+      p.id !== me &&
+      ((p.username ?? "").toLowerCase().includes(q) ||
+        (p.name ?? "").toLowerCase().includes(q)),
+  );
 }
 
 function preview(

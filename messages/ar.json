@@ -68,8 +68,8 @@
     "save": "حفظ",
     "attachImage": "إرسال صورة",
     "attachFile": "إرسال ملف",
-    "recordVoice": "اضغط باستمرار لتسجيل ملف صوتي",
-    "stop": "إيقاف",
+    "recordVoice": "تسجيل رسالة صوتية",
+    "stop": "إيقاف التسجيل",
     "sendVoice": "إرسال الملف الصوتي",
     "deleteMessage": "حذف الرسالة",
     "reportMessage": "الإبلاغ عن هذه الرسالة",
@@ -98,7 +98,15 @@
     "image": "صورة",
     "file": "ملف",
     "attachment": "مرفق",
-    "audioUnsupported": "متصفحك لا يدعم تشغيل الصوت"
+    "audioUnsupported": "متصفحك لا يدعم تشغيل الصوت",
+    "failed": "فشل",
+    "retry": "إعادة المحاولة",
+    "reconnecting": "جارٍ إعادة الاتصال…",
+    "loadFailed": "تعذّر تحميل الرسائل.",
+    "uploadFailed": "فشل الرفع. جرّب ملفًا أصغر.",
+    "imageError": "الصورة غير متوفرة",
+    "moreActions": "خيارات الرسالة",
+    "emptyThreadHint": "لا توجد رسائل بعد. قل مرحبًا!"
   },
   "hero": {
     "badge": "المنصة الأولى للخدمات في المغرب",

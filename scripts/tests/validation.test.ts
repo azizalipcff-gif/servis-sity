@@ -158,6 +158,7 @@ await run("business: valid input parses", () => {
   const r = businessSchema.safeParse({
     name: "Salon",
     category_id: UUID,
+    city_id: UUID,
     slug: "salon-casablanca",
   });
   assert(r.success, "valid business must parse");
@@ -167,13 +168,14 @@ await run("business: invalid slug rejected", () => {
   const r = businessSchema.safeParse({
     name: "Salon",
     category_id: UUID,
+    city_id: UUID,
     slug: "Salon Casablanca",
   });
   assert(!r.success, "slug with spaces/uppercase must be rejected");
 });
 
 await run("business: non-uuid category rejected", () => {
-  const r = businessSchema.safeParse({ name: "Salon", category_id: "x", slug: "salon" });
+  const r = businessSchema.safeParse({ name: "Salon", category_id: "x", city_id: UUID, slug: "salon" });
   assert(!r.success, "non-uuid category_id must be rejected");
 });
 

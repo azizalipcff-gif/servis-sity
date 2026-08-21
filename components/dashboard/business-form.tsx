@@ -15,9 +15,9 @@ import {
   whatsappNationalDigits,
   formatWhatsAppNational,
 } from "@/lib/whatsapp";
-import { MOROCCAN_CITIES } from "@/lib/constants";
+import { resolveInitialCityId, deriveCityValue } from "@/lib/business/city-relation";
 import type { BusinessDetail } from "@/lib/queries";
-import type { Category } from "@/lib/supabase/database.types";
+import type { Category, City } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 import { Stagger, StaggerItem } from "@/components/motion";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ import { ImageUploadField } from "@/components/dashboard/image-upload";
 type Props = {
   business: BusinessDetail | null;
   categories: Category[];
+  cities: City[];
   userId: string;
   locale: Locale;
   successHref?: string;
@@ -59,7 +60,7 @@ function SectionHeading({ title, hint }: { title: string; hint: string }) {
   );
 }
 
-export function BusinessForm({ business, categories, userId, locale, successHref }: Props) {
+export function BusinessForm({ business, categories, cities, userId, locale, successHref }: Props) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const router = useRouter();
@@ -90,7 +91,7 @@ export function BusinessForm({ business, categories, userId, locale, successHref
   const whatsappError =
     digits !== "" && !/^[5-7]\d{8}$/.test(digits);
   const [address, setAddress] = useState(business?.address ?? "");
-  const [city, setCity] = useState(business?.city ?? "");
+  const [cityId, setCityId] = useState(() => resolveInitialCityId(cities, business));
   const [logoUrl, setLogoUrl] = useState(business?.logo_url ?? "");
   const [coverUrl, setCoverUrl] = useState(business?.cover_url ?? "");
 
@@ -110,18 +111,28 @@ export function BusinessForm({ business, categories, userId, locale, successHref
     setError(null);
     setSaved(false);
 
+    const selectedCity = cities.find((c) => c.id === cityId) ?? null;
+
     const parsed = businessSchema.safeParse({
       name,
       category_id: categoryId,
+      city_id: cityId || undefined,
       slug,
       description,
       phone: phone || undefined,
       whatsapp: whatsappValue || undefined,
       address: address || undefined,
-      city: city || undefined,
+      city: selectedCity ? selectedCity.slug : undefined,
     });
 
     if (!parsed.success) {
+      setError(tCommon("error"));
+      return;
+    }
+
+    // The select only offers canonical cities, but guard against a tampered or
+    // stale city_id: it must resolve to a real row in the cities table.
+    if (!selectedCity) {
       setError(tCommon("error"));
       return;
     }
@@ -136,6 +147,7 @@ export function BusinessForm({ business, categories, userId, locale, successHref
       const payload = {
         name: parsed.data.name,
         category_id: parsed.data.category_id,
+        city_id: selectedCity.id,
         slug: parsed.data.slug,
         description: parsed.data.description || null,
         phone: parsed.data.phone || null,
@@ -143,7 +155,7 @@ export function BusinessForm({ business, categories, userId, locale, successHref
         whatsapp_url: whatsappUrl,
         whatsapp_enabled: Boolean(whatsappUrl) && whatsappEnabled,
         address: parsed.data.address || null,
-        city: parsed.data.city || null,
+        city: deriveCityValue(selectedCity),
         logo_url: logoUrl || null,
         cover_url: coverUrl || null,
       };
@@ -353,17 +365,18 @@ export function BusinessForm({ business, categories, userId, locale, successHref
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="city">{t("city")}</Label>
-                  <Input
-                    id="city"
-                    list="moroccan-cities-dash"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                  />
-                  <datalist id="moroccan-cities-dash">
-                    {MOROCCAN_CITIES.map((c) => (
-                      <option key={c} value={c} />
-                    ))}
-                  </datalist>
+                  <Select value={cityId} onValueChange={setCityId}>
+                    <SelectTrigger id="city">
+                      <SelectValue placeholder={t("city")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cities.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {localizedName(c, locale)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </StaggerItem>

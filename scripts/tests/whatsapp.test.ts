@@ -112,6 +112,7 @@ await run("whatsapp: business schema stores canonical number", () => {
   const ok = businessSchema.safeParse({
     name: "Test",
     category_id: "11111111-1111-4111-8111-111111111111",
+    city_id: "11111111-1111-4111-8111-111111111111",
     slug: "test",
     whatsapp: "0671234567",
   });
@@ -127,6 +128,7 @@ await run("whatsapp: empty / absent whatsapp is allowed", () => {
   const ok = businessSchema.safeParse({
     name: "Test",
     category_id: "11111111-1111-4111-8111-111111111111",
+    city_id: "11111111-1111-4111-8111-111111111111",
     slug: "test",
   });
   assert(ok.success, "business schema parses without whatsapp");

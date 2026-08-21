@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { getCurrentUser, getCurrentProfile } from "@/lib/supabase/user";
 import {
   getCategories,
+  getCities,
   getMyBusiness,
   getOwnerAnalytics,
   getBookingsForOwner,
@@ -29,9 +30,10 @@ export default async function DashboardPage({ params }: Props) {
 
   const user = await getCurrentUser();
 
-  const [profile, categories, business] = await Promise.all([
+  const [profile, categories, cities, business] = await Promise.all([
     getCurrentProfile(),
     getCategories(),
+    getCities(),
     getMyBusiness(user?.id ?? ""),
   ]);
 
@@ -89,6 +91,7 @@ export default async function DashboardPage({ params }: Props) {
             <BusinessForm
               business={business}
               categories={categories}
+              cities={cities}
               userId={user?.id ?? ""}
               locale={locale as Locale}
             />

@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Not found", description: "Product not found" };
 
   const t = await getTranslations({ locale, namespace: "meta" });
-  const title = product.seo_title || `${product.name} · Service City`;
+  const title = product.seo_title || product.name;
   const description =
     product.seo_description ||
     product.description?.slice(0, 155) ||
@@ -84,6 +84,29 @@ export default async function ProductPage({ params }: Props) {
   const tb = await getTranslations("business");
   const product = await getProductBySlug(slug);
   if (!product) notFound();
+
+  const breadcrumbJsonLd = toJsonLd({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: tb("home"),
+        item: absoluteUrl(`/${locale}`),
+      },
+      ...(product.categories
+        ? [
+            {
+              "@type": "ListItem" as const,
+              position: 2,
+              name: localizedName(product.categories, locale as Locale),
+              item: absoluteUrl(`/${locale}/products?category=${product.categories.slug}`),
+            },
+          ]
+        : []),
+    ],
+  });
 
   const [businessProducts, similar] = await Promise.all([
     product.business
@@ -136,6 +159,10 @@ export default async function ProductPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: productJsonLd }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }}
       />
 
       {/* Cinematic hero — first visual element below the navbar */}

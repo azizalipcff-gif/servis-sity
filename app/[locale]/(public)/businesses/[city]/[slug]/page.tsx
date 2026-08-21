@@ -103,6 +103,35 @@ export default async function BusinessPage({ params }: Props) {
   const hasMap = Boolean((business.lat && business.lng) || business.address);
   const images = business.media.filter((m) => m.type === "image");
 
+  const breadcrumbJsonLd = toJsonLd({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: t("home"),
+        item: absoluteUrl(`/${locale}`),
+      },
+      ...(business.categories
+        ? [
+            {
+              "@type": "ListItem" as const,
+              position: 2,
+              name: localizedName(business.categories, locale as Locale),
+              item: absoluteUrl(`/${locale}/category/${business.categories.slug}`),
+            },
+          ]
+        : []),
+      {
+        "@type": "ListItem" as const,
+        position: business.categories ? 3 : 2,
+        name: business.name,
+        item: absoluteUrl(businessPath(locale, business)),
+      },
+    ],
+  });
+
   const navItems: SectionNavItem[] = [
     { id: "about", label: t("description") },
     { id: "services", label: t("services") },
@@ -225,6 +254,10 @@ export default async function BusinessPage({ params }: Props) {
         dangerouslySetInnerHTML={{
           __html: toJsonLd(schema(business, locale)),
         }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }}
       />
     </div>
   );

@@ -1,11 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Paperclip, Mic, SendHorizonal, X } from "lucide-react";
+import { Loader2, Mic, Paperclip, SendHorizonal, Square, X } from "lucide-react";
 import { QUICK_EMOJI } from "./emoji";
-import { uploadFile, uploadRecording } from "./upload";
+import { uploadFile, uploadRecording, MESSENGER_MAX_FILE_BYTES, MESSENGER_MAX_VOICE_BYTES } from "./upload";
 import type { MessengerKind } from "./upload";
+
+/** Mirrors MAX_BODY enforced by POST /api/messenger/messages. */
+export const MESSENGER_MAX_BODY = 4000;
 
 export type ComposerPayload = {
   type: string;
@@ -19,6 +22,7 @@ export type ComposerPayload = {
 export function Composer({
   me,
   disabled,
+  sending,
   value,
   onChange,
   editing,
@@ -30,6 +34,8 @@ export function Composer({
 }: {
   me: string;
   disabled?: boolean;
+  /** True while a send request is in flight — blocks duplicate submits. */
+  sending?: boolean;
   value: string;
   onChange: (v: string) => void;
   editing: { id: string; body: string } | null;
@@ -41,19 +47,35 @@ export function Composer({
 }) {
   const t = useTranslations("messenger");
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const startTimeRef = useRef<number>(0);
 
+  // Touch keyboards already have a send affordance and users expect Enter to
+  // insert a newline there; desktop gets Enter-to-send / Shift+Enter newline.
+  const isTouch = useMemo(
+    () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches,
+    [],
+  );
+
+  const blocked = disabled || uploading || recording;
+
   function submit() {
-    if (!value.trim()) return;
-    onSend({ type: editing ? "text" : "text", body: value.trim() });
+    const trimmed = value.trim();
+    if (!trimmed || blocked || sending) return;
+    onSend({ type: "text", body: trimmed.slice(0, MESSENGER_MAX_BODY) });
     onChange("");
   }
 
   async function sendFile(file: File) {
+    setUploadError(null);
+    if (file.size === 0 || file.size > MESSENGER_MAX_FILE_BYTES) {
+      setUploadError(t("uploadFailed"));
+      return;
+    }
     setUploading(true);
     try {
       const kind: MessengerKind = await uploadFile(me, file);
@@ -71,7 +93,7 @@ export function Composer({
         },
       });
     } catch {
-      /* upload failed */
+      setUploadError(t("uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -79,6 +101,7 @@ export function Composer({
 
   async function startRecording() {
     if (!navigator.mediaDevices?.getUserMedia) return;
+    setUploadError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const rec = new MediaRecorder(stream);
@@ -87,25 +110,40 @@ export function Composer({
       startTimeRef.current = Date.now();
       rec.ondataavailable = (e) => chunksRef.current.push(e.data);
       rec.onstop = async () => {
-        const kind = await uploadRecording(me, new Blob(chunksRef.current, { type: "audio/webm" }), (Date.now() - startTimeRef.current) / 1000);
-        onSend({
-          type: "voice",
-          body: t("voice"),
-          attachmentUrl: kind.url,
-          attachmentMeta: { kind: "voice", size: kind.size, mime: kind.mime, duration: kind.duration },
-        });
+        stream.getTracks().forEach((tr) => tr.stop());
+        setRecording(false);
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        if (blob.size === 0 || blob.size > MESSENGER_MAX_VOICE_BYTES) {
+          setUploadError(t("uploadFailed"));
+          return;
+        }
+        setUploading(true);
+        try {
+          const kind = await uploadRecording(me, blob, (Date.now() - startTimeRef.current) / 1000);
+          onSend({
+            type: "voice",
+            body: t("voice"),
+            attachmentUrl: kind.url,
+            attachmentMeta: { kind: "voice", size: kind.size, mime: kind.mime, duration: kind.duration },
+          });
+        } catch {
+          setUploadError(t("uploadFailed"));
+        } finally {
+          setUploading(false);
+        }
       };
       rec.start();
       setRecording(true);
     } catch {
-      /* permission denied */
+      setUploadError(t("uploadFailed"));
     }
   }
 
   function stopRecording() {
     recorderRef.current?.stop();
-    setRecording(false);
   }
+
+  const nearLimit = value.length >= MESSENGER_MAX_BODY - 100;
 
   return (
     <div className="border-t p-3">
@@ -118,32 +156,37 @@ export function Composer({
           </button>
         </div>
       )}
-      {replyTo && (
+      {(replyTo || editing) && (
         <div className="mb-2 flex items-center gap-2 rounded-lg bg-muted px-3 py-1.5 text-xs">
-          <span className="font-medium">{t("reply")}</span>
-          <span className="flex-1 truncate text-muted-foreground">{replyTo.body}</span>
-          <button type="button" onClick={onCancelReply} aria-label={t("cancel")}>
+          <span className="font-medium">{editing ? t("edit") : t("reply")}</span>
+          <span className="flex-1 truncate text-muted-foreground">
+            {editing ? editing.body : replyTo?.body}
+          </span>
+          <button
+            type="button"
+            onClick={editing ? onCancelEdit : onCancelReply}
+            aria-label={t("cancel")}
+            className="rounded p-0.5 hover:bg-background"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
       )}
-      {editing && (
-        <div className="mb-2 flex items-center gap-2 rounded-lg bg-muted px-3 py-1.5 text-xs">
-          <span className="font-medium">{t("edit")}</span>
-          <button type="button" className="text-destructive" onClick={onCancelEdit}>
-            {t("cancel")}
-          </button>
-        </div>
+      {uploadError && (
+        <p role="alert" className="mb-1 text-xs font-medium text-destructive">
+          {uploadError}
+        </p>
       )}
       <div className="flex items-end gap-2">
         <button
           type="button"
           onClick={startRecording}
-          className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          disabled={disabled || uploading}
+          className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
           aria-label={t("recordVoice")}
           title={t("recordVoice")}
         >
-          <Mic className="h-5 w-5" />
+          {recording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
         </button>
         <button
           type="button"
@@ -151,7 +194,7 @@ export function Composer({
           className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label={t("attachFile")}
           title={t("attachFile")}
-          disabled={disabled}
+          disabled={blocked}
         >
           <Paperclip className="h-5 w-5" />
         </button>
@@ -169,15 +212,16 @@ export function Composer({
         <textarea
           value={value}
           onChange={(e) => {
-            onChange(e.target.value);
+            onChange(e.target.value.slice(0, MESSENGER_MAX_BODY));
             onTyping();
           }}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              submit();
-            }
+            if (e.key !== "Enter" || e.shiftKey || isTouch) return;
+            e.preventDefault();
+            submit();
           }}
+          enterKeyHint={isTouch ? "enter" : "send"}
+          maxLength={MESSENGER_MAX_BODY}
           placeholder={t("messagePlaceholder")}
           aria-label={t("messagePlaceholder")}
           rows={1}
@@ -187,14 +231,25 @@ export function Composer({
         <button
           type="button"
           onClick={submit}
-          disabled={disabled || (!value.trim() && !uploading)}
+          disabled={blocked || sending || !value.trim()}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-40"
           aria-label={t("send")}
         >
-          <SendHorizonal className="h-5 w-5" />
+          {sending ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <SendHorizonal className="h-5 w-5 rtl:-scale-x-100" />
+          )}
         </button>
       </div>
-      <EmojiBar onChange={(v) => { onChange(value + v); onTyping(); }} />
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <EmojiBar onChange={(v) => { onChange((value + v).slice(0, MESSENGER_MAX_BODY)); onTyping(); }} />
+        {nearLimit && !editing && (
+          <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+            {value.length}/{MESSENGER_MAX_BODY}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -202,7 +257,7 @@ export function Composer({
 function EmojiBar({ onChange }: { onChange: (e: string) => void }) {
   const t = useTranslations("messenger");
   return (
-    <div className="mt-2 flex items-center gap-1">
+    <div className="flex items-center gap-1">
       <button
         type="button"
         onClick={() => onChange("🙂")}

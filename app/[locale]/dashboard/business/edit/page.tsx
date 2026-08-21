@@ -1,7 +1,7 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { getCurrentUser } from "@/lib/supabase/user";
-import { getCategories, getMyBusiness } from "@/lib/queries";
+import { getCategories, getCities, getMyBusiness } from "@/lib/queries";
 import { BusinessForm } from "@/components/dashboard/business-form";
 import { EntityPageHeader } from "@/components/dashboard/entity-page-header";
 import type { Locale } from "@/lib/translations";
@@ -19,8 +19,9 @@ export default async function BusinessEditPage({ params }: Props) {
   const user = await getCurrentUser();
   if (!user) return null;
 
-  const [categories, business, t] = await Promise.all([
+  const [categories, cities, business, t] = await Promise.all([
     getCategories(),
+    getCities(),
     getMyBusiness(user.id),
     getTranslations("dashboard"),
   ]);
@@ -43,6 +44,7 @@ export default async function BusinessEditPage({ params }: Props) {
       <BusinessForm
         business={business}
         categories={categories}
+        cities={cities}
         userId={user.id}
         locale={locale as Locale}
         successHref="/dashboard"

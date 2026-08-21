@@ -221,7 +221,7 @@ function PricingCard({
       <div className={cn("mt-5 h-px w-full", tone === "dark" ? "bg-background/15" : "bg-border")} />
 
       <ul className="mt-5 flex-1 space-y-2.5 text-sm">
-        {features.map((f: string, i: number) => (
+        {(features as string[]).map((f: string, i: number) => (
           <li key={i} className="flex w-full min-w-0 items-start gap-2.5">
             <span
               className={cn(

@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!service) return { title: "Not found", description: "Service not found" };
 
   const t = await getTranslations({ locale, namespace: "meta" });
-  const title = `${service.name} · Service City`;
+  const title = service.name;
   const description =
     service.description?.slice(0, 155) ||
     service.business?.name ||
@@ -88,6 +88,29 @@ export default async function ServicePage({ params }: Props) {
   const service = await getServiceById(id);
   if (!service) notFound();
 
+  const breadcrumbJsonLd = toJsonLd({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: tb("home"),
+        item: absoluteUrl(`/${locale}`),
+      },
+      ...(service.categories
+        ? [
+            {
+              "@type": "ListItem" as const,
+              position: 2,
+              name: localizedName(service.categories, locale as Locale),
+              item: absoluteUrl(`/${locale}/services?category=${service.categories.slug}`),
+            },
+          ]
+        : []),
+    ],
+  });
+
   const biz = service.business;
   const [businessServices, similar] = await Promise.all([
     biz ? getServicesForBusinessRow(biz.id, service.id) : Promise.resolve([]),
@@ -125,6 +148,10 @@ export default async function ServicePage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serviceJsonLd }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }}
       />
 
       {/* Cinematic hero — first visual element below the navbar */}

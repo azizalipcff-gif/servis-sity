@@ -1,7 +1,9 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { MapPin, Sparkles, TrendingUp, Store } from "lucide-react";
+import { Sparkles, Store } from "lucide-react";
+import { getCategoryIcon } from "@/components/category-icon";
+import { Link } from "@/i18n/navigation";
 import type { SearchIndexData } from "@/lib/search/index";
 import type { SearchItem } from "@/lib/search/types";
 import { localizedName, type Locale } from "@/lib/translations";
@@ -9,17 +11,11 @@ import { ResultCardShell } from "@/components/search/result-card-shell";
 import { categoryText, fromSearchItem } from "@/components/search/card-data";
 
 /**
- * Search landing — the city-aware auto-population shown on `/search` while the
- * query is empty. Reuses the exact same unified result cards as the results
- * page so businesses, services and products keep one design language.
+ * Search landing — shown on `/search` while the query is empty. Keeps the
+ * same unified result cards as the results page so businesses, services and
+ * products share one design language. Categories deep-link to their pages.
  */
-export function SearchIndex({
-  data,
-  onCategory,
-}: {
-  data: SearchIndexData;
-  onCategory: (slug: string) => void;
-}) {
+export function SearchIndex({ data }: { data: SearchIndexData }) {
   const t = useTranslations("search");
   const locale = useLocale() as Locale;
 
@@ -27,8 +23,6 @@ export function SearchIndex({
     data.popularBusinesses.length > 0 ||
     data.popularServices.length > 0 ||
     data.popularProducts.length > 0 ||
-    data.trending.length > 0 ||
-    data.highlyRated.length > 0 ||
     data.categories.length > 0;
 
   if (!hasAny) return null;
@@ -76,22 +70,6 @@ export function SearchIndex({
         />
       )}
 
-      {data.trending.length > 0 && (
-        <Section
-          title={t("indexTrending")}
-          items={data.trending}
-          locale={locale}
-        />
-      )}
-
-      {data.highlyRated.length > 0 && (
-        <Section
-          title={t("indexTopRated")}
-          items={data.highlyRated}
-          locale={locale}
-        />
-      )}
-
       {data.categories.length > 0 && (
         <section>
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
@@ -99,18 +77,20 @@ export function SearchIndex({
             {t("indexCategories")}
           </h3>
           <div className="flex flex-wrap gap-2">
-            {data.categories.map((c) => (
-              <button
-                key={c.slug}
-                type="button"
-                onClick={() => onCategory(c.slug)}
-                className="group inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground/80 transition-colors hover:border-primary/40 hover:text-primary"
-              >
-                <MapPin className="size-3.5 text-muted-foreground transition-colors group-hover:text-primary" />
-                {localizedName(c, locale)}
-                <span className="text-xs text-muted-foreground">({c.count})</span>
-              </button>
-            ))}
+            {data.categories.map((c) => {
+              const Icon = getCategoryIcon(c.icon);
+              return (
+                <Link
+                  key={c.slug}
+                  href={`/category/${c.slug}`}
+                  className="group inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground/80 transition-colors hover:border-primary/40 hover:text-primary"
+                >
+                  <Icon className="size-3.5 text-muted-foreground transition-colors group-hover:text-primary" />
+                  {localizedName(c, locale)}
+                  <span className="text-xs text-muted-foreground">({c.count})</span>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}
@@ -129,8 +109,7 @@ function Section({
 }) {
   return (
     <section>
-      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-        <TrendingUp className="size-4" />
+      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
         {title}
       </h3>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

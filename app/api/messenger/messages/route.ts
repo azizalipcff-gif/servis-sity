@@ -81,8 +81,29 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // Resolve quoted messages so reply previews survive reloads.
+    const replyIds = [
+      ...new Set((rows ?? []).map((m) => m.reply_to).filter(Boolean) as string[]),
+    ];
+    const replies: Record<
+      string,
+      { id: string; sender_id: string; body: string; type: string; deleted_at: string | null }
+    > = {};
+    if (replyIds.length) {
+      const { data: rp } = await supabase
+        .from("messages")
+        .select("id,sender_id,body,type,deleted_at")
+        .in("id", replyIds);
+      (rp ?? []).forEach((m) => {
+        replies[m.id] = m;
+      });
+    }
+
     // Keep oldest first for the client.
-    const messages = (rows ?? []).slice().reverse();
+    const messages = (rows ?? []).slice().reverse().map((m) => ({
+      ...m,
+      reply: m.reply_to ? replies[m.reply_to] ?? null : null,
+    }));
     return jsonOk({ messages, reactions, reads });
   });
 }
@@ -222,12 +243,19 @@ export async function PATCH(req: NextRequest) {
         return jsonError(403, "forbidden");
       }
       const now = new Date().toISOString();
-      const { error } = await supabase
-        .from("conversation_members")
-        .update({ last_read_at: now })
-        .eq("conversation_id", body.conversationId)
-        .eq("user_id", user.id);
-      if (error) return jsonError(500, "update_failed");
+      // DB-clock write via RPC: comparing against created_at (also DB time)
+      // must not depend on the app server's clock staying in sync.
+      const { error: rpcError } = await supabase.rpc("messenger_mark_read", {
+        p_conversation_id: body.conversationId,
+      });
+      if (rpcError) {
+        const { error } = await supabase
+          .from("conversation_members")
+          .update({ last_read_at: now })
+          .eq("conversation_id", body.conversationId)
+          .eq("user_id", user.id);
+        if (error) return jsonError(500, "update_failed");
+      }
       return jsonOk({ ok: true });
     }
 
@@ -323,12 +351,17 @@ export async function PATCH(req: NextRequest) {
           { onConflict: "message_id,user_id" },
         );
         if (error) return jsonError(500, "update_failed");
-        const now = new Date().toISOString();
-        await supabase
-          .from("conversation_members")
-          .update({ last_read_at: now })
-          .eq("conversation_id", msg.conversation_id)
-          .eq("user_id", user.id);
+        const { error: rpcError } = await supabase.rpc("messenger_mark_read", {
+          p_conversation_id: msg.conversation_id,
+        });
+        if (rpcError) {
+          const now = new Date().toISOString();
+          await supabase
+            .from("conversation_members")
+            .update({ last_read_at: now })
+            .eq("conversation_id", msg.conversation_id)
+            .eq("user_id", user.id);
+        }
         return jsonOk({ ok: true });
       }
       case "report": {

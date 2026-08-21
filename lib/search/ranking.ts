@@ -1,3 +1,4 @@
+import { scoreQuery } from "@/lib/search-quality/scoring";
 import type { SearchBusiness, SearchItem, SortKey } from "./types";
 
 /**
@@ -194,6 +195,61 @@ export function rankItems<T extends SearchItem>(
 
 function planRankOf(f: ItemFields): number {
   return f.plan === "pro" ? 0 : f.plan === "premium" ? 1 : 2;
+}
+
+/**
+ * Text blob used for query-relevance scoring of any unified result. Reuses the
+ * same canonical tokenizer as the search-quality pipeline so "electri" matches
+ * "électricien" and Arabic script folds correctly.
+ */
+export function itemSearchText(item: SearchItem): string {
+  const cat = item.categories;
+  const categoryText = cat
+    ? [cat.slug, cat.name_ar, cat.name_fr, cat.name_en].filter(Boolean).join(" ")
+    : "";
+  if (item.kind === "business") {
+    return [item.name, item.description, item.city, item.city_slug, item.address, item.tags, item.keywords, categoryText]
+      .filter(Boolean)
+      .join(" ");
+  }
+  const seller = item.business;
+  return [
+    item.name,
+    item.description,
+    item.sellerName,
+    seller?.name,
+    seller?.city,
+    seller?.city_slug,
+    categoryText,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/**
+ * Plain-text search ordering: query relevance dominates, earned trust breaks
+ * ties. Without a query (browse by city/category) it falls through to the
+ * existing weighted "recommended" ranking so nothing regresses.
+ */
+export function rankSearchItems<T extends SearchItem>(
+  items: T[],
+  sort: SortKey,
+  userLat: number | null,
+  userLng: number | null,
+  rawQuery: string,
+): T[] {
+  const query = (rawQuery ?? "").trim();
+  if (!query || sort !== "recommended") {
+    return rankItems(items, sort, userLat, userLng);
+  }
+  return items
+    .map((item) => ({
+      item,
+      match: scoreQuery(query, itemSearchText(item)).score,
+      trust: itemRelevance(item),
+    }))
+    .sort((a, b) => b.match - a.match || b.trust - a.trust)
+    .map((x) => x.item);
 }
 
 export function haversineKm(

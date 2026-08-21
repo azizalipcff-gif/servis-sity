@@ -68,8 +68,8 @@
     "save": "Save",
     "attachImage": "Send image",
     "attachFile": "Send file",
-    "recordVoice": "Hold to record voice note",
-    "stop": "Stop",
+    "recordVoice": "Record voice note",
+    "stop": "Stop recording",
     "sendVoice": "Send voice note",
     "deleteMessage": "Delete message",
     "reportMessage": "Report this message",
@@ -98,7 +98,15 @@
     "image": "Image",
     "file": "File",
     "attachment": "Attachment",
-    "audioUnsupported": "Audio is not supported by your browser"
+    "audioUnsupported": "Audio is not supported by your browser",
+    "failed": "Failed",
+    "retry": "Retry",
+    "reconnecting": "Reconnecting…",
+    "loadFailed": "Couldn't load messages.",
+    "uploadFailed": "Upload failed. Try a smaller file.",
+    "imageError": "Image unavailable",
+    "moreActions": "Message options",
+    "emptyThreadHint": "No messages yet. Say hello!"
   },
   "hero": {
     "badge": "Morocco's #1 services platform",

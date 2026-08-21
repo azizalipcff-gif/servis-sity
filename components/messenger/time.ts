@@ -2,27 +2,39 @@
 
 type Label = (key: string) => string;
 
-export function formatListTime(iso: string, t: Label): string {
+/**
+ * All formatters take an explicit locale. The previous browser-default
+ * `toLocaleTimeString([])` calls produced different text on server and
+ * client (hydration mismatch) because the RSC pass has no browser locale.
+ */
+
+export function formatListTime(iso: string, t: Label, locale: string): string {
   const d = new Date(iso);
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const dayMs = 86400000;
-  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(d);
   if (d.getTime() > start) return time;
   if (d.getTime() > start - dayMs) return t("yesterday");
-  return d.toLocaleDateString();
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(d);
 }
 
-export function formatDayLabel(iso: string, t: Label): string {
+export function formatDayLabel(iso: string, t: Label, locale: string): string {
   const d = new Date(iso);
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const dayMs = 86400000;
   if (d.getTime() > start) return t("today");
   if (d.getTime() > start - dayMs) return t("yesterday");
-  return d.toLocaleDateString([], { day: "numeric", month: "long", year: "numeric" });
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(d);
 }
 
-export function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+export function formatTime(iso: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(
+    new Date(iso),
+  );
 }

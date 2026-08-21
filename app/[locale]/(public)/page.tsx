@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
-import { Hero } from "@/components/home/hero";
+import { HomeSearch } from "@/components/home/home-search";
 import { MarketplaceTypes } from "@/components/home/marketplace-types";
 import { CategoryStrip } from "@/components/home/category-strip";
 import { FeaturedBusinesses } from "@/components/home/featured-businesses";
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const t = await getTranslations({ locale, namespace: "meta" });
 
   return {
-    title: t("title"),
+    title: { absolute: t("title") },
     description: t("description"),
     alternates: {
       canonical: absoluteUrl(`/${locale}`),
@@ -94,24 +94,26 @@ export default async function HomePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: organizationJsonLd }}
       />
-      <Hero
+      <HomeSearch
         businessCount={businessCount}
         cityCount={cities.length}
         serviceCount={servicesCount}
         productCount={productsCount}
-      />
-      <FeaturedMarketplace services={services} products={products} />
-      <CategoryStrip
         categories={categories}
-        counts={counts}
-        locale={locale as Locale}
-      />
-      <TrustBadges />
-      <MarketplaceTypes />
-      <FeaturedBusinesses businesses={businesses} locale={locale as Locale} />
-      <PopularCategories categories={categories} locale={locale as Locale} />
-      <PromoBanner />
-      <TrustSection businessCount={businessCount} cityCount={cities.length} />
+      >
+        <FeaturedMarketplace services={services} products={products} />
+        <CategoryStrip
+          categories={categories}
+          counts={counts}
+          locale={locale as Locale}
+        />
+        <TrustBadges />
+        <MarketplaceTypes />
+        <FeaturedBusinesses businesses={businesses} locale={locale as Locale} />
+        <PopularCategories categories={categories} locale={locale as Locale} />
+        <PromoBanner />
+        <TrustSection businessCount={businessCount} cityCount={cities.length} />
+      </HomeSearch>
     </>
   );
 }

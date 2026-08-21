@@ -63,6 +63,7 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 export const businessSchema = z.object({
   name: z.string().min(2, "minLength").max(120),
   category_id: z.string().uuid("required"),
+  city_id: z.string().uuid("required"),
   slug: z
     .string()
     .min(2, "minLength")

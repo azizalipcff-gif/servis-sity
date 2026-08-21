@@ -1,15 +1,11 @@
 import { getTranslations } from "next-intl/server";
-import { LifeBuoy, MapPin, PlusCircle } from "lucide-react";
+import { LifeBuoy, MapPin } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { BrandLogo } from "@/components/brand-logo";
 import { getCurrentUser, getCurrentProfile } from "@/lib/supabase/user";
-import { Button } from "@/components/ui/button";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { MobileNav } from "@/components/mobile-nav";
-import { LogoutButton } from "@/components/logout-button";
-import { AccountMenu } from "@/components/account-menu";
-import { NotificationsBell } from "@/components/notifications-bell";
-import { MessengerLink } from "@/components/messenger-link";
+import { ForBusinessesLink, HeaderAuth } from "@/components/header-auth";
 import { HeaderBar } from "@/components/layout/header-bar";
 import { HeaderSearch } from "@/components/header-search";
 import { CategoryNav } from "@/components/category-nav";
@@ -49,13 +45,7 @@ export async function Header() {
               </span>
             </div>
             <div className="flex items-center gap-4">
-              <Link
-                href={user ? "/dashboard" : "/register"}
-                className="inline-flex items-center gap-1.5 font-medium text-primary transition-colors hover:text-primary/80"
-              >
-                <PlusCircle className="size-4" />
-                {t("forBusinesses")}
-              </Link>
+              <ForBusinessesLink user={user ? { id: user.id } : null} />
               <LocaleSwitcher />
             </div>
           </div>
@@ -80,84 +70,11 @@ export async function Header() {
             </div>
 
             <div className="flex shrink-0 items-center gap-0.5 lg:gap-1">
-              {user ? (
-                <>
-                  <Link
-                    href="/profile/favorites"
-                    aria-label={t("favorites")}
-                    title={t("favorites")}
-                    className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  >
-                    <HeartIcon className="size-[18px]" />
-                  </Link>
-                  <div className="max-lg:hidden">
-                    <MessengerLink userId={user.id} />
-                  </div>
-                  <div className="max-sm:hidden sm:flex">
-                    <NotificationsBell userId={user.id} />
-                  </div>
-                  <div className="hidden lg:block">
-                    <LogoutButton />
-                  </div>
-
-                  {/* Desktop account chip — unchanged link behavior */}
-                  <Link
-                    href="/profile"
-                    aria-label={t("profile")}
-                    className="hidden size-9 items-center justify-center rounded-lg lg:flex"
-                  >
-                    <span className="grid size-7 place-items-center overflow-hidden rounded-full bg-secondary text-xs font-bold text-secondary-foreground ring-1 ring-border">
-                      {profile?.avatar_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={profile.avatar_url}
-                          alt=""
-                          className="h-full w-full rounded-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        initials || <UserIcon className="size-3.5" />
-                      )}
-                    </span>
-                  </Link>
-
-                  {/* Mobile account menu — Profile / Dashboard / Favorites / Messenger / Sign out */}
-                  <AccountMenu profile={profile} initials={initials} />
-                </>
-              ) : (
-                <div className="hidden items-center gap-1 lg:flex">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/login">{t("login")}</Link>
-                  </Button>
-                  <Button size="sm" asChild>
-                    <Link href="/register">{t("register")}</Link>
-                  </Button>
-                </div>
-              )}
-
-              {/* Logged-out mobile account chip */}
-              {!user && (
-                <Link
-                  href="/login"
-                  aria-label={t("login")}
-                  className="flex size-9 items-center justify-center rounded-lg lg:hidden"
-                >
-                  <UserIcon className="size-4" />
-                </Link>
-              )}
-
-              {/* Logged-out desktop account chip — unchanged behavior */}
-              {!user && (
-                <Link
-                  href="/login"
-                  aria-label={t("login")}
-                  className="hidden size-9 items-center justify-center rounded-lg lg:flex"
-                >
-                  <span className="grid size-7 place-items-center rounded-full bg-secondary ring-1 ring-border">
-                    <UserIcon className="size-3.5" />
-                  </span>
-                </Link>
-              )}
+              <HeaderAuth
+                user={user ? { id: user.id } : null}
+                profile={profile}
+                initials={initials}
+              />
             </div>
           </div>
         </HeaderBar>
@@ -174,22 +91,5 @@ export async function Header() {
         cta={{ href: "/register", label: t("register") }}
       />
     </>
-  );
-}
-
-function UserIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
-      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  );
-}
-
-function HeartIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className ?? "size-[18px]"}>
-      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-    </svg>
   );
 }

@@ -110,7 +110,7 @@ export async function notifyUser(input: {
     p_type: input.type ?? "general",
     p_title: input.title,
     p_body: input.body ?? "",
-    p_link: input.link ?? null,
+    p_link: input.link ?? undefined,
     p_category: input.category ?? input.type ?? "general",
   });
 }

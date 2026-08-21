@@ -72,6 +72,61 @@ const RATING_TOKENS: Array<[RegExp, number]> = [
   [/3\s*(?:stars?|etoiles|étoiles)?|★★★|3 نجوم/i, 3],
 ];
 
+/**
+ * Lightweight city extraction for plain-text search. When the raw query
+ * mentions a known Moroccan city it returns the canonical display name (e.g.
+ * "Casablanca", "Fès") plus the query with that token removed, so the rest can
+ * be matched against names/descriptions. Matching is word-bounded so "sale"
+ * inside "salesman" never false-positives on the city Salé.
+ */
+export function inferCityFromQuery(input: string): {
+  city: string | null;
+  query: string;
+} {
+  const raw = (input ?? "").trim();
+  if (!raw) return { city: null, query: raw };
+
+  const lowered = raw.toLowerCase();
+  let best: { city: string; alias: string } | null = null;
+  for (const [city, aliases] of Object.entries(CITY_ALIASES)) {
+    for (const alias of aliases) {
+      if (wordHit(lowered, alias) && (!best || alias.length > best.alias.length)) {
+        best = { city, alias };
+      }
+    }
+  }
+  if (!best) return { city: null, query: raw };
+
+  const query = raw
+    .replace(new RegExp(escapeRegExp(best.alias), "gi"), " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return { city: best.city, query };
+}
+
+function wordHit(text: string, needle: string): boolean {
+  const len = needle.length;
+  if (len === 0) return false;
+  let from = 0;
+  for (;;) {
+    const i = text.indexOf(needle, from);
+    if (i === -1) return false;
+    const before = text[i - 1];
+    const after = text[i + len];
+    if (
+      (!before || !/\p{L}|\p{N}/u.test(before)) &&
+      (!after || !/\p{L}|\p{N}/u.test(after))
+    ) {
+      return true;
+    }
+    from = i + 1;
+  }
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export function parseNaturalQuery(input: string): ParsedFilters {
   const raw = input.trim();
   if (!raw) return { q: "" };

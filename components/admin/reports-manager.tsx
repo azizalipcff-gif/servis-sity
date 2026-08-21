@@ -107,7 +107,7 @@ const badge = (s: ReportStatus) => {
                     {r.profiles?.full_name ?? "—"}
                   </td>
                   <td className="px-4 py-3 max-w-[220px] truncate">{r.reason ?? "—"}</td>
-                  <td className="px-4 py-3">{badge(r.status)}</td>
+                  <td className="px-4 py-3">{badge(r.status as ReportStatus)}</td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-1">
                       {r.status !== "resolved" && (

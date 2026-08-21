@@ -58,7 +58,7 @@ export async function issueInvoice(
     .from("invoices")
     .insert({
       number: makeInvoiceNumber(),
-      business_id: opts.businessId,
+      business_id: opts.businessId!,
       user_id: opts.userId,
       subscription_id: opts.subscriptionId,
       payment_id: opts.paymentId,
@@ -293,8 +293,8 @@ export async function finalizeSuccessfulPayment(
     p_currency: opts.currency,
     p_amount_cents: opts.totalCents,
     p_reference: `SUB-${opts.planCode.toUpperCase()}-${opts.intervalType}`,
-    p_invoice_id: invoice?.id ?? null,
-    p_coupon_id: opts.couponId ?? null,
+    p_invoice_id: invoice?.id ?? undefined,
+    p_coupon_id: opts.couponId ?? undefined,
     p_discount_cents: opts.discountCents ?? 0,
   });
   if (ledgerErr) throw new Error(`finalize:ledger:${ledgerErr.message}`);

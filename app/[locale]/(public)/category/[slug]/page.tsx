@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const url = absoluteUrl(`/${locale}/category/${slug}`);
   const ogImage = imageUrl(category.image_url) || absoluteUrl("/branding/service-city-logo.png");
 
-  const title = category.seo_title || `${name} — Service City`;
+  const title = category.seo_title || name;
   const description =
     category.seo_description ||
     `${name} — find trusted professionals, compare prices and book online.`;

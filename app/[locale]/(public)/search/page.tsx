@@ -2,10 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { parseSearchParams } from "@/lib/search/url";
 import { getCategories } from "@/lib/queries";
-import {
-  getSearchIndex,
-  resolveCanonicalCity,
-} from "@/lib/search/index";
+import { getSearchIndex } from "@/lib/search/index";
 import { siteUrl } from "@/lib/seo";
 import { SearchExplorer } from "@/components/search/search-explorer";
 
@@ -25,22 +22,8 @@ export default async function SearchPage({ params, searchParams }: Props) {
     getCategories(),
   ]);
 
-  // Single canonical city normalization point — "Fès" → "Fes" (stored value).
-  const resolvedCity = await resolveCanonicalCity(initial.city);
-  const canonicalCity = resolvedCity?.name ?? initial.city;
-
-  const needsIndex =
-    !initial.q &&
-    !initial.city &&
-    initial.type === "all" &&
-    !initial.category &&
-    initial.minRating === 0 &&
-    initial.minPrice == null &&
-    initial.maxPrice == null &&
-    !initial.verifiedOnly &&
-    !initial.premiumOnly &&
-    !initial.openNowOnly &&
-    initial.sort === "recommended";
+  // Empty text + no deep-link scope => serve the simple landing feeds.
+  const needsIndex = !initial.q && !initial.city && !initial.category;
   const index = needsIndex ? await getSearchIndex(null) : null;
 
   return (
@@ -50,16 +33,8 @@ export default async function SearchPage({ params, searchParams }: Props) {
         index={index}
         initial={{
           q: initial.q,
-          type: initial.type,
-          city: canonicalCity,
+          city: initial.city,
           category: initial.category,
-          minRating: initial.minRating,
-          minPrice: initial.minPrice,
-          maxPrice: initial.maxPrice,
-          verifiedOnly: initial.verifiedOnly,
-          premiumOnly: initial.premiumOnly,
-          openNowOnly: initial.openNowOnly,
-          sort: initial.sort,
         }}
       />
     </div>
@@ -74,30 +49,17 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     getTranslations({ locale, namespace: "meta" }),
   ]);
 
-  const rawCity = typeof sp.city === "string" ? sp.city : undefined;
-  const rawCategory = typeof sp.category === "string" ? sp.category : "";
-  const resolvedCity = await resolveCanonicalCity(rawCity);
-  const city = resolvedCity?.name ?? rawCity ?? "";
-
-  const parts = [initialQ(sp) || t("title")].filter(Boolean);
-  if (city) parts.push(city);
-  if (rawCategory) parts.push(rawCategory);
+  const q = initialQ(sp);
+  const title = q ? `${q} — ${meta("title")}` : `${t("title")} — ${meta("title")}`;
 
   const canonical = new URL(`/${locale}/search`, siteUrl());
-  const qs = new URLSearchParams();
-  if (initialQ(sp)) qs.set("q", initialQ(sp));
-  if (city) qs.set("city", city);
-  if (rawCategory) qs.set("category", rawCategory);
-  const qstring = qs.toString();
-  if (qstring) canonical.search = qstring;
-
-  const hasFilters = qstring !== "";
+  if (q) canonical.search = new URLSearchParams({ q }).toString();
 
   return {
-    title: `${parts.join(" · ")} — ${meta("title")}`,
+    title,
     description: t("subtitle"),
     alternates: { canonical: canonical.toString() },
-    robots: hasFilters ? { index: false, follow: true } : undefined,
+    robots: q ? { index: false, follow: true } : undefined,
   };
 }
 

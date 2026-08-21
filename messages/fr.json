@@ -68,8 +68,8 @@
     "save": "Enregistrer",
     "attachImage": "Envoyer une image",
     "attachFile": "Envoyer un fichier",
-    "recordVoice": "Maintenir pour enregistrer un vocal",
-    "stop": "Arrêter",
+    "recordVoice": "Enregistrer un message vocal",
+    "stop": "Arrêter l'enregistrement",
     "sendVoice": "Envoyer le vocal",
     "deleteMessage": "Supprimer le message",
     "reportMessage": "Signaler ce message",
@@ -98,7 +98,15 @@
     "image": "Image",
     "file": "Fichier",
     "attachment": "Pièce jointe",
-    "audioUnsupported": "L'audio n'est pas pris en charge par votre navigateur"
+    "audioUnsupported": "L'audio n'est pas pris en charge par votre navigateur",
+    "failed": "Échec",
+    "retry": "Réessayer",
+    "reconnecting": "Reconnexion…",
+    "loadFailed": "Impossible de charger les messages.",
+    "uploadFailed": "Échec de l'envoi. Essayez un fichier plus petit.",
+    "imageError": "Image indisponible",
+    "moreActions": "Options du message",
+    "emptyThreadHint": "Aucun message pour l'instant. Dites bonjour !"
   },
   "hero": {
     "badge": "La plateforme de services n°1 au Maroc",

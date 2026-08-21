@@ -248,8 +248,8 @@ export const getBusinessBySlug = cache(
 
     return {
       ...attachCitySlug(business),
-      services: services.data ?? [],
-      media: media.data ?? [],
+      services: (services.data ?? []) as BusinessDetail["services"],
+      media: (media.data ?? []) as BusinessDetail["media"],
       reviews: (reviews.data ?? []) as BusinessDetail["reviews"],
       hours: hours.data ?? [],
     };
@@ -408,12 +408,12 @@ export async function getMyBusiness(ownerId: string): Promise<BusinessDetail | n
 
     return {
       ...attachCitySlug(business),
-      services: services.data ?? [],
-      media: media.data ?? [],
+      services: (services.data ?? []) as BusinessDetail["services"],
+      media: (media.data ?? []) as BusinessDetail["media"],
       hours: hours.data ?? [],
       reviews: (reviews.data ?? []) as BusinessDetail["reviews"],
     };
-}
+  }
 
 export { SORT_ORDER };
 

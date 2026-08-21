@@ -144,8 +144,8 @@ export async function PATCH(req: NextRequest) {
       "finalize_payment_refund",
       {
         p_payment_id: payment.id,
-        p_provider_refund_id: providerRefundId,
-        p_reason: note ?? null,
+        p_provider_refund_id: providerRefundId ?? undefined,
+        p_reason: note ?? undefined,
       },
     );
     if (refundErr) return jsonError(500, "refund_record_failed");

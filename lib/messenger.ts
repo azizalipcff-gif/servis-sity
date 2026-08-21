@@ -11,6 +11,8 @@ export type ChatParticipant = {
   avatar_url: string | null;
   username: string | null;
   city: string | null;
+  /** The participant's own read marker in this conversation (drives ✓✓). */
+  last_read_at: string | null;
 };
 
 export type MessageLite = {
@@ -31,6 +33,13 @@ export type ConversationSummary = {
   type: string;
   title: string | null;
   business_id: string | null;
+  /** Business context for the thread header (logo, localized city). */
+  business: {
+    id: string;
+    name: string;
+    logo_url: string | null;
+    city: { en: string; fr: string; ar: string } | null;
+  } | null;
   updated_at: string;
   last_read_at: string;
   pinned_at: string | null;
@@ -74,42 +83,35 @@ export type ChatMemberState = {
   archived_at: string | null;
 };
 
-/** Latest message per conversation (first match per conversation in desc order). */
+/** Latest message per conversation — one DISTINCT ON query via RPC. */
 export async function getLatestMessages(
   supabase: Sbc,
-  conversationIds: string[],
 ): Promise<Record<string, MessageLite>> {
   const out: Record<string, MessageLite> = {};
-  if (!conversationIds.length) return out;
-  const { data } = await supabase
-    .from("messages")
-    .select("*")
-    .in("conversation_id", conversationIds)
-    .order("created_at", { ascending: false })
-    .limit(500);
+  const { data, error } = await supabase.rpc("messenger_latest_messages");
+  if (error) {
+    logError("messenger.getLatestMessages", error);
+    return out;
+  }
   data?.forEach((m) => {
-    if (!out[m.conversation_id]) out[m.conversation_id] = m as MessageLite;
+    out[m.conversation_id] = m as MessageLite;
   });
   return out;
 }
 
-/** Unread count per conversation (messages after my last read, not from me). */
+/** Unread count per conversation — one query via RPC (was an N+1 loop). */
 export async function getUnreadCounts(
   supabase: Sbc,
-  me: string,
-  memberships: Record<string, ChatMemberState>,
 ): Promise<Record<string, number>> {
   const out: Record<string, number> = {};
-  for (const [conversationId, mem] of Object.entries(memberships)) {
-    const { count } = await supabase
-      .from("messages")
-      .select("id", { count: "exact", head: true })
-      .eq("conversation_id", conversationId)
-      .neq("sender_id", me)
-      .gt("created_at", mem.last_read_at)
-      .is("deleted_at", null);
-    out[conversationId] = count ?? 0;
+  const { data, error } = await supabase.rpc("messenger_unread_counts");
+  if (error) {
+    logError("messenger.getUnreadCounts", error);
+    return out;
   }
+  data?.forEach((row) => {
+    out[row.conversation_id] = Number(row.unread ?? 0);
+  });
   return out;
 }
 
@@ -121,12 +123,37 @@ export async function getParticipants(
   const out: Record<string, ChatParticipant[]> = {};
   if (!conversationIds.length) return out;
   conversationIds.forEach((cid) => (out[cid] = []));
+
+  // Preferred path: security-definer RPC. profiles RLS is own-row-only, so a
+  // plain embed under the caller's JWT can never resolve PEER profiles.
+  const rpc = await supabase.rpc("messenger_participants", {
+    conversation_ids: conversationIds,
+  });
+  if (!rpc.error && rpc.data) {
+    rpc.data.forEach((row) => {
+      out[row.conversation_id].push({
+        id: row.user_id,
+        name: row.full_name || row.username || row.user_id,
+        avatar_url: row.avatar_url,
+        username: row.username,
+        city: row.city,
+        last_read_at: row.last_read_at,
+      });
+    });
+    return out;
+  }
+  if (rpc.error) logError("messenger.getParticipants", rpc.error);
+
+  // Fallback for databases without the RPC (pre-0035): embed works for the
+  // caller's own row; peer rows resolve only where profiles RLS allows.
   const { data } = await supabase
     .from("conversation_members")
-    .select(`conversation_id,user_id,profiles:user_id(${PROFILE_SELECT})`)
+    .select(`conversation_id,user_id,last_read_at,profiles:user_id(${PROFILE_SELECT})`)
     .in("conversation_id", conversationIds);
   type ProfRow = {
     conversation_id: string;
+    user_id: string;
+    last_read_at: string | null;
     profiles?: {
       id: string;
       full_name: string | null;
@@ -144,6 +171,7 @@ export async function getParticipants(
       avatar_url: pf.avatar_url,
       username: pf.username,
       city: pf.city,
+      last_read_at: row.last_read_at,
     });
   });
   return out;
@@ -170,17 +198,54 @@ export async function listConversations(
     .in("id", conversationIds);
 
   const myMem = await getMyMemberships(supabase, me, conversationIds);
-  const latest = await getLatestMessages(supabase, conversationIds);
-  const unread = await getUnreadCounts(supabase, me, myMem);
+  const latest = await getLatestMessages(supabase);
+  const unread = await getUnreadCounts(supabase);
   const participants = await getParticipants(supabase, conversationIds);
+
+  // Business context for the thread header (logo + localized city).
+  const businessIds = [...new Set((convs ?? []).map((c) => c.business_id).filter(Boolean))] as string[];
+  type BizCtx = {
+    name: string;
+    logo_url: string | null;
+    city: { en: string; fr: string; ar: string } | null;
+  };
+  const bizById: Record<string, BizCtx> = {};
+  if (businessIds.length) {
+    const { data: bizRows } = await supabase
+      .from("businesses")
+      .select("id,name,logo_url,city")
+      .in("id", businessIds);
+    const slugs = [...new Set((bizRows ?? []).map((b) => b.city).filter(Boolean))] as string[];
+    const bySlug: Record<string, { en: string; fr: string; ar: string }> = {};
+    if (slugs.length) {
+      const { data: cityRows } = await supabase
+        .from("cities")
+        .select("slug,name_en,name_fr,name_ar")
+        .in("slug", slugs);
+      cityRows?.forEach((c) => {
+        bySlug[c.slug] = { en: c.name_en, fr: c.name_fr, ar: c.name_ar };
+      });
+    }
+    bizRows?.forEach((b) => {
+      bizById[b.id] = {
+        name: b.name,
+        logo_url: b.logo_url,
+        city: b.city ? bySlug[b.city] ?? null : null,
+      };
+    });
+  }
 
   const result: ConversationSummary[] = (convs ?? []).map((c) => {
     const mem = myMem[c.id];
+    const bizRow = c.business_id ? bizById[c.business_id] : undefined;
     return {
       id: c.id,
       type: c.type,
       title: c.title,
       business_id: c.business_id,
+      business: bizRow
+        ? { id: c.business_id!, ...bizRow }
+        : null,
       updated_at: c.updated_at,
       last_read_at: mem?.last_read_at ?? new Date(0).toISOString(),
       pinned_at: mem?.pinned_at ?? null,
@@ -334,6 +399,15 @@ export async function getOrCreateConversation(
     .from("conversation_members")
     .insert({ conversation_id: convId, user_id: peerId });
   if (peerErr) {
+    // 0034 trigger: a concurrent request created the same pair first. Reuse
+    // the winner instead of failing, and clean up our half-built conversation.
+    const msg = errorFields(peerErr).message ?? "";
+    if (msg.includes("DUPLICATE_PRIVATE_CONVERSATION")) {
+      void supabase.from("conversation_members").delete().eq("conversation_id", convId);
+      void supabase.from("conversations").delete().eq("id", convId);
+      const dup = await findExistingConversation(supabase, me, peerId, null);
+      if (dup) return { id: dup, conversation: null, error: null };
+    }
     logCreateFailed("members.peer", { me, peerId, businessId }, peerErr);
     return { id: null, conversation: null, error: "create_failed" };
   }
@@ -347,29 +421,32 @@ async function findExistingConversation(
   peerId: string | null,
   businessId: string | null,
 ): Promise<string | null> {
-  const { data: mine } = await supabase
-    .from("conversation_members")
-    .select("conversation_id")
-    .eq("user_id", me);
-  const ids = mine?.map((m) => m.conversation_id) ?? [];
-  if (!ids.length) return null;
-
-  const { data: convs } = await supabase
-    .from("conversations")
-    .select("id,business_id")
-    .in("id", ids);
-
-  for (const c of convs ?? []) {
-    if (businessId) {
-      if (c.business_id === businessId) return c.id;
-      continue;
-    }
-    if (c.business_id) continue;
-    const { data: members } = await supabase
-      .from("conversation_members")
-      .select("user_id")
-      .eq("conversation_id", c.id);
-    if (peerId && members?.some((m) => m.user_id === peerId)) return c.id;
+  if (businessId) {
+    // The partial unique index (0034) guarantees at most one per business.
+    const { data } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("business_id", businessId)
+      .eq("type", "business")
+      .limit(1);
+    return data?.[0]?.id ?? null;
   }
-  return null;
+  if (!peerId) return null;
+
+  // One round-trip: private conversations containing BOTH users. PostgREST
+  // embeds the member rows; we keep the conversation only when both ids are
+  // present. (Was an N+1 loop with one members query per conversation.)
+  const { data } = await supabase
+    .from("conversations")
+    .select("id,conversation_members(user_id)")
+    .eq("type", "private")
+    .is("business_id", null)
+    .in("conversation_members.user_id", [me, peerId]);
+  type Row = { id: string; conversation_members: { user_id: string }[] };
+  const rows = (data ?? []) as unknown as Row[];
+  const hit = rows.find((c) => {
+    const ids = new Set(c.conversation_members.map((m) => m.user_id));
+    return ids.has(me) && ids.has(peerId);
+  });
+  return hit?.id ?? null;
 }

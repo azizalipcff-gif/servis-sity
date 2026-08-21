@@ -2,16 +2,13 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { parseSearchParams } from "@/lib/search/url";
 import {
-  rankItems,
+  rankSearchItems,
   haversineKm,
 } from "@/lib/search/ranking";
+import { inferCityFromQuery } from "@/lib/search/nl-parser";
+import { resolveCanonicalCity } from "@/lib/search/index";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { withErrorCapture } from "@/lib/security/http";
-import {
-  isEmbeddingConfigured,
-  generateEmbedding,
-  EMBEDDING_DIMENSION,
-} from "@/lib/search-quality/embeddings";
 import type {
   SearchBusiness,
   SearchItem,
@@ -51,21 +48,43 @@ export async function GET(request: Request) {
 
 async function handleSearch(request: Request): Promise<NextResponse> {
   const url = new URL(request.url);
-  const params = parseSearchParams(
+  const raw = parseSearchParams(
     Object.fromEntries(url.searchParams.entries()),
   );
 
   const supabase = await createClient();
   const categories = await loadCategories(supabase);
 
-  // Preferred path: hybrid_search RPC (vector + trigram + in-SQL filters).
-  // Falls back to the in-memory catalog scan below when the function has not
-  // been deployed (migration 0019 not yet applied) or fails.
+  // Plain-text query, one parse:
+  //  - "plombier à casablanca"  => q:"plombier",  city:"Casablanca"
+  //  - "casa"                    => q:"",          city:"Casablanca"
+  // An explicit `city` URL param always wins over text inference. Both are
+  // canonicalized to `cities.name_en` — businesses.city stores the canonical
+  // English name — so "Fès"/"فاس" filter exactly like "Fes".
+  const infer = inferCityFromQuery(raw.q);
+  const requestedCity = raw.city || infer.city || "";
+  const city =
+    (await resolveCanonicalCity(requestedCity))?.name ?? requestedCity;
+  const params: SearchParams = {
+    ...raw,
+    q: raw.city ? raw.q : infer.query,
+    city,
+  };
+
+  // Preferred path: hybrid_search RPC (trigram + in-SQL filters). Falls back
+  // to the in-memory catalog scan below when the function has not been
+  // deployed (migration 0019 not yet applied) or fails.
   const v3 = await searchHybrid(params, supabase, categories);
   const matchMethod: SearchMatchMethod = v3 ? "hybrid" : "legacy";
   const items = v3 ?? (await searchLegacy(params, supabase, categories));
 
-  const ranked = rankItems(items, params.sort, params.lat, params.lng);
+  const ranked = rankSearchItems(
+    items,
+    params.sort,
+    params.lat,
+    params.lng,
+    params.q,
+  );
   const page = ranked.slice(params.offset, params.offset + params.limit);
 
   const body: SearchResponse = {
@@ -98,26 +117,12 @@ type HybridRow = {
 };
 
 /**
- * Returns the query embedding as a Postgres vector literal (`[x,y,…]`), or
- * `null` when the provider is unconfigured, the query is empty, or generation
- * fails. Returning `null` keeps the hybrid RPC on its lexical path — semantic
- * search is an additive capability, never a hard dependency.
- */
-async function queryEmbeddingOrNull(q: string): Promise<string | null> {
-  const text = (q ?? "").trim();
-  if (!text || !isEmbeddingConfigured()) return null;
-  try {
-    const vector = await generateEmbedding(text);
-    if (vector.length !== EMBEDDING_DIMENSION) return null;
-    return `[${vector.join(",")}]`;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Runs the hybrid_search RPC and maps rows back into `SearchItem`. Returns
  * `null` when the function is unavailable so callers fall back to legacy.
+ *
+ * Plain-text mode only: no embedding column is sent, so the RPC serves its
+ * in-SQL trigram/lexical path. Semantic query expansion was retired with the
+ * explorer rebuild.
  */
 async function searchHybrid(
   params: SearchParams,
@@ -145,13 +150,6 @@ async function searchHybrid(
       p_open_now: params.openNowOnly,
       p_limit: RANK_POOL_CAP,
     };
-
-    // Semantic leg: embed the free-text query server-side with the active
-    // provider (Ollama). When the provider is not configured or the call fails,
-    // the embedding is omitted and the RPC runs its trigram/lexical path —
-    // search keeps working, never 500s on AI outages.
-    const embedding = await queryEmbeddingOrNull(params.q);
-    if (embedding) args.p_embedding = embedding;
 
     const { data, error } = await client.rpc("hybrid_search", args);
     if (error || !Array.isArray(data)) return null;

@@ -49,7 +49,7 @@ export async function GET(request: Request) {
 
   const safeNext = safeReturnTo(next) ?? sanitizeFallback(next);
   const destination = recovery
-    ? `/${locale}/login?recovery=1`
+    ? `/${locale}/update-password`
     : `/${locale}${stripLocalePrefix(safeNext)}`;
 
   return NextResponse.redirect(`${origin}${destination}`);

@@ -7,7 +7,6 @@ import { Eye, EyeOff, Loader2, LockKeyhole, Mail, ShieldCheck } from "lucide-rea
 import { createClient } from "@/lib/supabase/client";
 import { loginSchema } from "@/lib/validations/schemas";
 import { useRouter, Link } from "@/i18n/navigation";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { GoogleSignInButton } from "@/components/auth/google-signin-button";
@@ -30,9 +29,7 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [resetting, setResetting] = useState(false);
 
   const safeReturnTo =
     returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")
@@ -42,7 +39,6 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setInfo(null);
 
     const parsed = loginSchema.safeParse({ email, password });
     if (!parsed.success) {
@@ -73,32 +69,6 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
       setError(t("errorGeneric"));
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleForgotPassword() {
-    if (!email) {
-      setError(t("forgotPasswordNoEmail"));
-      setInfo(null);
-      return;
-    }
-    setResetting(true);
-    setError(null);
-    setInfo(null);
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
-      });
-      if (error) {
-        setError(t("errorGeneric"));
-      } else {
-        setInfo(t("resetSent"));
-      }
-    } catch {
-      setError(t("errorOauthUnavailable"));
-    } finally {
-      setResetting(false);
     }
   }
 
@@ -165,14 +135,12 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <Label htmlFor="password">{t("password")}</Label>
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                disabled={resetting}
-                className="text-xs font-medium text-primary hover:text-primary/80 disabled:opacity-50"
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-primary hover:text-primary/80"
               >
                 {t("forgotPassword")}
-              </button>
+              </Link>
             </div>
             <div className="relative">
               <LockKeyhole className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -200,17 +168,12 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
             </div>
           </div>
 
-          {(error || info) && (
+          {error && (
             <p
               role="alert"
-              className={cn(
-                "rounded-xl px-3 py-2.5 text-sm",
-                error
-                  ? "bg-destructive/10 text-destructive"
-                  : "bg-success/10 text-success",
-              )}
+              className="rounded-xl bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
             >
-              {error ?? info}
+              {error}
             </p>
           )}
 

@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return withErrorCapture("messenger.conversations.create", async () => {
     if (!assertSameOrigin(req)) return jsonError(403, "csrf_rejected");
-    const limited = rateLimit(req, { key: "conversation.create", limit: 30, windowMs: 60000 });
+    const limited = await rateLimit(req, { key: "conversation.create", limit: 30, windowMs: 60000 });
     if (!limited.ok) return rateLimitResponse(limited.retryAfter);
 
     const supabase = await createClient();

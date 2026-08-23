@@ -13,7 +13,7 @@ const MODERATION_AUDIT_ACTIONS = [
 
 export async function GET(request: Request) {
   return withErrorCapture("admin.businesses.preview", async () => {
-    const rl = rateLimit(request, { key: "admin:read", limit: 600, windowMs: 60_000 });
+    const rl = await rateLimit(request, { key: "admin:read", limit: 600, windowMs: 60_000 });
     if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
     const guard = await requireAdmin();

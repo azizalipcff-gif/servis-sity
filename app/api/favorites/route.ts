@@ -53,7 +53,7 @@ async function targetExists(supabase: Client, type: FavoriteType, id: string): P
 /* ---- POST /api/favorites  { type, id } ---- */
 export async function POST(request: Request) {
   return withErrorCapture("favorites.create", async () => {
-    const rl = rateLimit(request, { key: "favorites:mutate", limit: 60, windowMs: 60_000 });
+    const rl = await rateLimit(request, { key: "favorites:mutate", limit: 60, windowMs: 60_000 });
     if (!rl.ok) return rateLimitResponse(rl.retryAfter);
     if (!assertSameOrigin(request)) return jsonError(403, "csrf_rejected");
 
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
 /* ---- DELETE /api/favorites  { type, id } | legacy { id } (favorite row id) ---- */
 export async function DELETE(request: Request) {
   return withErrorCapture("favorites.delete", async () => {
-    const rl = rateLimit(request, { key: "favorites:mutate", limit: 60, windowMs: 60_000 });
+    const rl = await rateLimit(request, { key: "favorites:mutate", limit: 60, windowMs: 60_000 });
     if (!rl.ok) return rateLimitResponse(rl.retryAfter);
     if (!assertSameOrigin(request)) return jsonError(403, "csrf_rejected");
 

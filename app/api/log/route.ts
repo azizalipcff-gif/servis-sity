@@ -12,7 +12,7 @@ const logSchema = z.object({
 export async function POST(request: Request) {
   return withErrorCapture("log.post", async () => {
     if (!assertSameOrigin(request)) return jsonError(403, "csrf_rejected");
-    const rl = rateLimit(request, { key: "log:report", limit: 60, windowMs: 60_000 });
+    const rl = await rateLimit(request, { key: "log:report", limit: 60, windowMs: 60_000 });
     if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
     const body = await request.json().catch(() => null);

@@ -38,7 +38,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   return withErrorCapture("billing.featured.post", async () => {
     if (!assertSameOrigin(req)) return jsonError(403, "csrf_rejected");
-    const limited = rateLimit(req, { key: "billing.featured", limit: 10, windowMs: 60000 });
+    const limited = await rateLimit(req, { key: "billing.featured", limit: 10, windowMs: 60000 });
     if (!limited.ok) return rateLimitResponse(limited.retryAfter);
 
     const supabase = await createClient();

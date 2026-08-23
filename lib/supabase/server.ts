@@ -64,3 +64,25 @@ export function createServiceClient() {
     auth: { persistSession: false },
   });
 }
+
+/**
+ * Cookies-free public Supabase client (anon key, no session/cookie access).
+ *
+ * Used by read-heavy public query helpers that are wrapped in `unstable_cache`.
+ * `unstable_cache` forbids touching request-specific APIs such as `cookies()`,
+ * so a server client built via `@supabase/ssr` (which always reads cookies)
+ * cannot be used inside it. The anon key still respects RLS, so public read
+ * policies apply exactly as before — only the user session is no longer
+ * attached (these helpers only ever fetch approved/published public data).
+ */
+export function createPublicClient() {
+  const url = isValidHttpUrl(process.env.NEXT_PUBLIC_SUPABASE_URL)
+    ? process.env.NEXT_PUBLIC_SUPABASE_URL
+    : "https://unset.supabase.co";
+  const anonKey = isValidSupabaseKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    : "unset";
+  return createSupabaseClient<Database>(url, anonKey, {
+    auth: { persistSession: false },
+  });
+}

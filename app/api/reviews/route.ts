@@ -6,7 +6,7 @@ import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 
 export async function POST(request: Request) {
   return withErrorCapture("reviews.post", async () => {
-    const rl = rateLimit(request, { key: "review:create", limit: 10, windowMs: 60_000 });
+    const rl = await rateLimit(request, { key: "review:create", limit: 10, windowMs: 60_000 });
     if (!rl.ok) return rateLimitResponse(rl.retryAfter);
     if (!assertSameOrigin(request)) return jsonError(403, "csrf_rejected");
 

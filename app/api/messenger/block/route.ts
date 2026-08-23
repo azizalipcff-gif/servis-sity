@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   return withErrorCapture("messenger.block", async () => {
     if (!assertSameOrigin(req)) return jsonError(403, "csrf_rejected");
-    const limited = rateLimit(req, { key: "block", limit: 20, windowMs: 60000 });
+    const limited = await rateLimit(req, { key: "block", limit: 20, windowMs: 60000 });
     if (!limited.ok) return rateLimitResponse(limited.retryAfter);
 
     const supabase = await createClient();

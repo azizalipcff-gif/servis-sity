@@ -35,7 +35,7 @@ const trackSchema = z.object({
  */
 export async function POST(req: NextRequest) {
   return withErrorCapture("analytics.track", async () => {
-    const rl = rateLimit(req, { key: "analytics:track", limit: 120, windowMs: 60_000 });
+    const rl = await rateLimit(req, { key: "analytics:track", limit: 120, windowMs: 60_000 });
     if (!rl.ok) return rateLimitResponse(rl.retryAfter);
     if (!assertSameOrigin(req)) return jsonError(403, "csrf_rejected");
 

@@ -1,5 +1,6 @@
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { createClient, createPublicClient } from "@/lib/supabase/server";
 import type {
   Booking,
   Business,
@@ -62,20 +63,24 @@ const SORT_ORDER = { pro: 0, premium: 1, free: 2 } as const;
  * All query helpers catch errors and return empty data so the app can
  * render (with empty states) even before Supabase credentials are set.
  */
-export const getCategories = cache(async (): Promise<Category[]> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("categories")
-    .select("*")
-    .order("created_at", { ascending: true });
+export const getCategories = unstable_cache(
+  async (): Promise<Category[]> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .order("created_at", { ascending: true });
 
-  if (error || !data) return [];
-  return data;
-});
+    if (error || !data) return [];
+    return data;
+  },
+  ["q:categories"],
+  { tags: ["categories"], revalidate: 3600 },
+);
 
-export const getCityBySlug = cache(
+export const getCityBySlug = unstable_cache(
   async (slug: string): Promise<City | null> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("cities")
       .select("*")
@@ -84,41 +89,49 @@ export const getCityBySlug = cache(
     if (error || !data) return null;
     return data;
   },
+  ["q:city-by-slug"],
+  { tags: ["cities"], revalidate: 3600 },
 );
 
-export const getCategoryBySlug = cache(
+export const getCategoryBySlug = unstable_cache(
   async (slug: string): Promise<Category | null> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("categories")
       .select("*")
       .eq("slug", slug)
       .maybeSingle();
 
-  if (error || !data) return null;
-  return data;
+    if (error || !data) return null;
+    return data;
   },
+  ["q:category-by-slug"],
+  { tags: ["categories"], revalidate: 3600 },
 );
 
 /** Map category_id -> approved business count (used by marketplace rails). */
-export const getCategoryCounts = cache(async (): Promise<Record<string, number>> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("businesses")
-    .select("category_id, status")
-    .eq("status", "approved");
-  if (error || !data) return {};
+export const getCategoryCounts = unstable_cache(
+  async (): Promise<Record<string, number>> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("businesses")
+      .select("category_id, status")
+      .eq("status", "approved");
+    if (error || !data) return {};
 
-  const counts: Record<string, number> = {};
-  for (const row of data) {
-    counts[row.category_id] = (counts[row.category_id] ?? 0) + 1;
-  }
-  return counts;
-});
+    const counts: Record<string, number> = {};
+    for (const row of data) {
+      counts[row.category_id] = (counts[row.category_id] ?? 0) + 1;
+    }
+    return counts;
+  },
+  ["q:category-counts"],
+  { tags: ["categories"], revalidate: 300 },
+);
 
-export const getFeaturedBusinesses = cache(
+export const getFeaturedBusinesses = unstable_cache(
   async (): Promise<BusinessWithCategory[]> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("businesses")
       .select(`*, categories!businesses_category_id_fkey(*), ${CITY_SLUG_JOIN}`)
@@ -131,22 +144,27 @@ export const getFeaturedBusinesses = cache(
     if (error || !data) return [];
     return (data ?? []).map(attachCitySlug) as unknown as BusinessWithCategory[];
   },
+  ["q:featured-businesses"],
+  { tags: ["businesses"], revalidate: 300 },
 );
 
-export const getBusinessesByCategory = cache(
+export const getBusinessesByCategory = unstable_cache(
   async (categorySlug: string): Promise<BusinessWithCategory[]> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("businesses")
       .select(`*, categories!businesses_category_id_fkey!inner(*), ${CITY_SLUG_JOIN}`)
       .eq("status", "approved")
       .eq("categories.slug", categorySlug)
       .order("plan", { ascending: true })
+      .order("plan", { ascending: true })
       .order("rating_avg", { ascending: false });
 
     if (error || !data) return [];
     return (data ?? []).map(attachCitySlug) as unknown as BusinessWithCategory[];
   },
+  ["q:businesses-by-category"],
+  { tags: ["businesses"], revalidate: 300 },
 );
 
 export type BusinessListFilters = {
@@ -169,11 +187,11 @@ const BUSINESS_SORT_COLUMNS: Record<
 };
 
 /** Approved marketplace businesses with a real total count, for the /business catalog. */
-export const getPublishedBusinesses = cache(
+export const getPublishedBusinesses = unstable_cache(
   async (
     filters: BusinessListFilters = {},
   ): Promise<{ items: BusinessWithCategory[]; total: number }> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const limit = filters.limit ?? 24;
     const offset = filters.offset ?? 0;
 
@@ -199,15 +217,17 @@ export const getPublishedBusinesses = cache(
       total: count ?? 0,
     };
   },
+  ["q:published-businesses"],
+  { tags: ["businesses"], revalidate: 120 },
 );
 
 type JoinedBusiness = Business & {
   categories: Pick<Category, "slug" | "name_ar" | "name_fr" | "name_en"> | null;
 };
 
-export const getBusinessBySlug = cache(
+export const getBusinessBySlug = unstable_cache(
   async (slug: string): Promise<BusinessDetail | null> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
 
     const businessResult = (await supabase
       .from("businesses")
@@ -254,6 +274,8 @@ export const getBusinessBySlug = cache(
       hours: hours.data ?? [],
     };
   },
+  ["q:business-by-slug"],
+  { tags: ["businesses"], revalidate: 300 },
 );
 
 export const getRelatedBusinesses = cache(
@@ -274,43 +296,55 @@ export const getRelatedBusinesses = cache(
   },
 );
 
-export async function getBusinessCount(): Promise<number> {
-  const supabase = await createClient();
-  const { count, error } = await supabase
-    .from("businesses")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "approved");
+export const getBusinessCount = unstable_cache(
+  async (): Promise<number> => {
+    const supabase = createPublicClient();
+    const { count, error } = await supabase
+      .from("businesses")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "approved");
 
-  return error ? 0 : (count ?? 0);
-}
+    return error ? 0 : (count ?? 0);
+  },
+  ["q:business-count"],
+  { tags: ["businesses"], revalidate: 3600 },
+);
 
-export async function getPublishedServicesCount(): Promise<number> {
-  const supabase = await createClient();
-  const { count, error } = await supabase
-    .from("services")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "published");
+export const getPublishedServicesCount = unstable_cache(
+  async (): Promise<number> => {
+    const supabase = createPublicClient();
+    const { count, error } = await supabase
+      .from("services")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "published");
 
-  return error ? 0 : (count ?? 0);
-}
+    return error ? 0 : (count ?? 0);
+  },
+  ["q:published-services-count"],
+  { tags: ["services"], revalidate: 3600 },
+);
 
-export async function getPublishedProductsCount(): Promise<number> {
-  const supabase = await createClient();
-  const { count, error } = await supabase
-    .from("products")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "published");
+export const getPublishedProductsCount = unstable_cache(
+  async (): Promise<number> => {
+    const supabase = createPublicClient();
+    const { count, error } = await supabase
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "published");
 
-  return error ? 0 : (count ?? 0);
-}
+    return error ? 0 : (count ?? 0);
+  },
+  ["q:published-products-count"],
+  { tags: ["products"], revalidate: 3600 },
+);
 
-export const getSitemapBusinesses = cache(
+export const getSitemapBusinesses = unstable_cache(
   async (): Promise<
     (Pick<Business, "slug" | "city" | "city_id" | "last_updated_at"> & {
       city_slug: string | null;
     })[]
   > => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("businesses")
       .select(`slug, city, city_id, last_updated_at, ${CITY_SLUG_JOIN}`)
@@ -319,15 +353,15 @@ export const getSitemapBusinesses = cache(
     return (data ?? []).map(attachCitySlug) as unknown as (Pick<
       Business,
       "slug" | "city" | "city_id" | "last_updated_at"
-    > & {
-      city_slug: string | null;
-    })[];
+    > & { city_slug: string | null })[];
   },
+  ["q:sitemap-businesses"],
+  { tags: ["businesses"], revalidate: 3600 },
 );
 
-export const getSitemapProducts = cache(
+export const getSitemapProducts = unstable_cache(
   async (): Promise<Pick<Product, "slug" | "updated_at">[]> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("products")
       .select("slug, updated_at")
@@ -337,11 +371,13 @@ export const getSitemapProducts = cache(
     if (error || !data) return [];
     return data;
   },
+  ["q:sitemap-products"],
+  { tags: ["products"], revalidate: 3600 },
 );
 
-export const getSitemapServices = cache(
+export const getSitemapServices = unstable_cache(
   async (): Promise<Pick<Service, "id" | "updated_at">[]> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("services")
       .select("id, updated_at")
@@ -351,6 +387,8 @@ export const getSitemapServices = cache(
     if (error || !data) return [];
     return data;
   },
+  ["q:sitemap-services"],
+  { tags: ["services"], revalidate: 3600 },
 );
 
 export async function getBookingsForOwner(businessId: string) {
@@ -417,9 +455,9 @@ export async function getMyBusiness(ownerId: string): Promise<BusinessDetail | n
 
 export { SORT_ORDER };
 
-export const getProductsForBusiness = cache(
+export const getProductsForBusiness = unstable_cache(
   async (businessId: string): Promise<ProductWithBusiness[]> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("products")
       .select(
@@ -430,11 +468,13 @@ export const getProductsForBusiness = cache(
     if (error) return [];
     return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[];
   },
+  ["q:products-for-business"],
+  { tags: ["products", "businesses"], revalidate: 300 },
 );
 
-export const getFeaturedProducts = cache(
+export const getFeaturedProducts = unstable_cache(
   async (limit = 8): Promise<ProductWithBusiness[]> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("products")
       .select(
@@ -447,6 +487,8 @@ export const getFeaturedProducts = cache(
     if (error) return [];
     return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[];
   },
+  ["q:featured-products"],
+  { tags: ["products"], revalidate: 300 },
 );
 
 export const searchProducts = cache(
@@ -519,9 +561,9 @@ export type ProductListFilters = {
 const PRODUCT_BUSINESS_SELECT = `id, name, slug, logo_url, cover_url, city, city_id, verified, whatsapp, whatsapp_url, whatsapp_enabled, phone, owner_id, rating_avg, reviews_count, plan, ${CITY_SLUG_JOIN}`;
 
 /** Single published product by slug, with its seller (and category resolved separately). */
-export const getProductBySlug = cache(
+export const getProductBySlug = unstable_cache(
   async (slug: string): Promise<ProductDetail | null> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("products")
       .select(`*, business:businesses(${PRODUCT_BUSINESS_SELECT})`)
@@ -542,17 +584,19 @@ export const getProductBySlug = cache(
     }
     return { ...base, categories };
   },
+  ["q:product-by-slug"],
+  { tags: ["products"], revalidate: 300 },
 );
 
 /** Same-category published products (deterministic, by real view counts). */
-export const getSimilarProducts = cache(
+export const getSimilarProducts = unstable_cache(
   async (
     categoryId: string | null,
     productId: string,
     limit = 4,
   ): Promise<ProductWithBusiness[]> => {
     if (!categoryId) return [];
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("products")
       .select(`*, business:businesses(${PRODUCT_BUSINESS_SELECT})`)
@@ -564,6 +608,8 @@ export const getSimilarProducts = cache(
     if (error || !data) return [];
     return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[];
   },
+  ["q:similar-products"],
+  { tags: ["products"], revalidate: 300 },
 );
 
 const PRODUCT_SORT_COLUMNS: Record<
@@ -577,11 +623,11 @@ const PRODUCT_SORT_COLUMNS: Record<
 };
 
 /** Published catalog rows with real total count, using only existing fields. */
-export const getPublishedProducts = cache(
+export const getPublishedProducts = unstable_cache(
   async (
     filters: ProductListFilters = {},
   ): Promise<{ items: ProductWithBusiness[]; total: number }> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const limit = filters.limit ?? 24;
     const offset = filters.offset ?? 0;
 
@@ -606,6 +652,8 @@ export const getPublishedProducts = cache(
       total: count ?? 0,
     };
   },
+  ["q:published-products"],
+  { tags: ["products"], revalidate: 120 },
 );
 
 /* ==========================================================================
@@ -636,9 +684,9 @@ export type ServiceListFilters = {
 const SERVICE_BUSINESS_SELECT = `${PRODUCT_BUSINESS_SELECT}, category_id`;
 
 /** Single published service by id, with its provider business (and category resolved separately). */
-export const getServiceById = cache(
+export const getServiceById = unstable_cache(
   async (id: string): Promise<ServiceDetail | null> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("services")
       .select(`*, business:businesses(${SERVICE_BUSINESS_SELECT})`)
@@ -660,16 +708,18 @@ export const getServiceById = cache(
     }
     return { ...base, categories };
   },
+  ["q:service-by-id"],
+  { tags: ["services"], revalidate: 300 },
 );
 
 /** Published services of the same provider (deterministic: featured first, then recency). */
-export const getServicesForBusinessRow = cache(
+export const getServicesForBusinessRow = unstable_cache(
   async (
     businessId: string,
     serviceId: string,
     limit = 4,
   ): Promise<ServiceWithBusiness[]> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("services")
       .select(`*, business:businesses(${SERVICE_BUSINESS_SELECT})`)
@@ -682,10 +732,12 @@ export const getServicesForBusinessRow = cache(
     if (error || !data) return [];
     return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ServiceWithBusiness[];
   },
+  ["q:services-for-business-row"],
+  { tags: ["services"], revalidate: 300 },
 );
 
 /** Services from providers in the same category (deterministic, real data only). */
-export const getSimilarServices = cache(
+export const getSimilarServices = unstable_cache(
   async (
     categoryId: string | null,
     serviceId: string,
@@ -693,7 +745,7 @@ export const getSimilarServices = cache(
     limit = 4,
   ): Promise<ServiceWithBusiness[]> => {
     if (!categoryId) return [];
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data: businesses } = await supabase
       .from("businesses")
       .select("id")
@@ -716,6 +768,8 @@ export const getSimilarServices = cache(
     if (error || !data) return [];
     return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ServiceWithBusiness[];
   },
+  ["q:similar-services"],
+  { tags: ["services"], revalidate: 300 },
 );
 
 const SERVICE_SORT_COLUMNS: Record<
@@ -728,11 +782,11 @@ const SERVICE_SORT_COLUMNS: Record<
 };
 
 /** Published catalog rows with a real total count, using only existing fields. */
-export const getPublishedServices = cache(
+export const getPublishedServices = unstable_cache(
   async (
     filters: ServiceListFilters = {},
   ): Promise<{ items: ServiceWithBusiness[]; total: number }> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const limit = filters.limit ?? 24;
     const offset = filters.offset ?? 0;
 
@@ -782,12 +836,14 @@ export const getPublishedServices = cache(
       total: count ?? 0,
     };
   },
+  ["q:published-services"],
+  { tags: ["services"], revalidate: 120 },
 );
 
 /** Home rails: published services with their provider, featured first then recency. */
-export const getPopularServices = cache(
+export const getPopularServices = unstable_cache(
   async (limit = 8): Promise<ServiceWithBusiness[]> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("services")
       .select(`*, business:businesses(${SERVICE_BUSINESS_SELECT})`)
@@ -798,6 +854,8 @@ export const getPopularServices = cache(
     if (error || !data) return [];
     return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ServiceWithBusiness[];
   },
+  ["q:popular-services"],
+  { tags: ["services"], revalidate: 300 },
 );
 
 /* ==========================================================================
@@ -814,9 +872,9 @@ export type IndexFilters = {
 };
 
 /** Popular/trending/highly-rated approved businesses, optionally city-scoped. */
-export const getIndexBusinesses = cache(
+export const getIndexBusinesses = unstable_cache(
   async (f: IndexFilters = {}): Promise<BusinessWithCategory[]> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     let q = supabase
       .from("businesses")
       .select(`*, categories!businesses_category_id_fkey(*), ${CITY_SLUG_JOIN}`)
@@ -840,12 +898,14 @@ export const getIndexBusinesses = cache(
     if (error || !data) return [];
     return (data ?? []).map(attachCitySlug) as unknown as BusinessWithCategory[];
   },
+  ["q:index-businesses"],
+  { tags: ["businesses"], revalidate: 300 },
 );
 
 /** Published services from approved providers, optionally city-scoped. */
-export const getIndexServices = cache(
+export const getIndexServices = unstable_cache(
   async (f: IndexFilters = {}): Promise<ServiceWithBusiness[]> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     let q = supabase
       .from("services")
       .select(`*, business:businesses(${SERVICE_BUSINESS_SELECT})`)
@@ -859,12 +919,14 @@ export const getIndexServices = cache(
     if (error || !data) return [];
     return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ServiceWithBusiness[];
   },
+  ["q:index-services"],
+  { tags: ["services"], revalidate: 300 },
 );
 
 /** Published products from approved sellers, optionally city-scoped. */
-export const getIndexProducts = cache(
+export const getIndexProducts = unstable_cache(
   async (f: IndexFilters = {}): Promise<ProductWithBusiness[]> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     let q = supabase
       .from("products")
       .select(`*, business:businesses(${PRODUCT_BUSINESS_SELECT})`)
@@ -878,12 +940,14 @@ export const getIndexProducts = cache(
     if (error || !data) return [];
     return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[];
   },
+  ["q:index-products"],
+  { tags: ["products"], revalidate: 300 },
 );
 
 /** Approved business counts per category, optionally city-scoped. */
-export const getIndexCategoryCounts = cache(
+export const getIndexCategoryCounts = unstable_cache(
   async (city?: string): Promise<Record<string, number>> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     let q = supabase
       .from("businesses")
       .select("category_id")
@@ -898,6 +962,8 @@ export const getIndexCategoryCounts = cache(
     }
     return counts;
   },
+  ["q:index-category-counts"],
+  { tags: ["categories"], revalidate: 300 },
 );
 
 export async function getAdminBusinesses(): Promise<AdminBusiness[]> {
@@ -1112,16 +1178,20 @@ export async function getAdminDashboard(): Promise<AdminDashboardStats> {
   };
 }
 
-export const getCities = cache(async (): Promise<City[]> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("cities")
-    .select("*")
-    .order("created_at", { ascending: true });
+export const getCities = unstable_cache(
+  async (): Promise<City[]> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("cities")
+      .select("*")
+      .order("created_at", { ascending: true });
 
-  if (error || !data) return [];
-  return data;
-});
+    if (error || !data) return [];
+    return data;
+  },
+  ["q:cities"],
+  { tags: ["cities"], revalidate: 3600 },
+);
 
 export type AdminReport = Report & {
   businesses: Pick<Business, "name" | "slug" | "status"> | null;

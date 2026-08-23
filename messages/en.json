@@ -1352,5 +1352,40 @@
     "privacy": "Privacy policy",
     "terms": "Terms of service",
     "cities": "Cities"
+  },
+  "helpPage": {
+    "title": "Help Center",
+    "subtitle": "Find answers, browse guides, and get the support you need for Service City.",
+    "quickLinksTitle": "Popular help topics",
+    "links": {
+      "searchTitle": "Find businesses",
+      "searchDesc": "Search for businesses, services and artisans across Morocco.",
+      "searchCta": "Browse businesses",
+      "pricingTitle": "Pricing & plans",
+      "pricingDesc": "Compare plans and choose the best option for your business.",
+      "pricingCta": "View pricing",
+      "listTitle": "List your business",
+      "listDesc": "Create an account and publish your business profile in minutes.",
+      "listCta": "Get started"
+    },
+    "faqTitle": "Frequently asked questions",
+    "faq": [
+      {
+        "q": "How do I contact a business?",
+        "a": "Open a business profile and use the phone, WhatsApp or message button to reach them directly."
+      },
+      {
+        "q": "How do I list my business?",
+        "a": "Click \"List your business\", create a free account, and complete your profile."
+      },
+      {
+        "q": "Is Service City available in my city?",
+        "a": "We currently focus on Casablanca and major Moroccan cities, with more added over time."
+      },
+      {
+        "q": "How do I report an issue?",
+        "a": "Use the in-app support or email our team and we will get back to you as soon as possible."
+      }
+    ]
   }
 }

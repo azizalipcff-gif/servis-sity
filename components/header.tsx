@@ -10,6 +10,7 @@ import { HeaderBar } from "@/components/layout/header-bar";
 import { HeaderSearch } from "@/components/header-search";
 import { CategoryNav } from "@/components/category-nav";
 import { getCategories } from "@/lib/queries";
+import { buildSearchUrl } from "@/lib/search/url";
 
 export async function Header() {
   const t = await getTranslations("nav");
@@ -32,17 +33,20 @@ export async function Header() {
         <div className="hidden border-b border-border bg-secondary/60 lg:block">
           <div className="container-site flex h-9 items-center justify-between gap-4 text-[13px]">
             <div className="flex items-center gap-5">
-              <button
-                type="button"
+              <Link
+                href={buildSearchUrl({ city: defaultCity })}
                 className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
               >
                 <MapPin className="size-3.5" />
                 <span className="font-medium text-foreground">{defaultCity}</span>
-              </button>
-              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+              </Link>
+              <Link
+                href="/help"
+                className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
+              >
                 <LifeBuoy className="size-3.5" />
                 {t("help")}
-              </span>
+              </Link>
             </div>
             <div className="flex items-center gap-4">
               <ForBusinessesLink user={user ? { id: user.id } : null} />

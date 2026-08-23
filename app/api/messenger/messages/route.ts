@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
   return withErrorCapture("messenger.messages.send", async () => {
     const t0 = Date.now();
     if (!assertSameOrigin(req)) return jsonError(403, "csrf_rejected");
-    const limited = rateLimit(req, { key: "message.send", limit: 40, windowMs: 60000 });
+    const limited = await rateLimit(req, { key: "message.send", limit: 40, windowMs: 60000 });
     if (!limited.ok) return rateLimitResponse(limited.retryAfter);
 
     const supabase = await createClient();
@@ -219,7 +219,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   return withErrorCapture("messenger.messages.patch", async () => {
     if (!assertSameOrigin(req)) return jsonError(403, "csrf_rejected");
-    const limited = rateLimit(req, { key: "message.action", limit: 60, windowMs: 60000 });
+    const limited = await rateLimit(req, { key: "message.action", limit: 60, windowMs: 60000 });
     if (!limited.ok) return rateLimitResponse(limited.retryAfter);
 
     const supabase = await createClient();

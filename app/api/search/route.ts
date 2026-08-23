@@ -36,7 +36,7 @@ const RANK_POOL_CAP = 600;
 
 export async function GET(request: Request) {
   return withErrorCapture("search.get", async () => {
-    const rl = rateLimit(request, {
+    const rl = await rateLimit(request, {
       key: "search:get",
       limit: 300,
       windowMs: 60_000,

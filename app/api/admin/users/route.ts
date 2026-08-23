@@ -9,7 +9,7 @@ import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
 
 export async function PATCH(request: Request) {
   return withErrorCapture("admin.users.patch", async () => {
-    const rl = rateLimit(request, { key: "admin:mutate", limit: 120, windowMs: 60_000 });
+    const rl = await rateLimit(request, { key: "admin:mutate", limit: 120, windowMs: 60_000 });
     if (!rl.ok) return rateLimitResponse(rl.retryAfter);
     if (!assertSameOrigin(request)) return jsonError(403, "csrf_rejected");
 
@@ -52,7 +52,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   return withErrorCapture("admin.users.delete", async () => {
-    const rl = rateLimit(request, { key: "admin.mutate", limit: 120, windowMs: 60_000 });
+    const rl = await rateLimit(request, { key: "admin.mutate", limit: 120, windowMs: 60_000 });
     if (!rl.ok) return rateLimitResponse(rl.retryAfter);
     if (!assertSameOrigin(request)) return jsonError(403, "csrf_rejected");
 

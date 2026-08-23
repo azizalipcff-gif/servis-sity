@@ -1352,5 +1352,40 @@
     "privacy": "Politique de confidentialité",
     "terms": "Conditions d'utilisation",
     "cities": "Villes"
+  },
+  "helpPage": {
+    "title": "Centre d'aide",
+    "subtitle": "Trouvez des réponses, parcourez les guides et obtenez l'assistance dont vous avez besoin sur Service City.",
+    "quickLinksTitle": "Sujets d'aide populaires",
+    "links": {
+      "searchTitle": "Trouver des entreprises",
+      "searchDesc": "Recherchez des entreprises, services et artisans dans tout le Maroc.",
+      "searchCta": "Parcourir les entreprises",
+      "pricingTitle": "Tarifs et forfaits",
+      "pricingDesc": "Comparez les forfaits et choisissez la meilleure option pour votre entreprise.",
+      "pricingCta": "Voir les tarifs",
+      "listTitle": "Référencez votre entreprise",
+      "listDesc": "Créez un compte et publiez le profil de votre entreprise en quelques minutes.",
+      "listCta": "Commencer"
+    },
+    "faqTitle": "Questions fréquentes",
+    "faq": [
+      {
+        "q": "Comment contacter une entreprise ?",
+        "a": "Ouvrez le profil d'une entreprise et utilisez le bouton téléphone, WhatsApp ou message pour la contacter directement."
+      },
+      {
+        "q": "Comment référencer mon entreprise ?",
+        "a": "Cliquez sur « Référencez votre entreprise », créez un compte gratuit et complétez votre profil."
+      },
+      {
+        "q": "Service City est-elle disponible dans ma ville ?",
+        "a": "Nous nous concentrons actuellement sur Casablanca et les grandes villes marocaines, avec de nouvelles villes ajoutées régulièrement."
+      },
+      {
+        "q": "Comment signaler un problème ?",
+        "a": "Utilisez l'assistance intégrée à l'application ou écrivez à notre équipe et nous vous répondrons dès que possible."
+      }
+    ]
   }
 }

@@ -18,7 +18,7 @@ async function guard() {
 
 export async function POST(request: Request) {
   return withErrorCapture("dashboard.media.post", async () => {
-    const rl = rateLimit(request, { key: "media:create", limit: 30, windowMs: 60_000 });
+    const rl = await rateLimit(request, { key: "media:create", limit: 30, windowMs: 60_000 });
     if (!rl.ok) return rateLimitResponse(rl.retryAfter);
     if (!assertSameOrigin(request)) return jsonError(403, "csrf_rejected");
 

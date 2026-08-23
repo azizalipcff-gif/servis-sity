@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   return withErrorCapture("follow.toggle", async () => {
-    const rl = rateLimit(req, { key: "follow:toggle", limit: 30, windowMs: 60_000 });
+    const rl = await rateLimit(req, { key: "follow:toggle", limit: 30, windowMs: 60_000 });
     if (!rl.ok) return rateLimitResponse(rl.retryAfter);
     if (!assertSameOrigin(req)) return jsonError(403, "csrf_rejected");
 

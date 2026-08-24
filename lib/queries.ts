@@ -981,13 +981,16 @@ export type AdminService = Service & {
   business: (Pick<Business, "name" | "slug"> & {
     profiles: Pick<Profile, "full_name"> | null;
   }) | null;
+  category: Pick<Category, "name_ar" | "name_fr" | "name_en"> | null;
 };
 
 export async function getAdminServices(): Promise<AdminService[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("services")
-    .select("*, business:businesses(name, slug, profiles(full_name))")
+    .select(
+      "*, business:businesses(name, slug, profiles(full_name)), category:categories!services_category_id_fkey(name_ar, name_fr, name_en)"
+    )
     .order("updated_at", { ascending: false });
 
   if (error || !data) return [];
@@ -998,13 +1001,16 @@ export type AdminProduct = Product & {
   business: (Pick<Business, "name" | "slug"> & {
     profiles: Pick<Profile, "full_name"> | null;
   }) | null;
+  category: Pick<Category, "name_ar" | "name_fr" | "name_en"> | null;
 };
 
 export async function getAdminProducts(): Promise<AdminProduct[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("products")
-    .select("*, business:businesses(name, slug, profiles(full_name))")
+    .select(
+      "*, business:businesses(name, slug, profiles(full_name)), category:categories!products_category_id_fkey(name_ar, name_fr, name_en)"
+    )
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];

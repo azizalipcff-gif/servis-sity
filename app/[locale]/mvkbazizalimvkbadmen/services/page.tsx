@@ -20,7 +20,7 @@ export default async function AdminServicesPage({ params }: Props) {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">{t("services")}</h2>
-      <ServicesTable services={services} />
+      <ServicesTable services={services} locale={locale as Locale} />
     </div>
   );
 }

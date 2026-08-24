@@ -24,7 +24,7 @@ export function LocaleSwitcher() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild id="locale-switcher-trigger">
         <Button
           variant="ghost"
           size="sm"
@@ -38,7 +38,11 @@ export function LocaleSwitcher() {
           <ChevronDown className="size-3.5 opacity-60" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[10rem]">
+      <DropdownMenuContent
+        align="end"
+        className="min-w-[10rem]"
+        aria-labelledby="locale-switcher-trigger"
+      >
         {LOCALES.map((l) => (
           <DropdownMenuItem key={l} asChild>
             <Link

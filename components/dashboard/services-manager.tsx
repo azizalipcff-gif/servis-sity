@@ -123,14 +123,10 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="iconSm"
-                      asChild
-                      aria-label={t("editService")}
-                    >
+                    <Button variant="default" size="sm" asChild>
                       <Link href={`/dashboard/services/${service.id}/edit`}>
                         <Pencil className="size-4" />
+                        {t("editService")}
                       </Link>
                     </Button>
                     <Button
@@ -138,6 +134,7 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
                       size="iconSm"
                       onClick={() => handleDelete(service.id)}
                       disabled={deletingId === service.id}
+                      aria-label={t("deleteService")}
                     >
                       {deletingId === service.id ? (
                         <Loader2 className="size-4 animate-spin" />

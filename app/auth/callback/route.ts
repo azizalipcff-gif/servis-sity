@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "@/lib/supabase/database.types";
 import { safeReturnTo, stripLocalePrefix } from "@/lib/auth/return-to";
+import { routing } from "@/i18n/routing";
 
 const LOCALES = ["ar", "fr", "en"] as const;
 type Locale = (typeof LOCALES)[number];
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
   const recovery = searchParams.get("type") === "recovery";
 
   const cookieStore = await cookies();
-  const locale = resolveLocale(cookieStore.get("NEXT_LOCALE")?.value);
+  const locale = resolveLocale(cookieStore.get("NEXT_LOCALE")?.value, next);
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -55,10 +56,15 @@ export async function GET(request: Request) {
   return NextResponse.redirect(`${origin}${destination}`);
 }
 
-function resolveLocale(value: string | undefined): Locale {
-  return value && (LOCALES as readonly string[]).includes(value)
-    ? (value as Locale)
-    : "ar";
+function resolveLocale(value: string | undefined, next: string): Locale {
+  // Prefer a locale already embedded in the (locale-prefixed) `next` path so a
+  // post-login redirect lands in the SAME locale the user was browsing, instead
+  // of always falling back to the default locale.
+  const seg = next.split("/").filter(Boolean)[0];
+  if (seg && (LOCALES as readonly string[]).includes(seg)) return seg as Locale;
+  // Fall back to the NEXT_LOCALE cookie, then the configured default locale.
+  if (value && (LOCALES as readonly string[]).includes(value)) return value as Locale;
+  return routing.defaultLocale;
 }
 
 function sanitizeFallback(value: string): string {

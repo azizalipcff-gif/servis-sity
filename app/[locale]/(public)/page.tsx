@@ -24,7 +24,12 @@ import type { Locale } from "@/lib/translations";
 import { siteUrl, absoluteUrl, localizedLanguages } from "@/lib/seo";
 import { toJsonLd } from "@/lib/security/sanitize";
 
-export const dynamic = "force-dynamic";
+// The homepage is fully public (categories, cities, featured, counts) and all
+// of its data is already cached via `unstable_cache`. Rendering it dynamically
+// on every request forced a server round-trip (TTFB) that delayed both LCP and
+// TTI. Generating it statically with ISR keeps the HTML on the CDN and lets the
+// hero paint immediately; data refreshes every 5 minutes.
+export const revalidate = 300;
 
 type Props = {
   params: Promise<{ locale: string }>;

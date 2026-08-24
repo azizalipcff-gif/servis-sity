@@ -14,6 +14,8 @@ import {
   Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import type { BusinessDetail } from "@/lib/queries";
 import {
   DASHBOARD_TABS,
@@ -133,6 +135,13 @@ export function OwnerDashboard({
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold tracking-tight">{business.name}</h2>
+        <Button asChild size="sm">
+          <Link href="/dashboard/business/edit">{t("editBusiness")}</Link>
+        </Button>
+      </div>
+
       <div className="flex gap-1 overflow-x-auto rounded-2xl border bg-card p-1">
         {tabs.map((item) => {
           const Icon = item.icon;

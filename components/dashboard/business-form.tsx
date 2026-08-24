@@ -16,6 +16,7 @@ import {
   formatWhatsAppNational,
 } from "@/lib/whatsapp";
 import { resolveInitialCityId, deriveCityValue } from "@/lib/business/city-relation";
+import { deleteStoredUrl } from "@/lib/uploads";
 import type { BusinessDetail } from "@/lib/queries";
 import type { Category, City } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ImageUploadField } from "@/components/dashboard/image-upload";
+import { GalleryEditor, type GalleryItem } from "@/components/dashboard/gallery-editor";
+import { HoursEditor, type HourRow, emptyWeek } from "@/components/dashboard/hours-editor";
 
 type Props = {
   business: BusinessDetail | null;
@@ -69,6 +72,7 @@ export function BusinessForm({ business, categories, cities, userId, locale, suc
   const [name, setName] = useState(business?.name ?? "");
   const [slug, setSlug] = useState(business?.slug ?? "");
   const [categoryId, setCategoryId] = useState(business?.category_id ?? "");
+  const [subcategoryId, setSubcategoryId] = useState(business?.subcategory_id ?? "");
   const [description, setDescription] = useState(business?.description ?? "");
   const [phone, setPhone] = useState(business?.phone ?? "");
   const [whatsappDigits, setWhatsappDigits] = useState(() => {
@@ -94,6 +98,34 @@ export function BusinessForm({ business, categories, cities, userId, locale, suc
   const [cityId, setCityId] = useState(() => resolveInitialCityId(cities, business));
   const [logoUrl, setLogoUrl] = useState(business?.logo_url ?? "");
   const [coverUrl, setCoverUrl] = useState(business?.cover_url ?? "");
+
+  // Extra contact / profile / social fields — pre-populated from the saved row.
+  const [tags, setTags] = useState(business?.tags ?? "");
+  const [email, setEmail] = useState(business?.email ?? "");
+  const [website, setWebsite] = useState(business?.website ?? "");
+  const [facebook, setFacebook] = useState(business?.facebook ?? "");
+  const [instagram, setInstagram] = useState(business?.instagram ?? "");
+  const [tiktok, setTiktok] = useState(business?.tiktok ?? "");
+  const [linkedin, setLinkedin] = useState(business?.linkedin ?? "");
+
+  // Gallery (media table) + opening hours (business_hours table).
+  const [mediaItems, setMediaItems] = useState<GalleryItem[]>(
+    (business?.media ?? []).map((m, i) => ({
+      id: m.id,
+      url: m.url,
+      sort_order: i,
+    })),
+  );
+  const [hours, setHours] = useState<HourRow[]>(
+    business?.hours && business.hours.length > 0
+      ? business.hours.map((h) => ({
+          day_of_week: h.day_of_week,
+          open_time: h.open_time,
+          close_time: h.close_time,
+          is_closed: h.is_closed,
+        }))
+      : emptyWeek(),
+  );
 
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -147,6 +179,7 @@ export function BusinessForm({ business, categories, cities, userId, locale, suc
       const payload = {
         name: parsed.data.name,
         category_id: parsed.data.category_id,
+        subcategory_id: subcategoryId || null,
         city_id: selectedCity.id,
         slug: parsed.data.slug,
         description: parsed.data.description || null,
@@ -158,25 +191,83 @@ export function BusinessForm({ business, categories, cities, userId, locale, suc
         city: deriveCityValue(selectedCity),
         logo_url: logoUrl || null,
         cover_url: coverUrl || null,
+        tags: tags || null,
+        email: email || null,
+        website: website || null,
+        facebook: facebook || null,
+        instagram: instagram || null,
+        tiktok: tiktok || null,
+        linkedin: linkedin || null,
       };
 
-      const result = business
-        ? await supabase.from("businesses").update(payload).eq("id", business.id)
-        : await supabase
-            .from("businesses")
-            .insert({ ...payload, owner_id: userId })
-            .select("id, owner_id")
-            .maybeSingle();
+      // Update the existing record, or create a new one bound to this owner.
+      let targetId: string | null = null;
+      if (business) {
+        const { error } = await supabase
+          .from("businesses")
+          .update(payload)
+          .eq("id", business.id);
+        if (error) {
+          setError(tCommon("error"));
+          return;
+        }
+        targetId = business.id;
+      } else {
+        const { data, error } = await supabase
+          .from("businesses")
+          .insert({ ...payload, owner_id: userId })
+          .select("id")
+          .maybeSingle();
+        if (error || !data) {
+          setError(tCommon("error"));
+          return;
+        }
+        targetId = data.id;
+      }
 
-      const saveError = result.error;
-      const inserted = business ? null : result.data;
-
-      // Backend protection: the INSERT must have bound THIS authenticated user
-      // as owner. Never navigate on an unverified write — an owner mismatch or a
-      // rejected insert keeps the user on the form with a visible error.
-      if (saveError || (!business && (!inserted || inserted.owner_id !== userId))) {
+      if (!targetId) {
         setError(tCommon("error"));
         return;
+      }
+
+      // --- Gallery (media) ---------------------------------------------------
+      // Preserve existing photos unless the owner removed them; only newly
+      // uploaded files get written here. Removed photos are deleted from both
+      // the media table and Storage (best-effort, never blocks the save).
+      const originalIds = (business?.media ?? []).map((m) => m.id);
+      const keptIds = mediaItems.filter((i) => i.id).map((i) => i.id as string);
+      const deletedIds = originalIds.filter((id) => !keptIds.includes(id));
+      for (const id of deletedIds) {
+        const m = (business?.media ?? []).find((x) => x.id === id);
+        if (m) {
+          await deleteStoredUrl(m.url);
+          await supabase.from("media").delete().eq("id", id);
+        }
+      }
+      for (let i = 0; i < mediaItems.length; i++) {
+        const item = mediaItems[i];
+        if (item.id) {
+          await supabase.from("media").update({ sort_order: i }).eq("id", item.id);
+        } else {
+          await supabase
+            .from("media")
+            .insert({ business_id: targetId, type: "image", url: item.url, sort_order: i });
+        }
+      }
+
+      // --- Opening hours (business_hours) -----------------------------------
+      // Replaced wholesale from the editor's current state (owner-controlled).
+      await supabase.from("business_hours").delete().eq("business_id", targetId);
+      if (hours.some((h) => !h.is_closed)) {
+        await supabase.from("business_hours").insert(
+          hours.map((h) => ({
+            business_id: targetId,
+            day_of_week: h.day_of_week,
+            open_time: h.is_closed ? null : h.open_time,
+            close_time: h.is_closed ? null : h.close_time,
+            is_closed: h.is_closed,
+          })),
+        );
       }
 
       setSaved(true);
@@ -188,6 +279,8 @@ export function BusinessForm({ business, categories, cities, userId, locale, suc
       setLoading(false);
     }
   }
+
+  const subcategories = categories.filter((c) => c.parent_id === categoryId);
 
   return (
     <Card>
@@ -233,6 +326,24 @@ export function BusinessForm({ business, categories, cities, userId, locale, suc
                   </Select>
                 </div>
               </div>
+
+              {subcategories.length > 0 && (
+                <div className="space-y-2">
+                  <Label>{t("subcategory")}</Label>
+                  <Select value={subcategoryId} onValueChange={setSubcategoryId}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subcategories.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {localizedName(c, locale)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="slug">{t("slug")}</Label>
@@ -379,6 +490,96 @@ export function BusinessForm({ business, categories, cities, userId, locale, suc
                   </Select>
                 </div>
               </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="email">{t("email")}</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    dir="ltr"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="website">{t("website")}</Label>
+                  <Input
+                    id="website"
+                    dir="ltr"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                  />
+                </div>
+              </div>
+            </StaggerItem>
+
+            <Separator />
+
+            <StaggerItem className="space-y-4">
+              <SectionHeading
+                title={t("sectionSocial")}
+                hint={t("sectionSocialHint")}
+              />
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="facebook">{t("facebook")}</Label>
+                  <Input
+                    id="facebook"
+                    dir="ltr"
+                    value={facebook}
+                    onChange={(e) => setFacebook(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="instagram">{t("instagram")}</Label>
+                  <Input
+                    id="instagram"
+                    dir="ltr"
+                    value={instagram}
+                    onChange={(e) => setInstagram(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tiktok">{t("tiktok")}</Label>
+                  <Input
+                    id="tiktok"
+                    dir="ltr"
+                    value={tiktok}
+                    onChange={(e) => setTiktok(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="linkedin">{t("linkedin")}</Label>
+                  <Input
+                    id="linkedin"
+                    dir="ltr"
+                    value={linkedin}
+                    onChange={(e) => setLinkedin(e.target.value)}
+                  />
+                </div>
+              </div>
+            </StaggerItem>
+
+            <Separator />
+
+            <StaggerItem className="space-y-4">
+              <SectionHeading
+                title={t("sectionExtra")}
+                hint={t("sectionExtraHint")}
+              />
+
+              <div className="space-y-2">
+                <Label htmlFor="tags">{t("tags")}</Label>
+                <Input
+                  id="tags"
+                  dir="ltr"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder="plomberie, urgence, certifié"
+                />
+              </div>
             </StaggerItem>
 
             <Separator />
@@ -407,6 +608,28 @@ export function BusinessForm({ business, categories, cities, userId, locale, suc
                   onChange={setCoverUrl}
                 />
               </div>
+            </StaggerItem>
+
+            <Separator />
+
+            <StaggerItem className="space-y-4">
+              <SectionHeading
+                title={t("gallery")}
+                hint={t("sectionGalleryHint")}
+              />
+
+              <GalleryEditor items={mediaItems} onChange={setMediaItems} userId={userId} />
+            </StaggerItem>
+
+            <Separator />
+
+            <StaggerItem className="space-y-4">
+              <SectionHeading
+                title={t("sectionHours")}
+                hint={t("sectionHoursHint")}
+              />
+
+              <HoursEditor value={hours} onChange={setHours} locale={locale} />
             </StaggerItem>
           </Stagger>
 

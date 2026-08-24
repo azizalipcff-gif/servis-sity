@@ -1,0 +1,18 @@
+   ▲ Next.js 15.5.22 (Turbopack)
+   - Local:        http://localhost:3217
+   - Network:      http://192.168.1.69:3217
+   - Environments: .env.local
+
+ ✓ Starting...
+ ○ Compiling middleware ...
+ ✓ Compiled middleware in 709ms
+ ✓ Ready in 3.9s
+ ○ Compiling /[locale] ...
+ ✓ Compiled /[locale] in 10.2s
+ GET /en 200 in 946ms
+ GET /en 200 in 2186ms
+ ✓ Compiled in 923ms
+ ✓ Compiled in 482ms
+ ✓ Compiled in 565ms
+ ✓ Compiled in 462ms
+ ✓ Compiled in 732ms

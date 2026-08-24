@@ -63,6 +63,8 @@ export function ProductForm({
     featured: initial?.featured ?? false,
   });
   const [images, setImages] = useState<string[]>(initial?.images ?? []);
+  const [tagsText, setTagsText] = useState((initial?.tags ?? []).join(", "));
+  const [currency, setCurrency] = useState(initial?.currency ?? "MAD");
   const fileRef = useRef<HTMLInputElement>(null);
 
   function patch<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
@@ -93,6 +95,17 @@ export function ProductForm({
     const name = form.name.trim();
     if (!name) return;
 
+    const slug = initial?.slug ?? slugify(name);
+    const parsedTags = Array.from(
+      new Set(
+        tagsText
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+          .slice(0, 10),
+      ),
+    );
+
     const payload = {
       name,
       category_id: form.category_id || null,
@@ -103,6 +116,9 @@ export function ProductForm({
       status: form.status,
       featured: form.featured,
       images,
+      tags: parsedTags,
+      currency,
+      slug,
     };
 
     setBusy(true);
@@ -111,7 +127,7 @@ export function ProductForm({
       if (initial) {
         const { error } = await supabase
           .from("products")
-          .update({ ...payload, slug: slugify(name) })
+          .update(payload)
           .eq("id", initial.id);
         if (error) {
           setError(tCommon("error"));
@@ -120,8 +136,6 @@ export function ProductForm({
       } else {
         const { error } = await supabase.from("products").insert({
           ...payload,
-          slug: slugify(name),
-          currency: "MAD",
           business_id: businessId,
         });
         if (error) {
@@ -232,6 +246,31 @@ export function ProductForm({
                 onChange={(e) => patch("description", e.target.value)}
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label>{t("tags")}</Label>
+              <Input
+                dir="ltr"
+                value={tagsText}
+                onChange={(e) => setTagsText(e.target.value)}
+                placeholder="promo, livraison, nouveau"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("currency")}</Label>
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              >
+                {["MAD", "EUR", "USD"].map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

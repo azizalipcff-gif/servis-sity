@@ -133,6 +133,9 @@ function BusinessCard({
 
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
         <Button size="sm" asChild>
+          <Link href="/dashboard/business/edit">{t("business.edit")}</Link>
+        </Button>
+        <Button size="sm" variant="outline" asChild>
           <Link href="/dashboard">{t("business.manage")}</Link>
         </Button>
         {pageHref && (

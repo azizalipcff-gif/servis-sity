@@ -107,9 +107,10 @@ export function ProductsManager({
                       {statusLabel(p.status)}
                     </span>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="iconSm" asChild aria-label={t("edit")}>
+                      <Button variant="default" size="sm" asChild>
                         <Link href={`/dashboard/products/${p.id}/edit`}>
                           <Pencil className="h-4 w-4" />
+                          {t("edit")}
                         </Link>
                       </Button>
                       <Button
@@ -117,6 +118,7 @@ export function ProductsManager({
                         size="iconSm"
                         disabled={busy === p.id}
                         onClick={() => handleDelete(p.id, p.images ?? [])}
+                        aria-label={t("delete")}
                       >
                         {busy === p.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

@@ -45,6 +45,9 @@ export function BusinessesTable({ businesses, locale }: Props) {
   const [status, setStatus] = useState<"all" | BusinessStatus>("all");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ id: string; action?: "reject" } | null>(null);
+  const [deleteStatus, setDeleteStatus] = useState<
+    { type: "success" | "error"; message: string } | null
+  >(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -108,12 +111,30 @@ export function BusinessesTable({ businesses, locale }: Props) {
   }
   function remove(b: AdminBusiness) {
     if (!confirm(t("confirmDelete"))) return;
-    void runWith(b.id, () =>
-      api(`/api/admin/businesses?id=${b.id}`, "DELETE").then((ok) => {
-        if (ok) setRows((prev) => prev.filter((x) => x.id !== b.id));
-        return ok;
-      }),
-    );
+    setDeleteStatus(null);
+    void runWith(b.id, async () => {
+      const res = await fetch(`/api/admin/businesses?id=${b.id}`, { method: "DELETE" });
+      if (res.ok) {
+        setRows((prev) => prev.filter((x) => x.id !== b.id));
+        setDeleteStatus({ type: "success", message: t("deleteSuccess") });
+        return true;
+      }
+      let code = "delete_failed";
+      try {
+        const data = await res.json();
+        if (data?.error) code = data.error;
+      } catch {
+        /* ignore unparsable error bodies */
+      }
+      const message =
+        code === "delete_blocked_dependents"
+          ? t("deleteBlocked")
+          : code === "unauthorized" || code === "csrf_rejected"
+            ? t("notAdmin")
+            : t("deleteFailed");
+      setDeleteStatus({ type: "error", message });
+      return false;
+    });
   }
 
   const statusBadge = (s: BusinessStatus) => {
@@ -149,6 +170,19 @@ export function BusinessesTable({ businesses, locale }: Props) {
 
   return (
     <div className="space-y-4">
+      {deleteStatus && (
+        <div
+          role="alert"
+          className={
+            "rounded-lg border px-3 py-2 text-sm " +
+            (deleteStatus.type === "success"
+              ? "border-success/40 bg-success/10 text-success"
+              : "border-destructive/40 bg-destructive/10 text-destructive")
+          }
+        >
+          {deleteStatus.message}
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3">
         <input
           value={query}

@@ -455,22 +455,25 @@ export async function getMyBusiness(ownerId: string): Promise<BusinessDetail | n
 
 export { SORT_ORDER };
 
-export const getProductsForBusiness = unstable_cache(
-  async (businessId: string): Promise<ProductWithBusiness[]> => {
-    const supabase = createPublicClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select(
-        `*, business:businesses(id, name, slug, logo_url, cover_url, city, verified, whatsapp, whatsapp_url, whatsapp_enabled, phone, owner_id, rating_avg, reviews_count, plan)`,
-      )
-      .eq("business_id", businessId)
-      .order("created_at", { ascending: false });
-    if (error) return [];
-    return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[];
-  },
-  ["q:products-for-business"],
-  { tags: ["products", "businesses"], revalidate: 300 },
-);
+export async function getProductsForBusiness(
+  businessId: string,
+): Promise<ProductWithBusiness[]> {
+  // Session client (NOT the anonymous public client): RLS `products_select_public`
+  // only returns published rows to anonymous callers, which would hide the
+  // owner's own draft/archived products from their dashboard. As the owner we
+  // must see every status (including `archived`) so it can be deleted. Public
+  // business pages are unaffected — anonymous visitors still only see published.
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      `*, business:businesses(id, name, slug, logo_url, cover_url, city, verified, whatsapp, whatsapp_url, whatsapp_enabled, phone, owner_id, rating_avg, reviews_count, plan)`,
+    )
+    .eq("business_id", businessId)
+    .order("created_at", { ascending: false });
+  if (error) return [];
+  return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[];
+}
 
 export const getFeaturedProducts = unstable_cache(
   async (limit = 8): Promise<ProductWithBusiness[]> => {

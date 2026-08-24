@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import type { Product } from "@/lib/supabase/database.types";
@@ -24,10 +25,12 @@ type Props = {
 export function ProductsManager({ initial = [] }: Props) {
   const t = useTranslations("products");
 
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initial);
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   async function confirmDelete() {
     const id = confirmId;
@@ -40,6 +43,8 @@ export function ProductsManager({ initial = [] }: Props) {
       });
       if (res.ok) {
         setProducts((prev) => prev.filter((p) => p.id !== id));
+        setSuccess(t("deleteSuccess"));
+        router.refresh();
       } else {
         const data = (await res.json().catch(() => null)) as
           | { error?: string }
@@ -83,6 +88,11 @@ export function ProductsManager({ initial = [] }: Props) {
         </Button>
       </CardHeader>
       <CardContent>
+        {success ? (
+          <p className="mb-3 rounded-md bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600">
+            {success}
+          </p>
+        ) : null}
         {error ? (
           <p className="mb-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
@@ -140,7 +150,11 @@ export function ProductsManager({ initial = [] }: Props) {
                           variant="ghost"
                           size="iconSm"
                           disabled={busy === p.id}
-                          onClick={() => setConfirmId(p.id)}
+                          onClick={() => {
+                            setSuccess(null);
+                            setError(null);
+                            setConfirmId(p.id);
+                          }}
                           aria-label={t("delete")}
                         >
                           {busy === p.id ? (

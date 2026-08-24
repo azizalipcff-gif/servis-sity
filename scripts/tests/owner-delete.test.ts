@@ -38,6 +38,37 @@ test("owner-delete: service route is server-authorized + archived-gated", () => 
 });
 
 // ---------------------------------------------------------------------------
+// Requirement #5: the owner query must NOT hide archived products — otherwise
+// there is no row to attach a Delete button to. getProductsForBusiness must use
+// the SESSION client (so RLS returns the owner's own non-published rows) and
+// must not filter by status.
+// ---------------------------------------------------------------------------
+
+test("owner-delete: getProductsForBusiness uses the session client (owner sees archived)", () => {
+  const queries = readFileSync(join(here, "..", "..", "lib", "queries.ts"), "utf8");
+  const m = queries.match(/export async function getProductsForBusiness[\s\S]*?\n\}\n/);
+  assert.ok(m, "getProductsForBusiness is defined");
+  const fn = m[0];
+  assert.match(fn, /createClient\(\)/, "uses the authenticated (session) client");
+  assert.doesNotMatch(fn, /createPublicClient\(\)/, "does NOT use the anonymous public client");
+  assert.doesNotMatch(fn, /\.eq\("status"/, "does NOT filter by status (archived stays visible to owner)");
+});
+
+test("owner-delete: products manager shows a Delete button for archived items", () => {
+  const src = readRoute("components/dashboard/products-manager.tsx");
+  assert.match(src, /p\.status === "archived"/, "Delete is gated to archived status");
+  assert.match(src, /ConfirmDialog/, "uses the confirmation dialog");
+  assert.match(src, /\/api\/dashboard\/products\//, "calls the owner delete endpoint");
+});
+
+test("owner-delete: services manager shows a Delete button for archived items", () => {
+  const src = readRoute("components/dashboard/services-manager.tsx");
+  assert.match(src, /service\.status === "archived"/, "Delete is gated to archived status");
+  assert.match(src, /ConfirmDialog/, "uses the confirmation dialog");
+  assert.match(src, /\/api\/dashboard\/services\//, "calls the owner delete endpoint");
+});
+
+// ---------------------------------------------------------------------------
 // Storage-cleanup safety: an external/demo URL must NEVER be accepted for
 // deletion, so a crafted product image can't make us delete someone else's
 // Storage object.

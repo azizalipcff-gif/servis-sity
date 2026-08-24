@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { formatPrice, type Locale } from "@/lib/translations";
@@ -31,10 +32,12 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
   const tBusiness = useTranslations("business");
   const locale = useLocale() as Locale;
 
+  const router = useRouter();
   const [services, setServices] = useState<ServiceRow[]>(business.services ?? []);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   async function confirmDelete() {
     const id = confirmId;
@@ -47,6 +50,8 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
       });
       if (res.ok) {
         setServices((prev) => prev.filter((s) => s.id !== id));
+        setSuccess(t("deleteServiceSuccess"));
+        router.refresh();
       } else {
         const data = (await res.json().catch(() => null)) as
           | { error?: string }
@@ -83,6 +88,11 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
         </Button>
       </CardHeader>
       <CardContent>
+        {success ? (
+          <p className="mb-3 rounded-md bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600">
+            {success}
+          </p>
+        ) : null}
         {error ? (
           <p className="mb-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
@@ -160,7 +170,11 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
                       <Button
                         variant="ghost"
                         size="iconSm"
-                        onClick={() => setConfirmId(service.id)}
+                        onClick={() => {
+                          setSuccess(null);
+                          setError(null);
+                          setConfirmId(service.id);
+                        }}
                         disabled={deletingId === service.id}
                         aria-label={t("deleteService")}
                       >

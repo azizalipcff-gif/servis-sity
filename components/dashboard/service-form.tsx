@@ -31,7 +31,6 @@ import { ImageUploadField } from "./image-upload";
 type ServiceRow = NonNullable<BusinessDetail["services"]>[number];
 
 const SERVICE_STATUSES = ["draft", "published", "archived"] as const;
-type ServiceStatus = (typeof SERVICE_STATUSES)[number];
 
 type Props = {
   businessId: string;
@@ -62,10 +61,10 @@ export function ServiceForm({
   const [tagsText, setTagsText] = useState((initial?.tags ?? []).join(", "));
   const [imageUrl, setImageUrl] = useState(initial?.photo_url ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [status, setStatus] = useState<ServiceStatus>(
+  const [status, setStatus] = useState<string>(
     (SERVICE_STATUSES as readonly string[]).includes(initial?.status ?? "")
-      ? (initial?.status as ServiceStatus)
-      : "published",
+      ? (initial?.status as string)
+      : "pending",
   );
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -118,7 +117,7 @@ export function ServiceForm({
         tags: parsed.data.tags ?? [],
         photo_url: parsed.data.image_url || null,
         description: description.trim() || null,
-        status,
+        status: initial ? status : "pending",
       };
 
       if (initial) {
@@ -221,21 +220,27 @@ export function ServiceForm({
             </div>
             <div className="space-y-2">
               <Label>{t("serviceStatus")}</Label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as ServiceStatus)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm"
-              >
-                {SERVICE_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s === "published"
-                      ? tProducts("statusPublished")
-                      : s === "archived"
-                        ? tProducts("statusArchived")
-                        : tProducts("statusDraft")}
-                  </option>
-                ))}
-              </select>
+              {initial ? (
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm"
+                >
+                  {SERVICE_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s === "published"
+                        ? tProducts("statusPublished")
+                        : s === "archived"
+                          ? tProducts("statusArchived")
+                          : tProducts("statusDraft")}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  {tProducts("statusPendingReview")}
+                </div>
+              )}
             </div>
           </div>
 

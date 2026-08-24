@@ -153,3 +153,21 @@ export const featuredPatchSchema = z.object({
   id: z.string().uuid(),
   action: z.enum(["approve", "revoke", "renew"]),
 });
+
+/** Approve (publish) or reject (archive) a pending service submission. */
+export const serviceModerationSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["published", "archived"]),
+  status_note: z
+    .union([z.string().trim().min(1).max(500), z.null(), z.undefined()])
+    .optional(),
+});
+
+/** Approve (publish) or reject (archive) a pending product submission. */
+export const productModerationSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["published", "archived"]),
+  status_note: z
+    .union([z.string().trim().min(1).max(500), z.null(), z.undefined()])
+    .optional(),
+});

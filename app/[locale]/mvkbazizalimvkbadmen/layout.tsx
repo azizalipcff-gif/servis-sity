@@ -29,6 +29,27 @@ export default async function AdminLayout({ children, params }: Props) {
 
   const t = await getTranslations("admin");
 
+  const [pendingBiz, pendingSvc, pendingPrd] = await Promise.all([
+    guard.supabase
+      .from("businesses")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending_review"),
+    guard.supabase
+      .from("services")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending"),
+    guard.supabase
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending"),
+  ]);
+
+  const pendingCounts = {
+    businesses: pendingBiz.count ?? 0,
+    services: pendingSvc.count ?? 0,
+    products: pendingPrd.count ?? 0,
+  };
+
   return (
     <div
       className="container-site py-8"
@@ -45,7 +66,7 @@ export default async function AdminLayout({ children, params }: Props) {
         </div>
       </header>
 
-      <AdminNav />
+      <AdminNav pendingCounts={pendingCounts} />
 
       <main id="main-content" className="mt-6">{children}</main>
     </div>

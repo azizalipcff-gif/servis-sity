@@ -6,7 +6,7 @@ import { isValidHttpUrl, isValidSupabaseKey } from "./lib/supabase/validate";
 
 const handleI18nRouting = createMiddleware(routing);
 
-const ADMIN_SEGMENT = "admin";
+const ADMIN_SEGMENT = "mvkbazizalimvkbadmen";
 const FAVORITES_PATH = "profile/favorites";
 
 function isAdminPath(pathname: string): boolean {

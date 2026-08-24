@@ -39,18 +39,18 @@ export default async function AdminOverviewPage({ params }: Props) {
   const loc = locale as Locale;
 
   const cards = [
-    { icon: Building2, label: t("totalBusinesses"), value: stats.businesses, href: "/admin/businesses" },
-    { icon: ShieldCheck, label: t("pendingBusinesses"), value: stats.pendingBusinesses, href: "/admin/businesses" },
-    { icon: ShieldCheck, label: t("pendingVerification"), value: stats.pendingVerification, href: "/admin/businesses" },
-    { icon: UserRound, label: t("totalUsers"), value: stats.users, href: "/admin/users" },
-    { icon: UserRound, label: t("premiumUsers"), value: stats.premiumUsers, href: "/admin/users" },
-    { icon: CircleDollarSign, label: t("revenue"), value: `${stats.revenue}`, href: "/admin/bookings" },
-    { icon: Flag, label: t("reportsCount"), value: stats.reports, href: "/admin/reports" },
-    { icon: Tags, label: t("activeCategories"), value: stats.categories, href: "/admin/categories" },
-    { icon: MapPin, label: t("totalCities"), value: stats.cities, href: "/admin/cities" },
-    { icon: CalendarDays, label: t("totalBookings"), value: stats.bookings, href: "/admin/bookings" },
-    { icon: Star, label: t("totalReviews"), value: stats.reviews, href: "/admin/businesses" },
-    { icon: ShieldCheck, label: t("subscriptions"), value: stats.subscriptions, href: "/admin/users" },
+    { icon: Building2, label: t("totalBusinesses"), value: stats.businesses, href: "/mvkbazizalimvkbadmen/businesses" },
+    { icon: ShieldCheck, label: t("pendingBusinesses"), value: stats.pendingBusinesses, href: "/mvkbazizalimvkbadmen/businesses" },
+    { icon: ShieldCheck, label: t("pendingVerification"), value: stats.pendingVerification, href: "/mvkbazizalimvkbadmen/businesses" },
+    { icon: UserRound, label: t("totalUsers"), value: stats.users, href: "/mvkbazizalimvkbadmen/users" },
+    { icon: UserRound, label: t("premiumUsers"), value: stats.premiumUsers, href: "/mvkbazizalimvkbadmen/users" },
+    { icon: CircleDollarSign, label: t("revenue"), value: `${stats.revenue}`, href: "/mvkbazizalimvkbadmen/bookings" },
+    { icon: Flag, label: t("reportsCount"), value: stats.reports, href: "/mvkbazizalimvkbadmen/reports" },
+    { icon: Tags, label: t("activeCategories"), value: stats.categories, href: "/mvkbazizalimvkbadmen/categories" },
+    { icon: MapPin, label: t("totalCities"), value: stats.cities, href: "/mvkbazizalimvkbadmen/cities" },
+    { icon: CalendarDays, label: t("totalBookings"), value: stats.bookings, href: "/mvkbazizalimvkbadmen/bookings" },
+    { icon: Star, label: t("totalReviews"), value: stats.reviews, href: "/mvkbazizalimvkbadmen/businesses" },
+    { icon: ShieldCheck, label: t("subscriptions"), value: stats.subscriptions, href: "/mvkbazizalimvkbadmen/users" },
   ];
 
   const activityIcon = (kind: string) =>

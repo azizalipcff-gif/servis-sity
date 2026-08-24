@@ -977,6 +977,40 @@ export async function getAdminBusinesses(): Promise<AdminBusiness[]> {
   return data as AdminBusiness[];
 }
 
+export type AdminService = Service & {
+  business: (Pick<Business, "name" | "slug"> & {
+    profiles: Pick<Profile, "full_name"> | null;
+  }) | null;
+};
+
+export async function getAdminServices(): Promise<AdminService[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("services")
+    .select("*, business:businesses(name, slug, profiles(full_name))")
+    .order("updated_at", { ascending: false });
+
+  if (error || !data) return [];
+  return data as AdminService[];
+}
+
+export type AdminProduct = Product & {
+  business: (Pick<Business, "name" | "slug"> & {
+    profiles: Pick<Profile, "full_name"> | null;
+  }) | null;
+};
+
+export async function getAdminProducts(): Promise<AdminProduct[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("*, business:businesses(name, slug, profiles(full_name))")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+  return data as AdminProduct[];
+}
+
 export async function getAllProfiles(): Promise<Profile[]> {
   const supabase = await createClient();
   const { data, error } = await supabase

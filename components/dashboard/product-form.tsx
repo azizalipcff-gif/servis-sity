@@ -58,7 +58,7 @@ export function ProductForm({
     price: initial?.price?.toString() ?? "",
     compare_at_price: initial?.compare_at_price?.toString() ?? "",
     stock: initial?.stock?.toString() ?? "",
-    status: (initial?.status as Product["status"]) ?? "draft",
+    status: (initial?.status as Product["status"]) ?? "pending",
     description: initial?.description ?? "",
     featured: initial?.featured ?? false,
   });
@@ -113,7 +113,7 @@ export function ProductForm({
       price: Number(form.price) || 0,
       compare_at_price: form.compare_at_price === "" ? null : Number(form.compare_at_price),
       stock: Number(form.stock) || 0,
-      status: form.status,
+      status: initial ? form.status : "pending",
       featured: form.featured,
       images,
       tags: parsedTags,
@@ -211,17 +211,23 @@ export function ProductForm({
             </div>
             <div className="space-y-2">
               <Label>{t("status")}</Label>
-              <select
-                value={form.status}
-                onChange={(e) => patch("status", e.target.value as Product["status"])}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              >
-                {STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {statusLabel(s)}
-                  </option>
-                ))}
-              </select>
+              {initial ? (
+                <select
+                  value={form.status}
+                  onChange={(e) => patch("status", e.target.value as Product["status"])}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  {STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {statusLabel(s)}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  {t("statusPendingReview")}
+                </div>
+              )}
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label>{t("category")}</Label>

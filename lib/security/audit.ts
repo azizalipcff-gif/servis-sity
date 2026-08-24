@@ -17,6 +17,8 @@ export type AuditAction =
   | "business.verify"
   | "business.reject_verification"
   | "business.delete"
+  | "service.status_change"
+  | "product.status_change"
   | "report.resolve"
   | "category.create"
   | "category.delete"

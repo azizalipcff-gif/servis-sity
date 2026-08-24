@@ -11,38 +11,74 @@ import {
   Flag,
   LayoutDashboard,
   MapPin,
+  Package,
+  Scissors,
   Tags,
   UserRound,
 } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function AdminNav() {
+export type PendingCounts = {
+  businesses: number;
+  services: number;
+  products: number;
+};
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  exact?: boolean;
+  pending?: number;
+};
+
+export function AdminNav({ pendingCounts }: { pendingCounts?: PendingCounts }) {
   const t = useTranslations("admin");
   const pathname = usePathname();
 
   const header =
     "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground";
 
-  const sections = [
+  const pendingFor = (key: keyof PendingCounts) => pendingCounts?.[key] ?? 0;
+
+  const sections: { label: string; items: NavItem[] }[] = [
     {
       label: t("overview"),
       items: [
-        { href: "/admin", label: t("dashboard"), icon: LayoutDashboard, exact: true },
-        { href: "/admin/analytics", label: t("analytics"), icon: BarChart3 },
-        { href: "/admin/bookings", label: t("bookings"), icon: CalendarDays },
+        { href: "/mvkbazizalimvkbadmen", label: t("dashboard"), icon: LayoutDashboard, exact: true },
+        { href: "/mvkbazizalimvkbadmen/analytics", label: t("analytics"), icon: BarChart3 },
+        { href: "/mvkbazizalimvkbadmen/bookings", label: t("bookings"), icon: CalendarDays },
       ],
     },
     {
       label: t("title"),
       items: [
-        { href: "/admin/businesses", label: t("businesses"), icon: Building2 },
-        { href: "/admin/billing", label: t("billing"), icon: CreditCard },
-        { href: "/admin/users", label: t("users"), icon: UserRound },
-        { href: "/admin/categories", label: t("categories"), icon: Tags },
-        { href: "/admin/cities", label: t("cities"), icon: MapPin },
-        { href: "/admin/reports", label: t("reports"), icon: Flag },
-        { href: "/admin/audit", label: t("audit"), icon: Activity },
+        {
+          href: "/mvkbazizalimvkbadmen/businesses",
+          label: t("businesses"),
+          icon: Building2,
+          pending: pendingFor("businesses"),
+        },
+        {
+          href: "/mvkbazizalimvkbadmen/services",
+          label: t("services"),
+          icon: Scissors,
+          pending: pendingFor("services"),
+        },
+        {
+          href: "/mvkbazizalimvkbadmen/products",
+          label: t("products"),
+          icon: Package,
+          pending: pendingFor("products"),
+        },
+        { href: "/mvkbazizalimvkbadmen/billing", label: t("billing"), icon: CreditCard },
+        { href: "/mvkbazizalimvkbadmen/users", label: t("users"), icon: UserRound },
+        { href: "/mvkbazizalimvkbadmen/categories", label: t("categories"), icon: Tags },
+        { href: "/mvkbazizalimvkbadmen/cities", label: t("cities"), icon: MapPin },
+        { href: "/mvkbazizalimvkbadmen/reports", label: t("reports"), icon: Flag },
+        { href: "/mvkbazizalimvkbadmen/audit", label: t("audit"), icon: Activity },
       ],
     },
   ];
@@ -57,9 +93,10 @@ export function AdminNav() {
           <span className={cn("me-2", header)}>{section.label}</span>
           {section.items.map((item) => {
             const active = item.exact
-              ? pathname === "/admin"
+              ? pathname === "/mvkbazizalimvkbadmen"
               : pathname.startsWith(item.href);
             const Icon = item.icon;
+            const pending = item.pending ?? 0;
             return (
               <Link
                 key={item.href}
@@ -73,6 +110,11 @@ export function AdminNav() {
               >
                 <Icon className="size-4" />
                 {item.label}
+                {pending > 0 && (
+                  <span className="ms-0.5 inline-flex min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-semibold text-amber-950">
+                    {pending}
+                  </span>
+                )}
               </Link>
             );
           })}

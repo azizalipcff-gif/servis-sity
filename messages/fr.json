@@ -734,7 +734,13 @@
       "backDashboard": "Retour au tableau de bord",
       "backServices": "Retour aux services",
       "backProducts": "Retour aux produits"
-    }
+    },
+    "cancelDelete": "Annuler",
+    "deleteServiceTitle": "Supprimer définitivement le service ?",
+    "deleteServiceDescription": "Cela supprime définitivement le service et son image. Cette action est irréversible.",
+    "deleteServiceSuccess": "Service supprimé.",
+    "deleteServiceError": "Impossible de supprimer le service. Veuillez réessayer.",
+    "deleteServiceNotArchived": "Seuls les services archivés (rejetés) peuvent être supprimés."
   },
   "admin": {
     "title": "Panneau d'administration",
@@ -853,7 +859,6 @@
     "social": "Réseaux sociaux",
     "openingHours": "Horaires d'ouverture",
     "closed": "Fermé",
-    "services": "Services",
     "noServices": "Aucun service",
     "minutes": "min",
     "seo": "SEO",
@@ -884,8 +889,6 @@
     "duration": "Durée",
     "mainImage": "Image principale",
     "image": "Image",
-    "name": "Nom",
-    "date": "Date",
     "updateFailed": "La mise à jour a échoué. Veuillez réessayer."
   },
   "pricing": {
@@ -1104,7 +1107,12 @@
     "stockEmpty": "Rupture de stock",
     "category": "Catégorie",
     "tags": "Étiquettes",
-    "currency": "Devise"
+    "currency": "Devise",
+    "deleteTitle": "Supprimer définitivement le produit ?",
+    "deleteDescription": "Cela supprime définitivement le produit et toutes ses images. Cette action est irréversible.",
+    "deleteSuccess": "Produit supprimé.",
+    "deleteError": "Impossible de supprimer le produit. Veuillez réessayer.",
+    "deleteNotArchived": "Seuls les produits archivés (rejetés) peuvent être supprimés."
   },
   "product": {
     "outOfStock": "Rupture de stock",

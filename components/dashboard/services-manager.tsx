@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { formatPrice, type Locale } from "@/lib/translations";
 import type { BusinessDetail } from "@/lib/queries";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/empty-state";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Card,
   CardContent,
@@ -33,15 +33,37 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
 
   const [services, setServices] = useState<ServiceRow[]>(business.services ?? []);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleDelete(id: string) {
+  async function confirmDelete() {
+    const id = confirmId;
+    if (!id) return;
     setDeletingId(id);
-    const supabase = createClient();
-    const { error } = await supabase.from("services").delete().eq("id", id);
-    if (!error) {
-      setServices((prev) => prev.filter((s) => s.id !== id));
+    setError(null);
+    try {
+      const res = await fetch(`/api/dashboard/services/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setServices((prev) => prev.filter((s) => s.id !== id));
+      } else {
+        const data = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        setError(mapError(data?.error));
+      }
+    } catch {
+      setError(t("deleteServiceError"));
+    } finally {
+      setDeletingId(null);
+      setConfirmId(null);
     }
-    setDeletingId(null);
+  }
+
+  function mapError(code?: string): string {
+    if (code === "not_archived") return t("deleteServiceNotArchived");
+    return t("deleteServiceError");
   }
 
   return (
@@ -61,6 +83,11 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
         </Button>
       </CardHeader>
       <CardContent>
+        {error ? (
+          <p className="mb-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
         {services.length === 0 ? (
           <EmptyState
             icon={<Plus className="size-5" />}
@@ -129,19 +156,21 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
                         {t("editService")}
                       </Link>
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="iconSm"
-                      onClick={() => handleDelete(service.id)}
-                      disabled={deletingId === service.id}
-                      aria-label={t("deleteService")}
-                    >
-                      {deletingId === service.id ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="size-4" />
-                      )}
-                    </Button>
+                    {service.status === "archived" ? (
+                      <Button
+                        variant="ghost"
+                        size="iconSm"
+                        onClick={() => setConfirmId(service.id)}
+                        disabled={deletingId === service.id}
+                        aria-label={t("deleteService")}
+                      >
+                        {deletingId === service.id ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="size-4" />
+                        )}
+                      </Button>
+                    ) : null}
                   </div>
                 </li>
               );
@@ -149,6 +178,16 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
           </ul>
         )}
       </CardContent>
+      <ConfirmDialog
+        open={confirmId !== null}
+        title={t("deleteServiceTitle")}
+        description={t("deleteServiceDescription")}
+        confirmLabel={t("deleteService")}
+        cancelLabel={t("cancelDelete")}
+        busy={confirmId !== null && deletingId === confirmId}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmId(null)}
+      />
     </Card>
   );
 }

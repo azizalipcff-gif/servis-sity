@@ -19,6 +19,7 @@
 //   If omitted, the test still validates 401 enforcement + public visibility
 //   and skips the admin-only assertions.
 
+/* eslint-disable @typescript-eslint/no-require-imports -- Node CommonJS script */
 const { createClient } = require("@supabase/supabase-js");
 const fs = require("fs");
 const path = require("path");

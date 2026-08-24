@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
+import { getOAuthRedirectUrl } from "@/lib/auth/url";
 import { GoogleIcon } from "@/components/auth/google-icon";
 import { Button } from "@/components/ui/button";
 
@@ -17,14 +18,10 @@ export function GoogleSignInButton({ returnTo }: { returnTo?: string }) {
     setError(null);
     try {
       const supabase = createClient();
-      const safeReturnTo =
-        returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")
-          ? returnTo
-          : "/dashboard";
-      // Carry the *current* locale so the post-login redirect lands in the
-      // same locale the user was browsing instead of the default locale.
-      const nextPath = `/${locale}${safeReturnTo}`;
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
+      // Build the callback URL from the *current* origin so the post-login
+      // redirect lands back on the same environment (localhost in dev, the
+      // deployed domain in prod) and in the same locale the user was browsing.
+      const redirectTo = getOAuthRedirectUrl({ locale, returnTo });
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {

@@ -4,11 +4,10 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import type { Product } from "@/lib/supabase/database.types";
-import { createClient } from "@/lib/supabase/client";
-import { deleteStoredUrl } from "@/lib/uploads";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Card,
   CardContent,
@@ -18,33 +17,46 @@ import {
 } from "@/components/ui/card";
 
 type Props = {
-  businessId: string;
+  businessId?: string;
   initial?: Product[];
 };
 
-export function ProductsManager({
-  businessId,
-  initial = [],
-}: Props) {
+export function ProductsManager({ initial = [] }: Props) {
   const t = useTranslations("products");
 
   const [products, setProducts] = useState<Product[]>(initial);
   const [busy, setBusy] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleDelete(id: string, images: string[]) {
-    if (!confirm(t("confirmDelete"))) return;
+  async function confirmDelete() {
+    const id = confirmId;
+    if (!id) return;
     setBusy(id);
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("products")
-      .delete()
-      .eq("id", id)
-      .eq("business_id", businessId);
-    if (!error) {
-      await Promise.all(images.map((u) => deleteStoredUrl(u)));
-      setProducts((prev) => prev.filter((p) => p.id !== id));
+    setError(null);
+    try {
+      const res = await fetch(`/api/dashboard/products/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setProducts((prev) => prev.filter((p) => p.id !== id));
+      } else {
+        const data = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        setError(mapError(data?.error));
+      }
+    } catch {
+      setError(t("deleteError"));
+    } finally {
+      setBusy(null);
+      setConfirmId(null);
     }
-    setBusy(null);
+  }
+
+  function mapError(code?: string): string {
+    if (code === "not_archived") return t("deleteNotArchived");
+    return t("deleteError");
   }
 
   const statusLabel = (s: string) =>
@@ -71,6 +83,11 @@ export function ProductsManager({
         </Button>
       </CardHeader>
       <CardContent>
+        {error ? (
+          <p className="mb-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
         {products.length === 0 ? (
           <EmptyState
             icon={<Plus className="size-5" />}
@@ -84,7 +101,12 @@ export function ProductsManager({
                 {p.images?.[0] ? (
                   <div className="h-32 w-full overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                    <img
+                      src={p.images[0]}
+                      alt={p.name}
+                      className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
                   </div>
                 ) : (
                   <div className="flex h-32 items-center justify-center bg-muted text-muted-foreground" />
@@ -113,19 +135,21 @@ export function ProductsManager({
                           {t("edit")}
                         </Link>
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="iconSm"
-                        disabled={busy === p.id}
-                        onClick={() => handleDelete(p.id, p.images ?? [])}
-                        aria-label={t("delete")}
-                      >
-                        {busy === p.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
+                      {p.status === "archived" ? (
+                        <Button
+                          variant="ghost"
+                          size="iconSm"
+                          disabled={busy === p.id}
+                          onClick={() => setConfirmId(p.id)}
+                          aria-label={t("delete")}
+                        >
+                          {busy === p.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -134,6 +158,16 @@ export function ProductsManager({
           </div>
         )}
       </CardContent>
+      <ConfirmDialog
+        open={confirmId !== null}
+        title={t("deleteTitle")}
+        description={t("deleteDescription")}
+        confirmLabel={t("delete")}
+        cancelLabel={t("cancelDelete")}
+        busy={confirmId !== null && busy === confirmId}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmId(null)}
+      />
     </Card>
   );
 }

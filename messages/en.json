@@ -734,7 +734,13 @@
       "backDashboard": "Back to Dashboard",
       "backServices": "Back to Services",
       "backProducts": "Back to Products"
-    }
+    },
+    "cancelDelete": "Cancel",
+    "deleteServiceTitle": "Delete service permanently?",
+    "deleteServiceDescription": "This permanently removes the service and its image. This action cannot be undone.",
+    "deleteServiceSuccess": "Service deleted.",
+    "deleteServiceError": "Could not delete the service. Please try again.",
+    "deleteServiceNotArchived": "Only archived (rejected) services can be deleted."
   },
   "admin": {
     "title": "Admin panel",
@@ -853,7 +859,6 @@
     "social": "Social links",
     "openingHours": "Opening hours",
     "closed": "Closed",
-    "services": "Services",
     "noServices": "No services",
     "minutes": "min",
     "seo": "SEO",
@@ -884,8 +889,6 @@
     "duration": "Duration",
     "mainImage": "Main image",
     "image": "Image",
-    "name": "Name",
-    "date": "Date",
     "updateFailed": "Update failed. Please try again."
   },
   "pricing": {
@@ -1104,7 +1107,12 @@
     "stockEmpty": "Out of stock",
     "category": "Category",
     "tags": "Tags",
-    "currency": "Currency"
+    "currency": "Currency",
+    "deleteTitle": "Delete product permanently?",
+    "deleteDescription": "This permanently removes the product and all of its images. This action cannot be undone.",
+    "deleteSuccess": "Product deleted.",
+    "deleteError": "Could not delete the product. Please try again.",
+    "deleteNotArchived": "Only archived (rejected) products can be deleted."
   },
   "product": {
     "outOfStock": "Out of stock",

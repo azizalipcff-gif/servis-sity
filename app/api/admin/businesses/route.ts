@@ -10,6 +10,7 @@ import { writeAudit, type AuditAction } from "@/lib/security/audit";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
+import { logError } from "@/lib/security/logger";
 import { revalidateTag } from "next/cache";
 import { parseStoredUrl } from "@/lib/supabase/storage";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -130,14 +131,29 @@ export async function DELETE(request: Request) {
       .select("id, logo_url, cover_url")
       .eq("id", id)
       .maybeSingle();
-    if (readError) return jsonError(500, "delete_failed");
+    if (readError) {
+      logError("[admin.businesses.delete] select before delete failed", readError);
+      return jsonError(500, "delete_failed");
+    }
     if (!business) return jsonError(404, "not_found");
 
     // 1) Delete the database record. RLS restricts this to admins; child rows
     //    cascade or are set null per the FK definitions, so nothing is orphaned.
     const { error } = await guard.supabase.from("businesses").delete().eq("id", id);
     if (error) {
-      if (error.code === "23503") return jsonError(409, "delete_blocked_dependents");
+      // Surface the real failure server-side (without leaking DB internals to the client).
+      logError("[admin.businesses.delete] delete failed", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+      // FK / dependency violations get a specific, safe code. The 23503 check is the
+      // canonical FK-violation code; 23502/23514 are NOT NULL / CHECK violations that
+      // can also surface mid-cascade and should not be reported as a generic failure.
+      if (error.code === "23503" || error.code === "23502" || error.code === "23514") {
+        return jsonError(409, "delete_blocked_dependents");
+      }
       return jsonError(500, "delete_failed");
     }
 

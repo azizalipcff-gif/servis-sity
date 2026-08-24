@@ -734,7 +734,13 @@
       "backDashboard": "العودة إلى لوحة التحكم",
       "backServices": "العودة إلى الخدمات",
       "backProducts": "العودة إلى المنتجات"
-    }
+    },
+    "cancelDelete": "إلغاء",
+    "deleteServiceTitle": "حذف الخدمة نهائياً؟",
+    "deleteServiceDescription": "يؤدي هذا إلى إزالة الخدمة وصورتها نهائياً. لا يمكن التراجع عن هذا الإجراء.",
+    "deleteServiceSuccess": "تم حذف الخدمة.",
+    "deleteServiceError": "تعذّر حذف الخدمة. يرجى المحاولة مرة أخرى.",
+    "deleteServiceNotArchived": "لا يمكن حذف سوى الخدمات المؤرشفة (المرفوضة)."
   },
   "admin": {
     "title": "لوحة الإدارة",
@@ -853,7 +859,6 @@
     "social": "روابط التواصل",
     "openingHours": "ساعات العمل",
     "closed": "مغلق",
-    "services": "الخدمات",
     "noServices": "لا توجد خدمات",
     "minutes": "دقيقة",
     "seo": "تحسين محركات البحث",
@@ -884,8 +889,6 @@
     "duration": "المدة",
     "mainImage": "الصورة الرئيسية",
     "image": "الصورة",
-    "name": "الاسم",
-    "date": "التاريخ",
     "updateFailed": "فشل التحديث. حاول مرة أخرى."
   },
   "pricing": {
@@ -1104,7 +1107,12 @@
     "stockEmpty": "نفدت الكمية",
     "category": "الفئة",
     "tags": "الوسوم",
-    "currency": "العملة"
+    "currency": "العملة",
+    "deleteTitle": "حذف المنتج نهائياً؟",
+    "deleteDescription": "يؤدي هذا إلى إزالة المنتج وجميع صوره نهائياً. لا يمكن التراجع عن هذا الإجراء.",
+    "deleteSuccess": "تم حذف المنتج.",
+    "deleteError": "تعذّر حذف المنتج. يرجى المحاولة مرة أخرى.",
+    "deleteNotArchived": "لا يمكن حذف سوى المنتجات المؤرشفة (المرفوضة)."
   },
   "product": {
     "outOfStock": "نفدت الكمية",

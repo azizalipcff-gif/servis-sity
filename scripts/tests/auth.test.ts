@@ -29,6 +29,7 @@ import {
   type ResetClient,
   type RecoveryClient,
 } from "../../lib/auth/recovery.ts";
+import { getOAuthRedirectUrl } from "../../lib/auth/url.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "../..");
@@ -438,5 +439,78 @@ for (const locale of ["ar", "en", "fr"] as const) {
     assert(typeof auth.forgotPassword === "string", `auth.forgotPassword missing in ${locale}`);
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* OAuth redirect URL must be environment-aware (dev→localhost,        */
+/* prod→prod domain) and never hardcode an origin.                    */
+/* ------------------------------------------------------------------ */
+
+await run("oauth: dev origin yields localhost callback", () => {
+  const url = getOAuthRedirectUrl({
+    locale: "en",
+    returnTo: "/dashboard",
+    origin: "http://localhost:3000",
+  });
+  assertEqual(
+    url,
+    "http://localhost:3000/auth/callback?next=%2Fen%2Fdashboard",
+    "dev must redirect back to localhost",
+  );
+});
+
+await run("oauth: prod origin yields production callback", () => {
+  const url = getOAuthRedirectUrl({
+    locale: "en",
+    returnTo: "/dashboard",
+    origin: "https://servis-sity-iwtr.vercel.app",
+  });
+  assertEqual(
+    url,
+    "https://servis-sity-iwtr.vercel.app/auth/callback?next=%2Fen%2Fdashboard",
+    "prod must redirect back to the deployed domain",
+  );
+});
+
+await run("oauth: unknown origin is never substituted for production", () => {
+  const url = getOAuthRedirectUrl({
+    locale: "fr",
+    returnTo: "/profile",
+    origin: "http://localhost:3000",
+  });
+  assert(
+    !url.includes("servis-sity-iwtr.vercel.app"),
+    "localhost session must not be bounced to production",
+  );
+  assertEqual(
+    url,
+    "http://localhost:3000/auth/callback?next=%2Ffr%2Fprofile",
+    "locale + returnTo preserved on localhost",
+  );
+});
+
+await run("oauth: unsafe returnTo falls back to /dashboard", () => {
+  const url = getOAuthRedirectUrl({
+    locale: "en",
+    returnTo: "//evil.example",
+    origin: "http://localhost:3000",
+  });
+  assertEqual(
+    url,
+    "http://localhost:3000/auth/callback?next=%2Fen%2Fdashboard",
+    "open-redirect attempts are neutralized",
+  );
+});
+
+await run("oauth: button delegates to getOAuthRedirectUrl", () => {
+  const src = readSource("components/auth/google-signin-button.tsx");
+  assert(
+    src.includes('getOAuthRedirectUrl({ locale, returnTo })'),
+    "google button must build the callback via the env-aware helper",
+  );
+  assert(
+    !src.includes("window.location.origin"),
+    "origin must not be hardcoded in the button (helper resolves it)",
+  );
+});
 
 await finish();

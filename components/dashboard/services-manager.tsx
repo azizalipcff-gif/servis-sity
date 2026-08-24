@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { formatPrice, type Locale } from "@/lib/translations";
 import type { BusinessDetail } from "@/lib/queries";
 import { Link } from "@/i18n/navigation";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ActionsMenu } from "@/components/dashboard/actions-menu";
 import {
   Card,
   CardContent,
@@ -29,6 +30,7 @@ function discountPercent(price: number | null, oldPrice: number | null): number 
 
 export function ServicesManager({ business }: { business: BusinessDetail }) {
   const t = useTranslations("dashboard");
+  const tActions = useTranslations("actions");
   const tBusiness = useTranslations("business");
   const locale = useLocale() as Locale;
 
@@ -38,6 +40,8 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const confirmName = services.find((s) => s.id === confirmId)?.name ?? "";
 
   async function confirmDelete() {
     const id = confirmId;
@@ -160,31 +164,30 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
-                    <Button variant="default" size="sm" asChild>
-                      <Link href={`/dashboard/services/${service.id}/edit`}>
-                        <Pencil className="size-4" />
-                        {t("editService")}
-                      </Link>
-                    </Button>
-                    {service.status === "archived" ? (
-                      <Button
-                        variant="ghost"
-                        size="iconSm"
-                        onClick={() => {
-                          setSuccess(null);
-                          setError(null);
-                          setConfirmId(service.id);
-                        }}
-                        disabled={deletingId === service.id}
-                        aria-label={t("deleteService")}
-                      >
-                        {deletingId === service.id ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="size-4" />
-                        )}
-                      </Button>
-                    ) : null}
+                    <ActionsMenu
+                      itemName={service.name}
+                      status={service.status}
+                      editHref={`/dashboard/services/${service.id}/edit`}
+                      viewHref={
+                        service.status === "published"
+                          ? `/service/${service.id}`
+                          : undefined
+                      }
+                      shareUrl={
+                        service.status === "published"
+                          ? `/service/${service.id}`
+                          : undefined
+                      }
+                      canDelete={service.status === "archived"}
+                      onDelete={() => {
+                        setSuccess(null);
+                        setError(null);
+                        setConfirmId(service.id);
+                      }}
+                      onNotify={(message, kind) =>
+                        kind === "error" ? setError(message) : setSuccess(message)
+                      }
+                    />
                   </div>
                 </li>
               );
@@ -195,7 +198,7 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
       <ConfirmDialog
         open={confirmId !== null}
         title={t("deleteServiceTitle")}
-        description={t("deleteServiceDescription")}
+        description={tActions("deleteConfirmation", { name: confirmName })}
         confirmLabel={t("deleteService")}
         cancelLabel={t("cancelDelete")}
         busy={confirmId !== null && deletingId === confirmId}

@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { Product } from "@/lib/supabase/database.types";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ActionsMenu } from "@/components/dashboard/actions-menu";
 import {
   Card,
   CardContent,
@@ -24,6 +25,7 @@ type Props = {
 
 export function ProductsManager({ initial = [] }: Props) {
   const t = useTranslations("products");
+  const tActions = useTranslations("actions");
 
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initial);
@@ -31,6 +33,8 @@ export function ProductsManager({ initial = [] }: Props) {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const confirmName = products.find((p) => p.id === confirmId)?.name ?? "";
 
   async function confirmDelete() {
     const id = confirmId;
@@ -138,33 +142,22 @@ export function ProductsManager({ initial = [] }: Props) {
                     <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                       {statusLabel(p.status)}
                     </span>
-                    <div className="flex gap-1">
-                      <Button variant="default" size="sm" asChild>
-                        <Link href={`/dashboard/products/${p.id}/edit`}>
-                          <Pencil className="h-4 w-4" />
-                          {t("edit")}
-                        </Link>
-                      </Button>
-                      {p.status === "archived" ? (
-                        <Button
-                          variant="ghost"
-                          size="iconSm"
-                          disabled={busy === p.id}
-                          onClick={() => {
-                            setSuccess(null);
-                            setError(null);
-                            setConfirmId(p.id);
-                          }}
-                          aria-label={t("delete")}
-                        >
-                          {busy === p.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      ) : null}
-                    </div>
+                    <ActionsMenu
+                      itemName={p.name}
+                      status={p.status}
+                      editHref={`/dashboard/products/${p.id}/edit`}
+                      viewHref={p.status === "published" ? `/product/${p.slug}` : undefined}
+                      shareUrl={p.status === "published" ? `/product/${p.slug}` : undefined}
+                      canDelete={p.status === "archived"}
+                      onDelete={() => {
+                        setSuccess(null);
+                        setError(null);
+                        setConfirmId(p.id);
+                      }}
+                      onNotify={(message, kind) =>
+                        kind === "error" ? setError(message) : setSuccess(message)
+                      }
+                    />
                   </div>
                 </div>
               </div>
@@ -175,7 +168,7 @@ export function ProductsManager({ initial = [] }: Props) {
       <ConfirmDialog
         open={confirmId !== null}
         title={t("deleteTitle")}
-        description={t("deleteDescription")}
+        description={tActions("deleteConfirmation", { name: confirmName })}
         confirmLabel={t("delete")}
         cancelLabel={t("cancelDelete")}
         busy={confirmId !== null && busy === confirmId}

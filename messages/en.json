@@ -1449,6 +1449,19 @@
         "q": "How do I report an issue?",
         "a": "Use the in-app support or email our team and we will get back to you as soon as possible."
       }
-    ]
+      ],
+    "actions": {
+      "moreActions": "More actions",
+      "view": "View",
+      "edit": "Edit",
+      "share": "Share",
+      "delete": "Delete",
+      "copyLink": "Copy link",
+      "linkCopied": "Link copied",
+      "shareSuccess": "Shared",
+      "shareFailed": "Couldn't share — please try again",
+      "cannotShareUnpublished": "This item isn't public yet, so it can't be shared.",
+      "deleteConfirmation": "Permanently delete \"{name}\"? This action cannot be undone."
+    }
   }
 }

@@ -88,3 +88,71 @@ test("owner-delete: project storage URLs decompose to bucket + key", () => {
   assert.equal(parsed.bucket, "business-gallery");
   assert.equal(parsed.key, "user-123/gallery/x.webp");
 });
+
+// ---------------------------------------------------------------------------
+// Action menu (3-dot): every Product/Service must expose a consistent menu that
+// reuses existing primitives and never bypasses moderation. View/Share are only
+// offered for PUBLIC items; Delete only for archived/rejected items.
+// ---------------------------------------------------------------------------
+
+test("action-menu: products manager renders a status-aware 3-dot menu", () => {
+  const src = readRoute("components/dashboard/products-manager.tsx");
+  assert.match(src, /ActionsMenu/, "uses the shared ActionsMenu component");
+  assert.match(src, /p\.status === "published"/, "gates View/Share to published products");
+  assert.match(src, /\/product\//, "builds a public product URL when published");
+  assert.match(src, /canDelete=\{p\.status === "archived"\}/, "Delete only for archived products");
+});
+
+test("action-menu: services manager renders a status-aware 3-dot menu", () => {
+  const src = readRoute("components/dashboard/services-manager.tsx");
+  assert.match(src, /ActionsMenu/, "uses the shared ActionsMenu component");
+  assert.match(src, /service\.status === "published"/, "gates View/Share to published services");
+  assert.match(src, /\/service\//, "builds a public service URL when published");
+  assert.match(src, /canDelete=\{service\.status === "archived"\}/, "Delete only for archived services");
+});
+
+test("action-menu: shared component reuses existing primitives (no duplicates)", () => {
+  const src = readRoute("components/dashboard/actions-menu.tsx");
+  assert.match(src, /DropdownMenu/, "reuses the existing Radix DropdownMenu");
+  assert.match(src, /useShare/, "reuses the shared share hook");
+  assert.doesNotMatch(src, /\/api\/dashboard\//, "does NOT define a new delete API");
+  assert.match(src, /onDelete\(\)/, "delegates deletion to the existing confirm flow");
+});
+
+test("action-menu: share never exposes unpublished content", () => {
+  const src = readRoute("components/dashboard/actions-menu.tsx");
+  assert.match(src, /const isPublic = status === "published"/, "public-visibility gate");
+  assert.match(src, /showShare = isPublic/, "Share only rendered for public items");
+  assert.match(src, /showView = isPublic/, "View only rendered for public items");
+});
+
+test("i18n: actions namespace present with required keys in EN/FR/AR", () => {
+  const keys = [
+    "moreActions",
+    "view",
+    "edit",
+    "share",
+    "delete",
+    "copyLink",
+    "linkCopied",
+    "shareFailed",
+    "cannotShareUnpublished",
+    "deleteConfirmation",
+  ];
+  for (const loc of ["en", "fr", "ar"]) {
+    const src = readRoute(`messages/${loc}.json`);
+    assert.match(src, /"actions"/, `${loc}: actions namespace exists`);
+    for (const key of keys) {
+      assert.match(src, new RegExp(`"${key}"\\s*:`), `${loc}: actions.${key} exists`);
+    }
+  }
+});
+
+test("security: no duplicate delete API or edit route was introduced", () => {
+  const products = readRoute("components/dashboard/products-manager.tsx");
+  const services = readRoute("components/dashboard/services-manager.tsx");
+  assert.match(products, /\/api\/dashboard\/products\//, "product delete calls existing endpoint");
+  assert.match(services, /\/api\/dashboard\/services\//, "service delete calls existing endpoint");
+  assert.match(products, /\/dashboard\/products\/\$\{p\.id\}\/edit/, "product edit reuses existing route");
+  assert.match(services, /\/dashboard\/services\/\$\{service\.id\}\/edit/, "service edit reuses existing route");
+});

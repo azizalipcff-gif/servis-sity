@@ -9,7 +9,7 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ActionsMenu } from "@/components/dashboard/actions-menu";
+import { CardActionsMenu } from "@/components/dashboard/card-actions-menu";
 import {
   Card,
   CardContent,
@@ -30,6 +30,7 @@ export function ProductsManager({ initial = [] }: Props) {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initial);
   const [busy, setBusy] = useState<string | null>(null);
+  const [pinningId, setPinningId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -66,6 +67,31 @@ export function ProductsManager({ initial = [] }: Props) {
   function mapError(code?: string): string {
     if (code === "not_archived") return t("deleteNotArchived");
     return t("deleteError");
+  }
+
+  async function togglePin(id: string, current: boolean) {
+    setPinningId(id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/dashboard/products/${id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ featured: !current }),
+      });
+      if (res.ok) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, featured: !current } : p)),
+        );
+        setSuccess(current ? tActions("unpinned") : tActions("pinned"));
+        router.refresh();
+      } else {
+        setError(tActions("pinFailed"));
+      }
+    } catch {
+      setError(tActions("pinFailed"));
+    } finally {
+      setPinningId(null);
+    }
   }
 
   const statusLabel = (s: string) =>
@@ -111,7 +137,10 @@ export function ProductsManager({ initial = [] }: Props) {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((p) => (
-              <div key={p.id} className="overflow-hidden rounded-xl border bg-card">
+              <div
+                key={p.id}
+                className="relative overflow-hidden rounded-xl border bg-card"
+              >
                 {p.images?.[0] ? (
                   <div className="h-32 w-full overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -125,40 +154,45 @@ export function ProductsManager({ initial = [] }: Props) {
                 ) : (
                   <div className="flex h-32 items-center justify-center bg-muted text-muted-foreground" />
                 )}
+                <CardActionsMenu
+                  itemName={p.name}
+                  status={p.status}
+                  editHref={`/dashboard/products/${p.id}/edit`}
+                  viewHref={
+                    p.status === "published" ? `/product/${p.slug}` : undefined
+                  }
+                  shareUrl={
+                    p.status === "published" ? `/product/${p.slug}` : undefined
+                  }
+                  canDelete={p.status === "archived"}
+                  onDelete={() => {
+                    setSuccess(null);
+                    setError(null);
+                    setConfirmId(p.id);
+                  }}
+                  pinned={p.featured}
+                  onTogglePin={() => togglePin(p.id, p.featured)}
+                  pinning={pinningId === p.id}
+                  onNotify={(message, kind) =>
+                    kind === "error" ? setError(message) : setSuccess(message)
+                  }
+                />
                 <div className="space-y-1 p-3">
                   <div className="flex items-start justify-between gap-2">
                     <p className="truncate text-sm font-medium">{p.name}</p>
-                    {p.featured && (
+                    {p.featured ? (
                       <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
                         {t("featured")}
                       </span>
-                    )}
+                    ) : null}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {p.price != null ? `${p.price} MAD` : "—"}
                     {p.stock === 0 ? ` · ${t("stockEmpty")}` : ` · ${p.stock}`}
                   </p>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      {statusLabel(p.status)}
-                    </span>
-                    <ActionsMenu
-                      itemName={p.name}
-                      status={p.status}
-                      editHref={`/dashboard/products/${p.id}/edit`}
-                      viewHref={p.status === "published" ? `/product/${p.slug}` : undefined}
-                      shareUrl={p.status === "published" ? `/product/${p.slug}` : undefined}
-                      canDelete={p.status === "archived"}
-                      onDelete={() => {
-                        setSuccess(null);
-                        setError(null);
-                        setConfirmId(p.id);
-                      }}
-                      onNotify={(message, kind) =>
-                        kind === "error" ? setError(message) : setSuccess(message)
-                      }
-                    />
-                  </div>
+                  <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                    {statusLabel(p.status)}
+                  </span>
                 </div>
               </div>
             ))}

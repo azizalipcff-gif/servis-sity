@@ -69,6 +69,55 @@ export async function DELETE(
   });
 }
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  return withErrorCapture("dashboard.products.patch", async () => {
+    const rl = await rateLimit(request, {
+      key: "dashboard:patch",
+      limit: 30,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) return rateLimitResponse(rl.retryAfter);
+    if (!assertSameOrigin(request)) return jsonError(403, "csrf_rejected");
+
+    const user = await getCurrentUser();
+    if (!user) return jsonError(401, "unauthorized");
+
+    const { id } = await params;
+    if (!id || !uuidSchema.safeParse(id).success) {
+      return jsonError(400, "bad_request");
+    }
+
+    const body = (await request.json().catch(() => null)) as {
+      featured?: unknown;
+    } | null;
+    if (!body || typeof body.featured !== "boolean") {
+      return jsonError(400, "bad_request");
+    }
+
+    const supabase = await createClient();
+    // RLS scopes this update to the owner (or an admin). We accept ONLY the
+    // `featured` flag — this is the existing owner-controllable "pin" mechanism
+    // (products.featured), so clients can never flip status or moderation fields.
+    const { data, error } = await supabase
+      .from("products")
+      .update({ featured: body.featured })
+      .eq("id", id)
+      .select("id, featured")
+      .maybeSingle();
+    if (error) {
+      logError("[dashboard.products.patch] update failed", error);
+      return jsonError(500, "update_failed");
+    }
+    if (!data) return jsonError(404, "not_found");
+
+    revalidateTag("products");
+    return jsonOk({ featured: data.featured });
+  });
+}
+
 async function cleanupImages(supabase: SupabaseClient, images: unknown) {
   if (!Array.isArray(images)) return;
   await Promise.all(

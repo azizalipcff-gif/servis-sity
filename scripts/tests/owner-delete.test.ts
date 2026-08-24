@@ -95,33 +95,36 @@ test("owner-delete: project storage URLs decompose to bucket + key", () => {
 // offered for PUBLIC items; Delete only for archived/rejected items.
 // ---------------------------------------------------------------------------
 
-test("action-menu: products manager renders a status-aware 3-dot menu", () => {
+test("action-menu: products manager renders a top-corner 3-dot menu", () => {
   const src = readRoute("components/dashboard/products-manager.tsx");
-  assert.match(src, /ActionsMenu/, "uses the shared ActionsMenu component");
+  assert.match(src, /CardActionsMenu/, "uses the shared CardActionsMenu component");
   assert.match(src, /p\.status === "published"/, "gates View/Share to published products");
   assert.match(src, /\/product\//, "builds a public product URL when published");
   assert.match(src, /canDelete=\{p\.status === "archived"\}/, "Delete only for archived products");
+  assert.match(src, /onTogglePin=\{\(\) => togglePin/, "exposes a Pin/Unpin action");
 });
 
-test("action-menu: services manager renders a status-aware 3-dot menu", () => {
+test("action-menu: services manager renders a top-corner 3-dot menu", () => {
   const src = readRoute("components/dashboard/services-manager.tsx");
-  assert.match(src, /ActionsMenu/, "uses the shared ActionsMenu component");
+  assert.match(src, /CardActionsMenu/, "uses the shared CardActionsMenu component");
   assert.match(src, /service\.status === "published"/, "gates View/Share to published services");
   assert.match(src, /\/service\//, "builds a public service URL when published");
   assert.match(src, /canDelete=\{service\.status === "archived"\}/, "Delete only for archived services");
+  assert.match(src, /onTogglePin=\{\(\) => togglePin/, "exposes a Pin/Unpin action");
 });
 
 test("action-menu: shared component reuses existing primitives (no duplicates)", () => {
-  const src = readRoute("components/dashboard/actions-menu.tsx");
+  const src = readRoute("components/dashboard/card-actions-menu.tsx");
   assert.match(src, /DropdownMenu/, "reuses the existing Radix DropdownMenu");
   assert.match(src, /useShare/, "reuses the shared share hook");
+  assert.match(src, /absolute right-2 top-2/, "renders as a Facebook-style top-corner overlay");
   assert.doesNotMatch(src, /\/api\/dashboard\//, "does NOT define a new delete API");
-  assert.match(src, /onDelete\(\)/, "delegates deletion to the existing confirm flow");
+  assert.match(src, /onDelete/, "delegates deletion to the existing confirm flow");
 });
 
 test("action-menu: share never exposes unpublished content", () => {
-  const src = readRoute("components/dashboard/actions-menu.tsx");
-  assert.match(src, /const isPublic = status === "published"/, "public-visibility gate");
+  const src = readRoute("components/dashboard/card-actions-menu.tsx");
+  assert.match(src, /const isPublic = status === "published" \|\| status === "approved"/, "public-visibility gate (product/service published, business approved)");
   assert.match(src, /showShare = isPublic/, "Share only rendered for public items");
   assert.match(src, /showView = isPublic/, "View only rendered for public items");
 });
@@ -138,6 +141,11 @@ test("i18n: actions namespace present with required keys in EN/FR/AR", () => {
     "shareFailed",
     "cannotShareUnpublished",
     "deleteConfirmation",
+    "pin",
+    "unpin",
+    "pinned",
+    "unpinned",
+    "pinFailed",
   ];
   for (const loc of ["en", "fr", "ar"]) {
     const src = readRoute(`messages/${loc}.json`);
@@ -156,3 +164,55 @@ test("security: no duplicate delete API or edit route was introduced", () => {
   assert.match(products, /\/dashboard\/products\/\$\{p\.id\}\/edit/, "product edit reuses existing route");
   assert.match(services, /\/dashboard\/services\/\$\{service\.id\}\/edit/, "service edit reuses existing route");
 });
+
+test("pin: product/service reuse the existing featured flag via PATCH on the same [id] route", () => {
+  for (const kind of ["products", "services"]) {
+    const src = readRoute(`app/api/dashboard/${kind}/[id]/route.ts`);
+    assert.match(src, /export async function PATCH/, `${kind}: [id] route handles PATCH (pin toggle)`);
+    assert.match(src, /\.update\(\{ featured: body\.featured \}\)/, `${kind}: PATCH only writes the existing featured flag`);
+    assert.match(src, new RegExp('revalidateTag\\("' + kind + '"\\)'), `${kind}: revalidates the ${kind} cache`);
+  }
+});
+
+test("pin: no dedicated pin column or duplicate API was introduced", () => {
+  // The only pin-like column on products/services is `featured`; `pinned_at`
+  // exists solely on conversation_members (messenger), not on these tables.
+  const products = readRoute("app/api/dashboard/products/[id]/route.ts");
+  const services = readRoute("app/api/dashboard/services/[id]/route.ts");
+  assert.doesNotMatch(products, /pinned_at/, "products route does not invent a pin column");
+  assert.doesNotMatch(services, /pinned_at/, "services route does not invent a pin column");
+  assert.match(products, /export async function DELETE/, "still uses the single [id] route");
+});
+
+// ---------------------------------------------------------------------------
+// The profile pages render their OWN local ProductCard/ServiceCard/BusinessCard
+// (server components). The previous implementation added CardActionsMenu only to
+// the dashboard managers, so it was invisible on /profile/*. These guard against
+// that regression: the actual rendered profile cards must integrate the menu.
+// ---------------------------------------------------------------------------
+
+test("profile: products card renders the shared CardActionsMenu", () => {
+  const page = readRoute("app/[locale]/profile/products/page.tsx");
+  assert.match(page, /<ItemActions/, "products profile card renders ItemActions");
+  assert.match(page, /relative flex flex-col overflow-hidden rounded-2xl/, "card is a relative positioning context");
+  const actions = readRoute("components/profile/item-actions.tsx");
+  assert.match(actions, /CardActionsMenu/, "ItemActions renders the shared CardActionsMenu");
+});
+
+test("profile: services card renders the shared CardActionsMenu", () => {
+  const page = readRoute("app/[locale]/profile/services/page.tsx");
+  assert.match(page, /<ItemActions/, "services profile card renders ItemActions");
+  assert.match(page, /relative flex flex-col overflow-hidden rounded-2xl/, "card is a relative positioning context");
+  const actions = readRoute("components/profile/item-actions.tsx");
+  assert.match(actions, /CardActionsMenu/, "ItemActions renders the shared CardActionsMenu");
+});
+
+test("profile: business card renders the shared CardActionsMenu (Edit + Share only)", () => {
+  const page = readRoute("app/[locale]/profile/business/page.tsx");
+  assert.match(page, /<ItemActions/, "business profile card renders ItemActions");
+  assert.match(page, /relative flex flex-col rounded-2xl/, "card is a relative positioning context");
+  const actions = readRoute("components/profile/item-actions.tsx");
+  assert.match(actions, /CardActionsMenu/, "ItemActions renders the shared CardActionsMenu");
+  assert.match(page, /kind="business"/, "business card uses the business variant (no delete / no pin)");
+});
+

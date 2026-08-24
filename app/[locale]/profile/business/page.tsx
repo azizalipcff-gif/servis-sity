@@ -8,6 +8,7 @@ import {
 import { WORKSPACE_MANAGE_BUSINESS_HREF } from "@/lib/workspace/actions";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import { ItemActions } from "@/components/profile/item-actions";
 import { RatingStars } from "@/components/rating-stars";
 import { SmartImage } from "@/components/smart-image";
 import { StatusBadge } from "@/components/profile/status-badge";
@@ -79,8 +80,19 @@ function BusinessCard({
 }) {
   const pageHref = business.slug ? businessHref(business) : null;
   return (
-    <article className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-soft">
-      <div className="flex items-start justify-between gap-3">
+    <article className="relative flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-soft">
+      <ItemActions
+        kind="business"
+        id={business.id}
+        itemName={business.name}
+        status={business.status}
+        editHref="/dashboard/business/edit"
+        viewHref={pageHref ?? undefined}
+        shareUrl={pageHref ?? undefined}
+        canDelete={false}
+        apiBase="/api/dashboard/business"
+      />
+      <div className="flex items-start justify-between gap-3 pe-12">
         <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-muted">
           {business.logo_url ? (
             <SmartImage

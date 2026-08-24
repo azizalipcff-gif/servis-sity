@@ -1,0 +1,35 @@
+
+> service-city@0.1.0 dev
+> next dev --turbo -p 3111
+
+   ▲ Next.js 15.5.22 (Turbopack)
+   - Local:        http://localhost:3111
+   - Network:      http://192.168.1.4:3111
+   - Environments: .env.local
+
+ ✓ Starting...
+ ○ Compiling middleware ...
+ ✓ Compiled middleware in 613ms
+ ✓ Ready in 4s
+ ○ Compiling /[locale]/ssrcheck ...
+ ✓ Compiled /[locale]/ssrcheck in 7.9s
+ GET /en/ssrcheck 200 in 10762ms
+ ○ Compiling /[locale]/profile/products ...
+ ✓ Compiled /[locale]/profile/products in 3.8s
+ GET /en/profile/products 307 in 5334ms
+ ○ Compiling /[locale]/login ...
+ ✓ Compiled /[locale]/login in 1453ms
+ GET /en/login 200 in 3185ms
+ ○ Compiling /[locale]/profile/services ...
+ ✓ Compiled /[locale]/profile/services in 1017ms
+ GET /en/profile/services 307 in 2538ms
+ GET /en/login 200 in 583ms
+ ○ Compiling /[locale]/profile/business ...
+ ✓ Compiled /[locale]/profile/business in 1205ms
+ GET /en/profile/business 307 in 2594ms
+ GET /en/login 200 in 420ms
+ ○ Compiling /[locale]/dashboard ...
+ ✓ Compiled /[locale]/dashboard in 1801ms
+ GET /en/dashboard 307 in 3301ms
+ GET /en/login 200 in 566ms
+[?25h

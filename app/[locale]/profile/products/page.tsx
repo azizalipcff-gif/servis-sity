@@ -8,6 +8,7 @@ import {
 import { WORKSPACE_ADD_PRODUCT_HREF } from "@/lib/workspace/actions";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import { ItemActions } from "@/components/profile/item-actions";
 import { SmartImage } from "@/components/smart-image";
 import { StatusBadge } from "@/components/profile/status-badge";
 import { WorkspaceEmptyState } from "@/components/profile/workspace-empty-state";
@@ -79,7 +80,20 @@ function ProductCard({
   const viewHref = product.slug ? `/product/${product.slug}` : null;
   const image = product.images[0];
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-soft">
+    <article className="relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-soft">
+      <ItemActions
+        kind="product"
+        id={product.id}
+        itemName={product.name}
+        status={product.status}
+        editHref={`/dashboard/products/${product.id}/edit`}
+        viewHref={product.slug ? `/product/${product.slug}` : undefined}
+        shareUrl={product.slug ? `/product/${product.slug}` : undefined}
+        canDelete={product.status === "archived"}
+        enablePin
+        pinned={product.featured}
+        apiBase="/api/dashboard/products"
+      />
       <div className="relative aspect-square w-full overflow-hidden bg-muted">
         {image ? (
           <SmartImage

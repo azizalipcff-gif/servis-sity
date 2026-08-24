@@ -1449,19 +1449,25 @@
         "q": "Comment signaler un problème ?",
         "a": "Utilisez l'assistance intégrée à l'application ou écrivez à notre équipe et nous vous répondrons dès que possible."
       }
-      ],
-    "actions": {
-      "moreActions": "Plus d'actions",
-      "view": "Voir",
-      "edit": "Modifier",
-      "share": "Partager",
-      "delete": "Supprimer",
-      "copyLink": "Copier le lien",
-      "linkCopied": "Lien copié",
-      "shareSuccess": "Partagé",
-      "shareFailed": "Impossible de partager — veuillez réessayer",
-      "cannotShareUnpublished": "Cet élément n'est pas encore public et ne peut pas être partagé.",
-      "deleteConfirmation": "Supprimer définitivement « {name} » ? Cette action est irréversible."
-    }
+    ]
+  },
+  "actions": {
+    "moreActions": "Plus d'actions",
+    "view": "Voir",
+    "edit": "Modifier",
+    "share": "Partager",
+    "delete": "Supprimer",
+    "copyLink": "Copier le lien",
+    "linkCopied": "Lien copié",
+    "shareSuccess": "Partagé",
+    "shareFailed": "Impossible de partager — veuillez réessayer",
+    "cannotShareUnpublished": "Cet élément n'est pas encore public et ne peut pas être partagé.",
+    "deleteConfirmation": "Supprimer définitivement « {name} » ? Cette action est irréversible.",
+    "pin": "Épingler",
+    "unpin": "Désépingler",
+    "pinned": "Épinglé",
+    "unpinned": "Désépinglé",
+    "pinFailed": "Impossible de mettre à jour l'épinglage. Veuillez réessayer.",
+    "deleteFailed": "Impossible de supprimer l'élément. Veuillez réessayer."
   }
 }

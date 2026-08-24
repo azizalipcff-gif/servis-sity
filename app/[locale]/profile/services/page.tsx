@@ -8,6 +8,7 @@ import {
 import { WORKSPACE_ADD_SERVICE_HREF } from "@/lib/workspace/actions";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import { ItemActions } from "@/components/profile/item-actions";
 import { SmartImage } from "@/components/smart-image";
 import { StatusBadge } from "@/components/profile/status-badge";
 import { WorkspaceEmptyState } from "@/components/profile/workspace-empty-state";
@@ -83,7 +84,20 @@ function ServiceCard({
 }) {
   const viewHref = service.business?.slug ? businessHref(service.business) : null;
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-soft">
+    <article className="relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-soft">
+      <ItemActions
+        kind="service"
+        id={service.id}
+        itemName={service.name}
+        status={service.status}
+        editHref={`/dashboard/services/${service.id}/edit`}
+        viewHref={service.business?.slug ? businessHref(service.business) : undefined}
+        shareUrl={service.business?.slug ? businessHref(service.business) : undefined}
+        canDelete={service.status === "archived"}
+        enablePin
+        pinned={service.featured}
+        apiBase="/api/dashboard/services"
+      />
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
         {service.photo_url ? (
           <SmartImage

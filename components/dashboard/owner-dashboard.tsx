@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
@@ -14,9 +15,8 @@ import {
   Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/navigation";
 import type { BusinessDetail } from "@/lib/queries";
+import { CardActionsMenu } from "@/components/dashboard/card-actions-menu";
 import {
   DASHBOARD_TABS,
   type CompletenessInput,
@@ -59,6 +59,7 @@ export function OwnerDashboard({
   productsEditor?: React.ReactNode;
 }) {
   const t = useTranslations("dashboard.dash");
+  const [notice, setNotice] = useState<{ msg: string; kind: "success" | "error" } | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -135,11 +136,33 @@ export function OwnerDashboard({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold tracking-tight">{business.name}</h2>
-        <Button asChild size="sm">
-          <Link href="/dashboard/business/edit">{t("editBusiness")}</Link>
-        </Button>
+      <div className="relative flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4">
+        <div className="min-w-0">
+          <h2 className="truncate text-lg font-semibold tracking-tight">{business.name}</h2>
+          {notice ? (
+            <p
+              className={cn(
+                "mt-1 text-sm",
+                notice.kind === "error" ? "text-destructive" : "text-emerald-600",
+              )}
+            >
+              {notice.msg}
+            </p>
+          ) : null}
+        </div>
+        <CardActionsMenu
+          itemName={business.name}
+          status={business.status}
+          editHref="/dashboard/business/edit"
+          viewHref={
+            business.status === "approved" ? `/business/${business.slug}` : undefined
+          }
+          shareUrl={
+            business.status === "approved" ? `/business/${business.slug}` : undefined
+          }
+          canDelete={false}
+          onNotify={(message, kind) => setNotice({ msg: message, kind: kind ?? "success" })}
+        />
       </div>
 
       <div className="flex gap-1 overflow-x-auto rounded-2xl border bg-card p-1">

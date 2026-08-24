@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ActionsMenu } from "@/components/dashboard/actions-menu";
+import { CardActionsMenu } from "@/components/dashboard/card-actions-menu";
 import {
   Card,
   CardContent,
@@ -37,6 +37,7 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
   const router = useRouter();
   const [services, setServices] = useState<ServiceRow[]>(business.services ?? []);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pinningId, setPinningId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -73,6 +74,31 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
   function mapError(code?: string): string {
     if (code === "not_archived") return t("deleteServiceNotArchived");
     return t("deleteServiceError");
+  }
+
+  async function togglePin(id: string, current: boolean) {
+    setPinningId(id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/dashboard/services/${id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ featured: !current }),
+      });
+      if (res.ok) {
+        setServices((prev) =>
+          prev.map((s) => (s.id === id ? { ...s, featured: !current } : s)),
+        );
+        setSuccess(current ? tActions("unpinned") : tActions("pinned"));
+        router.refresh();
+      } else {
+        setError(tActions("pinFailed"));
+      }
+    } catch {
+      setError(tActions("pinFailed"));
+    } finally {
+      setPinningId(null);
+    }
   }
 
   return (
@@ -115,7 +141,7 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
               return (
                 <li
                   key={service.id}
-                  className="flex items-center justify-between gap-4 py-3"
+                  className="relative flex items-center justify-between gap-4 py-3"
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     {service.photo_url ? (
@@ -163,32 +189,33 @@ export function ServicesManager({ business }: { business: BusinessDetail }) {
                       )}
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <ActionsMenu
-                      itemName={service.name}
-                      status={service.status}
-                      editHref={`/dashboard/services/${service.id}/edit`}
-                      viewHref={
-                        service.status === "published"
-                          ? `/service/${service.id}`
-                          : undefined
-                      }
-                      shareUrl={
-                        service.status === "published"
-                          ? `/service/${service.id}`
-                          : undefined
-                      }
-                      canDelete={service.status === "archived"}
-                      onDelete={() => {
-                        setSuccess(null);
-                        setError(null);
-                        setConfirmId(service.id);
-                      }}
-                      onNotify={(message, kind) =>
-                        kind === "error" ? setError(message) : setSuccess(message)
-                      }
-                    />
-                  </div>
+                  <CardActionsMenu
+                    itemName={service.name}
+                    status={service.status}
+                    editHref={`/dashboard/services/${service.id}/edit`}
+                    viewHref={
+                      service.status === "published"
+                        ? `/service/${service.id}`
+                        : undefined
+                    }
+                    shareUrl={
+                      service.status === "published"
+                        ? `/service/${service.id}`
+                        : undefined
+                    }
+                    canDelete={service.status === "archived"}
+                    onDelete={() => {
+                      setSuccess(null);
+                      setError(null);
+                      setConfirmId(service.id);
+                    }}
+                    pinned={service.featured}
+                    onTogglePin={() => togglePin(service.id, service.featured)}
+                    pinning={pinningId === service.id}
+                    onNotify={(message, kind) =>
+                      kind === "error" ? setError(message) : setSuccess(message)
+                    }
+                  />
                 </li>
               );
             })}

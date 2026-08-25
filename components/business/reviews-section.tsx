@@ -7,6 +7,7 @@ import {
   Loader2,
   Star,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ type SortKey = "newest" | "highest" | "lowest";
 export function ReviewsSection({ business }: { business: BusinessDetail }) {
   const t = useTranslations("business");
   const dt = useTranslations("business.detail");
+  const router = useRouter();
 
   const [sort, setSort] = useState<SortKey>("newest");
   const [rating, setRating] = useState(0);
@@ -68,6 +70,9 @@ export function ReviewsSection({ business }: { business: BusinessDetail }) {
       setRating(0);
       setComment("");
       setFormOpen(false);
+      // Pull fresh server data so the new review + recomputed average/count
+      // appear immediately (the business query is cached on the server).
+      router.refresh();
     } catch {
       setError(t("bookingFailed"));
     } finally {
@@ -175,6 +180,10 @@ export function ReviewsSection({ business }: { business: BusinessDetail }) {
           </div>
         </div>
 
+        {message && (
+          <p className="mt-2 text-sm text-success">{message}</p>
+        )}
+
         <AnimatePresence>
           {formOpen && (
             <motion.form
@@ -184,20 +193,17 @@ export function ReviewsSection({ business }: { business: BusinessDetail }) {
               onSubmit={submit}
               className="overflow-hidden"
             >
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder={t("yourReview")}
-                rows={3}
-                className="mt-4 w-full rounded-lg border bg-background px-3.5 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder={t("yourReview")}
+                  rows={3}
+                  className="mt-4 w-full rounded-lg border bg-background px-3.5 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
 
-              {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
-              {message && (
-                <p className="mt-2 text-sm text-success">{message}</p>
-              )}
+                {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
 
-              <Button
+                <Button
                 type="submit"
                 size="sm"
                 className="mt-3"

@@ -39,7 +39,10 @@ export const businessPatchSchema = z
 
 export const reportPatchSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(["open", "reviewed", "resolved"]),
+  status: z.enum(["open", "reviewed", "resolved"]).optional(),
+  action: z.enum(["dismiss", "remove_listing", "suspend_owner"]).optional(),
+}).refine((v) => v.status !== undefined || v.action !== undefined, {
+  message: "empty_patch",
 });
 
 export const categoryCreateSchema = z.object({
@@ -141,6 +144,26 @@ export const paymentPatchSchema = z.object({
   id: z.string().uuid(),
   action: z.enum(["confirm", "refund"]),
   note: z.string().max(1000).optional().nullable(),
+});
+
+/**
+ * Admin manual subscription grant / manual billing.
+ * The client only ever supplies the target business, the plan, and (for a
+ * manual cash/bank payment) the amount/method/reference. Subscription status,
+ * plan, payment status, billing amount and entitlements are all derived
+ * server-side inside `finalizeSuccessfulPayment` — never trusted from input.
+ */
+export const subscriptionGrantSchema = z.object({
+  business_id: z.string().uuid(),
+  plan_key: z.enum(["free", "premium", "pro", "enterprise"]),
+  interval: z.enum(["monthly", "quarterly", "yearly", "lifetime"]),
+  mode: z.enum(["grant", "manual_billing"]).default("grant"),
+  amount_cents: z.coerce.number().int().min(0).optional(),
+  currency: z.string().length(3).optional(),
+  method: z.string().max(40).optional(),
+  reference: z.string().max(120).optional(),
+  note: z.string().max(1000).optional(),
+  coupon_id: z.string().uuid().optional(),
 });
 
 export const verificationPatchSchema = z.object({

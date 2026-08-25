@@ -80,7 +80,7 @@ export function ServicesTable({ services, locale }: Props) {
               const gallery = Array.isArray(s.gallery) ? s.gallery : [];
               const mainImage = (s.photo_url ? [s.photo_url, ...gallery] : gallery)[0] ?? "";
               const categoryName = s.category ? localizedName(s.category, locale) : null;
-              const isPending = s.status === "pending";
+              const isPending = s.status === "pending_review";
               const disabled = busyId === s.id;
               return (
                 <tr key={s.id} className="hover:bg-gray-50">

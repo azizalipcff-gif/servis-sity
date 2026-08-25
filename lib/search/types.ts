@@ -62,7 +62,16 @@ export interface SearchResponse {
 /** Which search engine produced the results on this request. */
 export type SearchMatchMethod = "hybrid" | "legacy";
 
-export type SearchBusiness = Business & {
+/**
+ * Public-only projection of a business row. The raw `businesses` table carries
+ * private/internal columns (owner_id, status_note, embedding, searchable_text,
+ * ean) that must NEVER reach anonymous search clients. This contract declares
+ * only safe fields so a leaked column is also a type error (Part 12).
+ */
+export type SearchBusiness = Omit<
+  Business,
+  "owner_id" | "status_note" | "searchable_text" | "embedding" | "ean"
+> & {
   categories: Pick<
     Category,
     "slug" | "icon" | "name_ar" | "name_fr" | "name_en"

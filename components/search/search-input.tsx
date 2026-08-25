@@ -9,21 +9,29 @@ export function SearchInput({
   onSubmit,
   placeholder,
   buttonLabel,
+  size = "lg",
+  inputClassName,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   placeholder?: string;
   buttonLabel?: string;
+  /** "lg" fills the page hero; "md" is the compact header bar. */
+  size?: "md" | "lg";
+  inputClassName?: string;
 }) {
+  const height = size === "md" ? "h-10" : "h-12";
+  const iconBox = size === "md" ? "w-10" : "w-12";
+  const iconSize = size === "md" ? "size-[18px]" : "size-5";
   return (
     <form
       onSubmit={onSubmit}
       role="search"
-      className="flex h-12 w-full items-center overflow-hidden rounded-xl border border-border bg-card shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20"
+      className={`flex ${height} w-full items-center overflow-hidden rounded-xl border border-border bg-card shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20`}
     >
-      <span className="grid w-12 shrink-0 place-items-center text-muted-foreground">
-        <Search className="size-5" />
+      <span className={`grid ${iconBox} shrink-0 place-items-center text-muted-foreground`}>
+        <Search className={iconSize} />
       </span>
       <input
         value={value}
@@ -31,7 +39,10 @@ export function SearchInput({
         type="search"
         placeholder={placeholder}
         aria-label={placeholder}
-        className="h-full min-w-0 flex-1 border-none bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/60 [&::-webkit-search-cancel-button]:hidden"
+        className={
+          inputClassName ??
+          "h-full min-w-0 flex-1 border-none bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/60 [&::-webkit-search-cancel-button]:hidden"
+        }
       />
       <button
         type="submit"

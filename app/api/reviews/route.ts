@@ -3,6 +3,7 @@ import { reviewSchema } from "@/lib/validations/schemas";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
+import { revalidateTag } from "next/cache";
 
 export async function POST(request: Request) {
   return withErrorCapture("reviews.post", async () => {
@@ -37,6 +38,9 @@ export async function POST(request: Request) {
       }
       return jsonError(500, "insert_failed");
     }
+    // The business query (rating aggregation) is cached; purge it so the updated
+    // average/count are reflected on the next render/refresh.
+    revalidateTag("businesses");
     return jsonOk();
   });
 }

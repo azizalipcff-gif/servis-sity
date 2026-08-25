@@ -28,26 +28,40 @@ export async function PATCH(request: Request) {
       .maybeSingle();
     if (readError || !current) return jsonError(404, "not_found");
 
+    const patch: { status: string; status_note?: string | null } = { status };
+    if (status === "published") patch.status_note = null;
+    else if (status_note !== undefined) patch.status_note = status_note;
+
     const { error } = await guard.supabase
       .from("services")
-      .update({ status })
+      .update(patch)
       .eq("id", id);
     if (error) return jsonError(500, "update_failed");
 
-    if (status === "published" && current.status !== "published" && current.business_id) {
+    if (current.business_id) {
       const { data: biz } = await guard.supabase
         .from("businesses")
         .select("owner_id, name")
         .eq("id", current.business_id)
         .maybeSingle();
       if (biz?.owner_id) {
-        await guard.supabase.from("notifications").insert({
-          recipient_id: biz.owner_id,
-          type: "admin",
-          title: biz.name ?? current.name ?? "",
-          body: "SERVICE_APPROVED",
-          link: `/dashboard?tab=services`,
-        });
+        if (status === "published") {
+          await guard.supabase.from("notifications").insert({
+            recipient_id: biz.owner_id,
+            type: "admin",
+            title: biz.name ?? current.name ?? "",
+            body: "SERVICE_APPROVED",
+            link: `/dashboard?tab=services`,
+          });
+        } else if (status === "archived") {
+          await guard.supabase.from("notifications").insert({
+            recipient_id: biz.owner_id,
+            type: "admin",
+            title: biz.name ?? current.name ?? "",
+            body: "SERVICE_REJECTED",
+            link: `/dashboard?tab=services`,
+          });
+        }
       }
     }
 

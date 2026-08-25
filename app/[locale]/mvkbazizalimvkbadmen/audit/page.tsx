@@ -1,9 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
-import { Activity, ShieldAlert } from "lucide-react";
-import { getRecentActivity } from "@/lib/queries";
+import { ShieldAlert } from "lucide-react";
+import { getAuditLogs } from "@/lib/queries";
 import type { Locale } from "@/lib/translations";
-import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +13,7 @@ export default async function AdminAuditPage({ params }: Props) {
   setRequestLocale(locale);
 
   const t = await getTranslations("admin");
-  const activity = await getRecentActivity(60);
+  const entries = await getAuditLogs(100);
   const loc = locale as Locale;
 
   const fmt = new Intl.DateTimeFormat(loc === "ar" ? "ar-MA" : loc, {
@@ -24,6 +23,11 @@ export default async function AdminAuditPage({ params }: Props) {
     minute: "2-digit",
   });
 
+  const reasonOf = (e: (typeof entries)[number]) =>
+    (e.metadata?.note as string | undefined) ??
+    (e.metadata?.reason as string | undefined) ??
+    null;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -32,36 +36,46 @@ export default async function AdminAuditPage({ params }: Props) {
       </div>
       <p className="text-sm text-muted-foreground">{t("operational")}</p>
 
-      <div className="rounded-3xl border bg-card">
-        <div className="flex items-center gap-2 border-b px-5 py-4">
-          <Activity className="size-4 text-primary" />
-          <h3 className="font-semibold">{t("recentActivity")}</h3>
-        </div>
-        {activity.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm text-muted-foreground">{t("empty")}</p>
-        ) : (
-          <ol className="divide-y">
-            {activity.map((a) => (
-              <li key={a.kind + a.id} className="flex items-start gap-3 px-5 py-3">
-                <span
-                  className={cn(
-                    "mt-0.5 grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold",
-                    a.kind === "signup" && "bg-primary/10 text-primary",
-                    a.kind === "booking" && "bg-accent/10 text-accent",
-                    a.kind === "review" && "bg-amber-500/10 text-amber-500",
-                    a.kind === "report" && "bg-destructive/10 text-destructive",
-                  )}
-                >
-                  {a.kind === "report" ? "!" : a.kind[0].toUpperCase()}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm">{a.label}</p>
-                  <p className="text-xs text-muted-foreground">{fmt.format(new Date(a.at))}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
+      <div className="overflow-x-auto rounded-3xl border bg-card">
+        <table className="w-full min-w-[720px] text-sm">
+          <thead className="border-b text-left text-xs uppercase text-muted-foreground">
+            <tr>
+              <th className="px-4 py-3">{t("action")}</th>
+              <th className="px-4 py-3">{t("entity")}</th>
+              <th className="px-4 py-3">{t("actor")}</th>
+              <th className="px-4 py-3">{t("reason")}</th>
+              <th className="px-4 py-3">{t("date")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {entries.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                  {t("empty")}
+                </td>
+              </tr>
+            ) : (
+              entries.map((e) => (
+                <tr key={e.id} className="align-top">
+                  <td className="px-4 py-3 font-medium">{e.action}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-muted-foreground">{e.target_type}</span>
+                    {e.target_id ? (
+                      <span className="ml-1 font-mono text-xs">{e.target_id.slice(0, 8)}</span>
+                    ) : null}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs">{e.actor_id?.slice(0, 8) ?? "—"}</td>
+                  <td className="px-4 py-3 max-w-[280px] truncate text-muted-foreground">
+                    {reasonOf(e) ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {fmt.format(new Date(e.created_at))}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

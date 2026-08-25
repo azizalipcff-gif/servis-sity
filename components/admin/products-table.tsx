@@ -79,7 +79,7 @@ export function ProductsTable({ products, locale }: Props) {
             {rows.map((p) => {
               const mainImage = Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : "";
               const categoryName = p.category ? localizedName(p.category, locale) : null;
-              const isPending = p.status === "pending";
+              const isPending = p.status === "pending_review";
               const disabled = busyId === p.id;
               return (
                 <tr key={p.id} className="hover:bg-gray-50">

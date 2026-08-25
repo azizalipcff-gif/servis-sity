@@ -1,6 +1,10 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
-import { createClient, createPublicClient } from "@/lib/supabase/server";
+import {
+  createClient,
+  createPublicClient,
+  createServiceClient,
+} from "@/lib/supabase/server";
 import type {
   Booking,
   Business,
@@ -1031,6 +1035,63 @@ export async function getAllProfiles(): Promise<Profile[]> {
   return data;
 }
 
+export type AdminUserRow = Profile & {
+  email: string | null;
+  provider: string | null;
+  business_count: number;
+};
+
+/**
+ * Admin-only directory of users enriched with data the architecture safely
+ * exposes: email + auth provider (from auth.users via the service role,
+ * server-side only) and business-ownership counts (public aggregate).
+ * Passwords, tokens and session secrets are never returned.
+ */
+export async function getAdminUsers(): Promise<AdminUserRow[]> {
+  const supabase = await createClient();
+  const { data: profiles, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error || !profiles) return [];
+
+  const { data: owners } = await supabase.from("businesses").select("owner_id");
+  const counts = new Map<string, number>();
+  for (const b of owners ?? []) {
+    if (b.owner_id) counts.set(b.owner_id, (counts.get(b.owner_id) ?? 0) + 1);
+  }
+
+  const authMap = new Map<string, { email: string | null; provider: string | null }>();
+  const svc = createServiceClient();
+  if (svc) {
+    let page = 1;
+    const perPage = 200;
+    while (page <= 25) {
+      const { data, error: authErr } = await svc.auth.admin.listUsers({ page, perPage });
+      if (authErr || !data?.users?.length) break;
+      for (const u of data.users) {
+        const provider =
+          (u.app_metadata?.provider as string | undefined) ??
+          u.identities?.[0]?.provider ??
+          null;
+        authMap.set(u.id, { email: u.email ?? null, provider });
+      }
+      if (data.users.length < perPage) break;
+      page++;
+    }
+  }
+
+  return profiles.map((p) => {
+    const a = authMap.get(p.id);
+    return {
+      ...p,
+      email: a?.email ?? null,
+      provider: a?.provider ?? null,
+      business_count: counts.get(p.id) ?? 0,
+    };
+  });
+}
+
 export async function getAllBookings() {
   const supabase = await createClient();
   const result = (await supabase
@@ -1063,6 +1124,126 @@ export async function getAdminStats() {
     users: users.error ? 0 : (users.count ?? 0),
     bookings: bookings.error ? 0 : (bookings.count ?? 0),
     reviews: reviews.error ? 0 : (reviews.count ?? 0),
+  };
+}
+
+export type AdminOverview = {
+  totalUsers: number;
+  monthlyUserGrowth: number;
+  totalBusinesses: number;
+  businessesByPlan: { free: number; premium: number; pro: number };
+  pendingBusinesses: number;
+  pendingServices: number;
+  pendingProducts: number;
+  mrrCents: number;
+  totalRevenueCents: number;
+  topCities: { id: string; name: string; count: number }[];
+  topCategories: { id: string; name: string; count: number }[];
+};
+
+/** Real admin dashboard KPIs aggregated from live tables. Graceful on errors. */
+export async function getAdminOverview(): Promise<AdminOverview> {
+  const supabase = await createClient();
+  const since30 = new Date(Date.now() - 30 * 86_400_000).toISOString();
+
+  const [
+    users,
+    users30,
+    bizTotal,
+    bizFree,
+    bizPremium,
+    bizPro,
+    pendBiz,
+    pendSvc,
+    pendPrd,
+    subs,
+    plansRes,
+    payRes,
+    bizGeo,
+    citiesRes,
+    catsRes,
+  ] = await Promise.all([
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
+    supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", since30),
+    supabase.from("businesses").select("id", { count: "exact", head: true }),
+    supabase.from("businesses").select("id", { count: "exact", head: true }).eq("plan", "free"),
+    supabase.from("businesses").select("id", { count: "exact", head: true }).eq("plan", "premium"),
+    supabase.from("businesses").select("id", { count: "exact", head: true }).eq("plan", "pro"),
+    supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "pending_review"),
+    supabase.from("services").select("id", { count: "exact", head: true }).eq("status", "pending_review"),
+    supabase.from("products").select("id", { count: "exact", head: true }).eq("status", "pending_review"),
+    supabase.from("subscriptions").select("plan, interval, status").eq("status", "active"),
+    supabase.from("plans").select("plan_key, interval, price_cents, active"),
+    supabase.from("payments").select("amount_cents, status"),
+    supabase.from("businesses").select("city_id, category_id"),
+    supabase.from("cities").select("id, name_en, name_fr, name_ar"),
+    supabase.from("categories").select("id, name_en, name_fr, name_ar"),
+  ]);
+
+  const totalUsers = users.error ? 0 : (users.count ?? 0);
+  const monthlyUserGrowth = users30.error ? 0 : (users30.count ?? 0);
+  const totalBusinesses = bizTotal.error ? 0 : (bizTotal.count ?? 0);
+  const businessesByPlan = {
+    free: bizFree.error ? 0 : (bizFree.count ?? 0),
+    premium: bizPremium.error ? 0 : (bizPremium.count ?? 0),
+    pro: bizPro.error ? 0 : (bizPro.count ?? 0),
+  };
+  const pendingBusinesses = pendBiz.error ? 0 : (pendBiz.count ?? 0);
+  const pendingServices = pendSvc.error ? 0 : (pendSvc.count ?? 0);
+  const pendingProducts = pendPrd.error ? 0 : (pendPrd.count ?? 0);
+
+  // MRR: sum plan price for active subscriptions (matched by plan_key + interval).
+  const planPrice = new Map<string, number>();
+  (plansRes.data ?? []).forEach((p) => {
+    planPrice.set(`${p.plan_key}:${p.interval}`, Number(p.price_cents) || 0);
+  });
+  let mrrCents = 0;
+  (subs.data ?? []).forEach((s) => {
+    mrrCents += planPrice.get(`${s.plan}:${s.interval}`) ?? 0;
+  });
+
+  let totalRevenueCents = 0;
+  (payRes.data ?? []).forEach((p) => {
+    if (p.status === "succeeded") totalRevenueCents += Number(p.amount_cents) || 0;
+  });
+
+  const cityName = new Map<string, string>();
+  (citiesRes.data ?? []).forEach((c) => {
+    cityName.set(c.id, c.name_en || c.name_fr || c.name_ar || c.id);
+  });
+  const catName = new Map<string, string>();
+  (catsRes.data ?? []).forEach((c) => {
+    catName.set(c.id, c.name_en || c.name_fr || c.name_ar || c.id);
+  });
+
+  const cityCounts = new Map<string, number>();
+  const catCounts = new Map<string, number>();
+  (bizGeo.data ?? []).forEach((b) => {
+    if (b.city_id) cityCounts.set(b.city_id, (cityCounts.get(b.city_id) ?? 0) + 1);
+    if (b.category_id) catCounts.set(b.category_id, (catCounts.get(b.category_id) ?? 0) + 1);
+  });
+
+  const topCities = [...cityCounts.entries()]
+    .map(([id, count]) => ({ id, name: cityName.get(id) ?? id, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+  const topCategories = [...catCounts.entries()]
+    .map(([id, count]) => ({ id, name: catName.get(id) ?? id, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  return {
+    totalUsers,
+    monthlyUserGrowth,
+    totalBusinesses,
+    businessesByPlan,
+    pendingBusinesses,
+    pendingServices,
+    pendingProducts,
+    mrrCents,
+    totalRevenueCents,
+    topCities,
+    topCategories,
   };
 }
 
@@ -1310,6 +1491,29 @@ export async function getRecentActivity(limit = 12): Promise<RecentActivity[]> {
   );
 
   return list.sort((a, b) => b.at.localeCompare(a.at)).slice(0, limit);
+}
+
+export type AuditEntry = {
+  id: string;
+  actor_id: string | null;
+  action: string;
+  target_type: string;
+  target_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  actor_name?: string | null;
+};
+
+/** Admin audit trail (real `audit_logs` rows). Graceful on error. */
+export async function getAuditLogs(limit = 100): Promise<AuditEntry[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("id, actor_id, action, target_type, target_id, metadata, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error || !data) return [];
+  return data as AuditEntry[];
 }
 
 export type HealthReport = {

@@ -2,13 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Search, ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
+import { LogOut, Search, ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
 import type { Profile, UserRole } from "@/lib/supabase/database.types";
+import type { AdminUserRow } from "@/lib/queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 type Props = {
-  users: Profile[];
+  users: AdminUserRow[];
 };
 
 const ROLES: UserRole[] = ["client", "owner", "admin"];
@@ -24,20 +25,18 @@ async function api(url: string, body: unknown) {
 
 export function UsersTable({ users }: Props) {
   const t = useTranslations("admin");
-  const tCommon = useTranslations("common");
-  const [rows, setRows] = useState(users);
+  const [rows, setRows] = useState<AdminUserRow[]>(users);
   const [query, setQuery] = useState("");
   const [role, setRole] = useState<"all" | UserRole>("all");
   const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((u) => {
       if (role !== "all" && u.role !== role) return false;
       if (!q) return true;
-      return [u.full_name, u.phone, u.city].some((v) =>
-        v?.toLowerCase().includes(q),
-      );
+      return [u.full_name, u.phone, u.city, u.email].some((v) => v?.toLowerCase().includes(q));
     });
   }, [rows, query, role]);
 
@@ -45,10 +44,16 @@ export function UsersTable({ users }: Props) {
     setRows((prev) => prev.map((u) => (u.id === id ? { ...u, ...patch } : u)));
   }
 
-  async function patch(id: string, patch: Record<string, unknown>, local: Partial<Profile>) {
+  async function patch(id: string, p: Record<string, unknown>, local: Partial<Profile>) {
     setBusy(true);
+    setFeedback(null);
     try {
-      if (await api("/api/admin/users", { id, ...patch })) update(id, local);
+      if (await api("/api/admin/users", { id, ...p })) {
+        update(id, local);
+        setFeedback({ kind: "ok", msg: t("updateSuccess") });
+      } else {
+        setFeedback({ kind: "err", msg: t("updateError") });
+      }
     } finally {
       setBusy(false);
     }
@@ -57,16 +62,55 @@ export function UsersTable({ users }: Props) {
   async function remove(id: string) {
     if (!confirm(t("confirmDelete"))) return;
     setBusy(true);
+    setFeedback(null);
     try {
       const res = await fetch(`/api/admin/users?id=${id}`, { method: "DELETE" });
-      if (res.ok) setRows((prev) => prev.filter((u) => u.id !== id));
+      if (res.ok) {
+        setRows((prev) => prev.filter((u) => u.id !== id));
+        setFeedback({ kind: "ok", msg: t("updateSuccess") });
+      } else {
+        setFeedback({ kind: "err", msg: t("updateError") });
+      }
     } finally {
       setBusy(false);
     }
   }
 
+  async function forceLogout(u: AdminUserRow) {
+    if (!confirm(t("forceLogoutConfirm", { name: u.full_name ?? u.email ?? u.id }))) return;
+    setBusy(true);
+    setFeedback(null);
+    try {
+      const res = await fetch("/api/admin/users/force-logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: u.id }),
+      });
+      if (res.ok) setFeedback({ kind: "ok", msg: t("sessionsRevoked") });
+      else setFeedback({ kind: "err", msg: t("forceLogoutFailed") });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function fmtDate(v: string) {
+    return new Date(v).toLocaleDateString();
+  }
+
   return (
     <div className="space-y-4">
+      {feedback && (
+        <div
+          className={
+            "rounded-xl border px-4 py-2 text-sm " +
+            (feedback.kind === "ok"
+              ? "border-emerald-400/40 bg-emerald-500/5 text-emerald-600"
+              : "border-destructive/40 bg-destructive/5 text-destructive")
+          }
+        >
+          {feedback.msg}
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 sm:max-w-xs">
           <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -95,14 +139,16 @@ export function UsersTable({ users }: Props) {
         <p className="py-8 text-center text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <div className="overflow-x-auto rounded-3xl border bg-card">
-          <table className="w-full min-w-[680px] text-sm">
+          <table className="w-full min-w-[920px] text-sm">
             <thead className="border-b bg-muted/50">
               <tr>
                 <th className="px-4 py-3 text-start font-medium">{t("name")}</th>
-                <th className="px-4 py-3 text-start font-medium">{tCommon("phone")}</th>
-                <th className="px-4 py-3 text-start font-medium">{tCommon("city")}</th>
+                <th className="px-4 py-3 text-start font-medium">{t("email")}</th>
                 <th className="px-4 py-3 text-start font-medium">{t("role")}</th>
                 <th className="px-4 py-3 text-start font-medium">{t("status")}</th>
+                <th className="px-4 py-3 text-start font-medium">{t("registered")}</th>
+                <th className="px-4 py-3 text-start font-medium">{t("businesses")}</th>
+                <th className="px-4 py-3 text-start font-medium">{t("provider")}</th>
                 <th className="px-4 py-3 text-end font-medium">{t("actions")}</th>
               </tr>
             </thead>
@@ -111,9 +157,8 @@ export function UsersTable({ users }: Props) {
                 <tr key={user.id}>
                   <td className="px-4 py-3 font-medium">{user.full_name ?? "—"}</td>
                   <td className="px-4 py-3 text-muted-foreground" dir="ltr">
-                    {user.phone ?? "—"}
+                    {user.email ?? "—"}
                   </td>
-                  <td className="px-4 py-3">{user.city ?? "—"}</td>
                   <td className="px-4 py-3">
                     <select
                       value={user.role}
@@ -129,7 +174,7 @@ export function UsersTable({ users }: Props) {
                     >
                       {ROLES.map((r) => (
                         <option key={r} value={r}>
-                          {r}
+                          {t(r)}
                         </option>
                       ))}
                     </select>
@@ -143,8 +188,13 @@ export function UsersTable({ users }: Props) {
                       <Badge variant="success">{t("active")}</Badge>
                     )}
                   </td>
+                  <td className="px-4 py-3 text-muted-foreground" dir="ltr">
+                    {fmtDate(user.created_at)}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{user.business_count}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{user.provider ?? "—"}</td>
                   <td className="px-4 py-3">
-                    <div className="flex justify-end gap-1">
+                    <div className="flex flex-wrap justify-end gap-1">
                       <Button
                         size="sm"
                         variant={user.banned ? "default" : "ghost"}
@@ -177,6 +227,16 @@ export function UsersTable({ users }: Props) {
                         <span className="text-xs">
                           {user.suspended ? t("unsuspend") : t("suspend")}
                         </span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={busy}
+                        onClick={() => forceLogout(user)}
+                        title={t("forceLogout")}
+                      >
+                        <LogOut className="size-4" />
+                        <span className="sr-only">{t("forceLogout")}</span>
                       </Button>
                       <Button
                         size="sm"

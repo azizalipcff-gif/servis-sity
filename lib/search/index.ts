@@ -11,6 +11,7 @@ import type { BusinessWithCategory } from "@/lib/queries";
 import type { ProductWithBusiness, ServiceWithBusiness } from "@/lib/queries";
 import { normalizeToken } from "@/lib/search-quality/normalize";
 import type { SearchItem, SearchSeller } from "./types";
+import { stripPrivateBusiness } from "./sanitize";
 
 /**
  * City resolution — maps any free-text city (as it appears in the URL, the
@@ -109,9 +110,18 @@ export const getSearchIndex = cache(
   },
 );
 
-/** Rows already carry the joined `categories` (full Category) and `city_slug`. */
+/**
+ * Rows already carry the joined `categories` (full Category) and `city_slug`.
+ * The raw row is the full `businesses` record, so private columns
+ * (`owner_id`, `status_note`, `embedding`, `searchable_text`, `ean`) must be
+ * stripped before this travels to the client as part of the search landing
+ * feed (Part 4 / Part 12).
+ */
 function fromBusiness(b: BusinessWithCategory): SearchItem {
-  return { kind: "business", ...b } as unknown as SearchItem;
+  return {
+    kind: "business",
+    ...stripPrivateBusiness(b as unknown as Record<string, unknown>),
+  } as unknown as SearchItem;
 }
 
 function fromService(s: ServiceWithBusiness): SearchItem {

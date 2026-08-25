@@ -1,7 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
-import { Activity, CalendarDays, Flag, Star, UserRound } from "lucide-react";
-import { getRecentActivity } from "@/lib/queries";
+import { Activity, Building2, Flag, TrendingUp, UserRound } from "lucide-react";
+import { getAdminOverview, getRecentActivity } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -12,28 +12,36 @@ export default async function AdminAnalyticsPage({ params }: Props) {
   setRequestLocale(locale);
 
   const t = await getTranslations("admin");
+  const o = await getAdminOverview();
   const activity = await getRecentActivity(100);
 
-  const counts = {
-    bookings: activity.filter((a) => a.kind === "booking").length,
-    reviews: activity.filter((a) => a.kind === "review").length,
-    reports: activity.filter((a) => a.kind === "report").length,
-    signups: activity.filter((a) => a.kind === "signup").length,
-  };
+  const money = (cents: number) =>
+    new Intl.NumberFormat(locale === "ar" ? "ar-MA" : locale, {
+      style: "currency",
+      currency: "MAD",
+      maximumFractionDigits: 0,
+    }).format(cents / 100);
 
-  const cards = [
-    { icon: CalendarDays, label: t("bookings"), value: counts.bookings, tone: "text-accent bg-accent/10" },
-    { icon: Star, label: t("totalReviews"), value: counts.reviews, tone: "text-amber-500 bg-amber-500/10" },
-    { icon: Flag, label: t("reports"), value: counts.reports, tone: "text-destructive bg-destructive/10" },
-    { icon: UserRound, label: t("signups"), value: counts.signups, tone: "text-primary bg-primary/10" },
+  const kpis = [
+    { icon: UserRound, label: t("totalUsers"), value: o.totalUsers, tone: "text-primary bg-primary/10" },
+    { icon: TrendingUp, label: t("monthlyGrowth"), value: `+${o.monthlyUserGrowth}`, tone: "text-emerald-500 bg-emerald-500/10" },
+    { icon: Building2, label: t("totalBusinesses"), value: o.totalBusinesses, tone: "text-accent bg-accent/10" },
+    { icon: Building2, label: t("planFree"), value: o.businessesByPlan.free, tone: "text-muted-foreground bg-muted" },
+    { icon: Building2, label: t("planPremium"), value: o.businessesByPlan.premium, tone: "text-amber-500 bg-amber-500/10" },
+    { icon: Building2, label: t("planPro"), value: o.businessesByPlan.pro, tone: "text-fuchsia-500 bg-fuchsia-500/10" },
+    { icon: Flag, label: t("pendingBusinesses"), value: o.pendingBusinesses, tone: "text-destructive bg-destructive/10" },
+    { icon: Flag, label: t("pendingServices"), value: o.pendingServices, tone: "text-destructive bg-destructive/10" },
+    { icon: Flag, label: t("pendingProducts"), value: o.pendingProducts, tone: "text-destructive bg-destructive/10" },
+    { icon: Activity, label: t("mrr"), value: money(o.mrrCents), tone: "text-primary bg-primary/10" },
+    { icon: Activity, label: t("revenue"), value: money(o.totalRevenueCents), tone: "text-primary bg-primary/10" },
   ];
 
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold">{t("analytics")}</h2>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {cards.map((c) => {
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {kpis.map((c) => {
           const Icon = c.icon;
           return (
             <div key={c.label} className="rounded-3xl border bg-card p-4">
@@ -45,6 +53,45 @@ export default async function AdminAnalyticsPage({ params }: Props) {
             </div>
           );
         })}
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="rounded-3xl border bg-card p-5">
+          <h3 className="mb-3 text-sm font-semibold">{t("topCities")}</h3>
+          {o.topCities.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("empty")}</p>
+          ) : (
+            <ol className="space-y-2 text-sm">
+              {o.topCities.map((c, i) => (
+                <li key={c.id} className="flex items-center justify-between gap-2">
+                  <span className="truncate">
+                    <span className="mr-2 text-muted-foreground">{i + 1}.</span>
+                    {c.name}
+                  </span>
+                  <span className="font-semibold">{c.count}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+        <div className="rounded-3xl border bg-card p-5">
+          <h3 className="mb-3 text-sm font-semibold">{t("topCategories")}</h3>
+          {o.topCategories.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("empty")}</p>
+          ) : (
+            <ol className="space-y-2 text-sm">
+              {o.topCategories.map((c, i) => (
+                <li key={c.id} className="flex items-center justify-between gap-2">
+                  <span className="truncate">
+                    <span className="mr-2 text-muted-foreground">{i + 1}.</span>
+                    {c.name}
+                  </span>
+                  <span className="font-semibold">{c.count}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
       </div>
 
       <div className="rounded-3xl border bg-card">

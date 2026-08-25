@@ -1620,6 +1620,7 @@ export type Database = {
           sku: string | null
           slug: string
           status: string
+          status_note: string | null
           stock: number
           tags: string[]
           updated_at: string
@@ -1644,6 +1645,7 @@ export type Database = {
           sku?: string | null
           slug: string
           status?: string
+          status_note?: string | null
           stock?: number
           tags?: string[]
           updated_at?: string
@@ -1668,6 +1670,7 @@ export type Database = {
           sku?: string | null
           slug?: string
           status?: string
+          status_note?: string | null
           stock?: number
           tags?: string[]
           updated_at?: string
@@ -1937,6 +1940,7 @@ export type Database = {
           price: number | null
           searchable_text: string | null
           status: string
+          status_note: string | null
           tags: string[]
           updated_at: string
         }
@@ -1955,6 +1959,7 @@ export type Database = {
           price?: number | null
           searchable_text?: string | null
           status?: string
+          status_note?: string | null
           tags?: string[]
           updated_at?: string
         }
@@ -1973,6 +1978,7 @@ export type Database = {
           price?: number | null
           searchable_text?: string | null
           status?: string
+          status_note?: string | null
           tags?: string[]
           updated_at?: string
         }
@@ -2372,6 +2378,7 @@ export type Database = {
         }[]
       }
       is_admin: { Args: never; Returns: boolean }
+      admin_revoke_user_sessions: { Args: { p_user_id: string }; Returns: undefined }
       is_conversation_creator: { Args: { cid: string }; Returns: boolean }
       is_conversation_member: { Args: { cid: string }; Returns: boolean }
       is_owner_or_admin: { Args: { business_id: string }; Returns: boolean }

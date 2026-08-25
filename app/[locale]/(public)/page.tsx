@@ -2,17 +2,15 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { HomeSearch } from "@/components/home/home-search";
 import { MarketplaceTypes } from "@/components/home/marketplace-types";
-import { CategoryStrip } from "@/components/home/category-strip";
+import { AllCategoriesButton } from "@/components/home/all-categories-button";
 import { FeaturedBusinesses } from "@/components/home/featured-businesses";
 import { FeaturedMarketplace } from "@/components/home/featured-marketplace";
 import { TrustBadges } from "@/components/home/trust-badges";
-import { PopularCategories } from "@/components/home/popular-categories";
 import { PromoBanner } from "@/components/home/promo-banner";
 import { TrustSection } from "@/components/home/trust-section";
 import {
   getBusinessCount,
   getCategories,
-  getCategoryCounts,
   getCities,
   getFeaturedBusinesses,
   getFeaturedProducts,
@@ -67,7 +65,6 @@ export default async function HomePage({ params }: Props) {
     businessCount,
     cities,
     products,
-    counts,
     services,
     productsCount,
     servicesCount,
@@ -77,7 +74,6 @@ export default async function HomePage({ params }: Props) {
     getBusinessCount(),
     getCities(),
     getFeaturedProducts(8),
-    getCategoryCounts(),
     getPopularServices(8),
     getPublishedProductsCount(),
     getPublishedServicesCount(),
@@ -107,15 +103,10 @@ export default async function HomePage({ params }: Props) {
         categories={categories}
       >
         <FeaturedMarketplace services={services} products={products} />
-        <CategoryStrip
-          categories={categories}
-          counts={counts}
-          locale={locale as Locale}
-        />
+        <AllCategoriesButton />
         <TrustBadges />
         <MarketplaceTypes />
         <FeaturedBusinesses businesses={businesses} locale={locale as Locale} />
-        <PopularCategories categories={categories} locale={locale as Locale} />
         <PromoBanner />
         <TrustSection businessCount={businessCount} cityCount={cities.length} />
       </HomeSearch>

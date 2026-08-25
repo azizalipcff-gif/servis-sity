@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
+import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
+import { writeAudit } from "@/lib/security/audit";
 import { notifyUser } from "@/lib/notifications";
 import { verificationPatchSchema } from "@/lib/validations/admin-schemas";
 import {
@@ -67,6 +69,8 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   return withErrorCapture("admin.verification.patch", async () => {
+    const rl = await rateLimit(req, { key: "admin:mutate", limit: 120, windowMs: 60_000 });
+    if (!rl.ok) return rateLimitResponse(rl.retryAfter);
     if (!assertSameOrigin(req)) return jsonError(403, "csrf_rejected");
     const auth = await requireAdmin();
     if (!auth) return jsonError(403, "forbidden");
@@ -122,6 +126,14 @@ export async function PATCH(req: NextRequest) {
         link: "/dashboard",
       });
     }
+
+    await writeAudit({
+      actorId: auth.admin.id,
+      action: "verification.change",
+      targetType: "verification_request",
+      targetId: id,
+      metadata: { status, note: note ?? null },
+    });
 
     return jsonOk({ ok: true, status });
   });

@@ -7,6 +7,7 @@ import {
 } from "@/lib/search/ranking";
 import { inferCityFromQuery } from "@/lib/search/nl-parser";
 import { resolveCanonicalCity } from "@/lib/search/index";
+import { stripPrivateBusiness } from "@/lib/search/sanitize";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { withErrorCapture } from "@/lib/security/http";
 import type {
@@ -244,7 +245,7 @@ function hybridRowToItem(
       const id = String(p.id);
       const cityId = p.city_id != null ? String(p.city_id) : null;
       return {
-        ...(p as unknown as SearchBusiness),
+        ...(stripPrivateBusiness(p) as unknown as SearchBusiness),
         id,
         kind: "business",
         categories: categoryFor(p.category_id as string | null),
@@ -386,7 +387,7 @@ async function searchBusinesses(
     };
     const { cities, ...rest } = raw;
     return {
-      ...rest,
+      ...(stripPrivateBusiness(rest as Record<string, unknown>) as unknown as SearchBusiness),
       city_slug: cities?.slug ?? null,
       kind: "business" as const,
       starting_price: prices.get(b.id) ?? null,

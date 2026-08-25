@@ -1,6 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
-import { getAllProfiles } from "@/lib/queries";
+import { getAdminUsers } from "@/lib/queries";
 import { UsersTable } from "@/components/admin/users-table";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ export default async function AdminUsersPage({ params }: Props) {
   setRequestLocale(locale);
 
   const t = await getTranslations("admin");
-  const users = await getAllProfiles();
+  const users = await getAdminUsers();
 
   return (
     <div className="space-y-4">

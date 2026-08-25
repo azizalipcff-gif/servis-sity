@@ -29,16 +29,18 @@ export function ReportsManager({ reports, locale }: Props) {
     [rows, filter],
   );
 
-  async function setStatus(r: AdminReport, status: ReportStatus) {
+  async function patch(r: AdminReport, payload: Record<string, unknown>) {
     setBusy(true);
     try {
       const res = await fetch("/api/admin/reports", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: r.id, status }),
+        body: JSON.stringify({ id: r.id, ...payload }),
       });
-      if (res.ok)
-        setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, status } : x)));
+      if (res.ok) {
+        const next = payload.action ? "resolved" : (payload.status as ReportStatus);
+        setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, status: next } : x)));
+      }
     } finally {
       setBusy(false);
     }
@@ -109,17 +111,39 @@ const badge = (s: ReportStatus) => {
                   <td className="px-4 py-3 max-w-[220px] truncate">{r.reason ?? "—"}</td>
                   <td className="px-4 py-3">{badge(r.status as ReportStatus)}</td>
                   <td className="px-4 py-3">
-                    <div className="flex justify-end gap-1">
+                    <div className="flex flex-wrap justify-end gap-1">
                       {r.status !== "resolved" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={busy}
-                          onClick={() => setStatus(r, "resolved")}
-                        >
-                          <ShieldCheck className="size-4" />
-                          {t("resolve")}
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={busy}
+                            onClick={() => patch(r, { action: "dismiss" })}
+                          >
+                            <ShieldCheck className="size-4" />
+                            {t("dismiss")}
+                          </Button>
+                          {r.businesses && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={busy}
+                                onClick={() => patch(r, { action: "remove_listing" })}
+                              >
+                                {t("removeListing")}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                disabled={busy}
+                                onClick={() => patch(r, { action: "suspend_owner" })}
+                              >
+                                {t("suspendOwner")}
+                              </Button>
+                            </>
+                          )}
+                        </>
                       )}
                       <Badge className="gap-1 px-2">
                         <Clock className="size-3" />

@@ -12,6 +12,7 @@ export type AuditAction =
   | "user.suspend"
   | "user.unsuspend"
   | "user.delete"
+  | "user.force_logout"
   | "business.status_change"
   | "business.plan_change"
   | "business.verify"
@@ -23,7 +24,14 @@ export type AuditAction =
   | "category.create"
   | "category.delete"
   | "city.create"
-  | "city.delete";
+  | "city.delete"
+  | "featured.change"
+  | "verification.change"
+  | "payment.confirm"
+  | "payment.refund"
+  | "plan.change"
+  | "subscription.manual_activate"
+  | "coupon.change";
 
 export async function writeAudit(opts: {
   actorId: string;

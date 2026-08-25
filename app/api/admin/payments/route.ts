@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
+import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
+import { writeAudit } from "@/lib/security/audit";
 import { finalizeSuccessfulPayment } from "@/lib/payments/service";
 import { resolveProvider } from "@/lib/payments/provider";
 import { adminConfirmGuard } from "@/lib/payments/security";
@@ -22,13 +24,37 @@ export async function GET() {
       .from("payments")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(100);
-    return jsonOk({ payments: data ?? [] });
+      .limit(200);
+    const payments = data ?? [];
+
+    let enriched = payments;
+    if (payments.length) {
+      const bizIds = [...new Set(payments.map((p) => p.business_id).filter(Boolean))] as string[];
+      const userIds = [...new Set(payments.map((p) => p.user_id).filter(Boolean))] as string[];
+      const [{ data: biz }, { data: usr }] = await Promise.all([
+        bizIds.length
+          ? supabase.from("businesses").select("id, name").in("id", bizIds)
+          : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+        userIds.length
+          ? supabase.from("profiles").select("id, full_name").in("id", userIds)
+          : Promise.resolve({ data: [] as { id: string; full_name: string | null }[] }),
+      ]);
+      const bizMap = new Map((biz ?? []).map((b) => [b.id, b.name]));
+      const usrMap = new Map((usr ?? []).map((u) => [u.id, u.full_name]));
+      enriched = payments.map((p) => ({
+        ...p,
+        business_name: p.business_id ? (bizMap.get(p.business_id) ?? null) : null,
+        owner_name: p.user_id ? (usrMap.get(p.user_id) ?? null) : null,
+      }));
+    }
+    return jsonOk({ payments: enriched });
   });
 }
 
 export async function PATCH(req: NextRequest) {
   return withErrorCapture("admin.payments.patch", async () => {
+    const rl = await rateLimit(req, { key: "admin:mutate", limit: 120, windowMs: 60_000 });
+    if (!rl.ok) return rateLimitResponse(rl.retryAfter);
     if (!assertSameOrigin(req)) return jsonError(403, "csrf_rejected");
     const auth = await requireAdmin();
     if (!auth) return jsonError(403, "forbidden");
@@ -119,11 +145,27 @@ export async function PATCH(req: NextRequest) {
           link: "/dashboard/billing",
         });
       }
+      await writeAudit({
+        actorId: auth.admin.id,
+        action: "payment.confirm",
+        targetType: "payment",
+        targetId: id,
+        metadata: { note: note ?? null },
+      });
       return jsonOk({ ok: true, action: "confirm" });
     }
 
     // refund — only on a paid (succeeded) payment; idempotent per payment.
     if (payment.status !== "succeeded") return jsonError(400, "payment_not_refundable");
+
+    // Idempotency guard: never issue a second gateway refund for a payment
+    // that already has a recorded refund (prevents double-refund on retry/race).
+    const { data: existingRefund } = await supabase
+      .from("refunds")
+      .select("id")
+      .eq("payment_id", payment.id)
+      .maybeSingle();
+    if (existingRefund) return jsonOk({ ok: true, action: "refund", skipped: true });
 
     const provider = resolveProvider(payment.provider);
 
@@ -149,6 +191,14 @@ export async function PATCH(req: NextRequest) {
       },
     );
     if (refundErr) return jsonError(500, "refund_record_failed");
+
+    await writeAudit({
+      actorId: auth.admin.id,
+      action: "payment.refund",
+      targetType: "payment",
+      targetId: id,
+      metadata: { note: note ?? null },
+    });
 
     if (payment.user_id) {
       await notifyUser({

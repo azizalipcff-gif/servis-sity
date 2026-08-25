@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
+import { routing } from "@/i18n/routing";
+import { SearchInput } from "@/components/search/search-input";
 
 export function HeaderSearch() {
   const t = useTranslations("nav");
@@ -12,9 +13,26 @@ export function HeaderSearch() {
   const pathname = usePathname();
   const [q, setQ] = useState("");
 
-  // The /search page and the homepage each own their search input —
-  // avoid a duplicated bar (homepage has the inline Hero search).
-  if (pathname.endsWith("/search") || pathname === "/") return null;
+  // next-intl's usePathname may or may not include the locale prefix depending
+  // on wiring, so strip a leading locale segment before comparing.
+  const segs = pathname.split("/").filter(Boolean);
+  const restPath =
+    segs.length > 0 && (routing.locales as readonly string[]).includes(segs[0])
+      ? "/" + segs.slice(1).join("/")
+      : pathname;
+
+  // The homepage, the /search page, and the listing pages (/business,
+  // /services, /products) each own their own search input (with category,
+  // city, verified and sort filters), so hide this global bar there to avoid a
+  // redundant second search box.
+  const HIDE_ON = ["/business", "/services", "/products"];
+  if (
+    pathname.endsWith("/search") ||
+    pathname === "/" ||
+    HIDE_ON.includes(pathname) ||
+    HIDE_ON.includes(restPath)
+  )
+    return null;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,29 +41,15 @@ export function HeaderSearch() {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      className="flex h-10 w-full max-w-2xl items-center overflow-hidden rounded-lg border border-border bg-card shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20"
-      role="search"
-    >
-      <span className="grid w-10 shrink-0 place-items-center text-muted-foreground">
-        <Search className="size-[18px]" />
-      </span>
-      <input
+    <div className="w-full max-w-2xl">
+      <SearchInput
+        size="md"
         value={q}
-        onChange={(e) => setQ(e.target.value)}
-        type="search"
+        onChange={setQ}
+        onSubmit={submit}
         placeholder={tH("marketSearchPlaceholder")}
-        aria-label={tH("marketSearchPlaceholder")}
-        className="h-full flex-1 border-none bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/60 [&::-webkit-search-cancel-button]:hidden"
+        buttonLabel={t("search")}
       />
-      <button
-        type="submit"
-        aria-label={t("search")}
-        className="inline-flex h-full shrink-0 items-center gap-1.5 bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 md:px-6"
-      >
-        {t("search")}
-      </button>
-    </form>
+    </div>
   );
 }

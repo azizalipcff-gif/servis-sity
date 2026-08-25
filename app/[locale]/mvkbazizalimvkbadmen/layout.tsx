@@ -37,11 +37,11 @@ export default async function AdminLayout({ children, params }: Props) {
     guard.supabase
       .from("services")
       .select("id", { count: "exact", head: true })
-      .eq("status", "pending"),
+      .eq("status", "pending_review"),
     guard.supabase
       .from("products")
       .select("id", { count: "exact", head: true })
-      .eq("status", "pending"),
+      .eq("status", "pending_review"),
   ]);
 
   const pendingCounts = {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Package, Store, Wrench } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -16,6 +17,30 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
   const locale = useLocale() as Locale;
   const pathname = usePathname();
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState<{ left: boolean; right: boolean }>({
+    left: false,
+    right: false,
+  });
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const update = () => {
+      const canScroll = el.scrollWidth > el.clientWidth + 1;
+      const atStart = el.scrollLeft <= 0;
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
+      setEdges({ left: canScroll && !atStart, right: canScroll && !atEnd });
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      el.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [categories.length]);
+
   if (categories.length === 0) return null;
 
   const visible = categories.slice(0, MAX_VISIBLE);
@@ -29,59 +54,79 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
 
   return (
     <div className="border-b border-border bg-background">
-      <div className="container-site flex items-stretch gap-1 overflow-x-auto scrollbar-none">
-        {typeLinks.map((item) => {
-          const Icon = item.icon;
-          const active =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return (
+      <div className="container-site">
+        <div className="relative">
+          <div
+            ref={scrollRef}
+            className="flex items-stretch gap-1 overflow-x-auto scrollbar-none"
+          >
+            {typeLinks.map((item) => {
+              const Icon = item.icon;
+              const active =
+                pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-[13px] font-semibold transition-colors",
+                    active
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  <Icon className={cn("size-4", active && "text-primary")} />
+                  <span className="whitespace-nowrap">{item.label}</span>
+                </Link>
+              );
+            })}
+
+            <span aria-hidden className="my-2 w-px shrink-0 bg-border" />
+
+            {visible.map((c) => {
+              const Icon = getCategoryIcon(c.icon);
+              const href = `/category/${c.slug}`;
+              const active = pathname === href;
+              return (
+                <Link
+                  key={c.id}
+                  href={href}
+                  className={cn(
+                    "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-[13px] font-medium transition-colors",
+                    active
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  <Icon className={cn("size-4", active && "text-primary")} />
+                  <span className="whitespace-nowrap">{localizedName(c, locale)}</span>
+                </Link>
+              );
+            })}
+
             <Link
-              key={item.href}
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-[13px] font-semibold transition-colors",
-                active
-                  ? "bg-primary/10 text-primary"
-                  : "text-foreground hover:bg-muted hover:text-foreground",
-              )}
+              href="/search"
+              className="flex shrink-0 items-center gap-1 px-3 py-2 text-[13px] font-semibold text-primary transition-colors hover:bg-primary/5"
             >
-              <Icon className={cn("size-4", active && "text-primary")} />
-              <span className="whitespace-nowrap">{item.label}</span>
+              {t("more")}
+              {rest.length > 0 && <ChevronDown className="size-3.5" />}
             </Link>
-          );
-        })}
+          </div>
 
-        <span aria-hidden className="my-2 w-px shrink-0 bg-border" />
-
-        {visible.map((c) => {
-          const Icon = getCategoryIcon(c.icon);
-          const href = `/category/${c.slug}`;
-          const active = pathname === href;
-          return (
-            <Link
-              key={c.id}
-              href={href}
-              className={cn(
-                "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-[13px] font-medium transition-colors",
-                active
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              <Icon className={cn("size-4", active && "text-primary")} />
-              <span className="whitespace-nowrap">{localizedName(c, locale)}</span>
-            </Link>
-          );
-        })}
-
-        <Link
-          href="/search"
-          className="flex shrink-0 items-center gap-1 px-3 py-2 text-[13px] font-semibold text-primary transition-colors hover:bg-primary/5"
-        >
-          {t("more")}
-          {rest.length > 0 && <ChevronDown className="size-3.5" />}
-        </Link>
+          {edges.left && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background to-transparent"
+            />
+          )}
+          {edges.right && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background to-transparent"
+            />
+          )}
+        </div>
       </div>
     </div>
   );

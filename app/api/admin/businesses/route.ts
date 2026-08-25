@@ -85,6 +85,17 @@ export async function PATCH(request: Request) {
       });
     }
 
+    // Notify the owner when their listing is rejected by an admin.
+    if (status === "rejected" && current.status !== "rejected" && current.owner_id) {
+      await guard.supabase.from("notifications").insert({
+        recipient_id: current.owner_id,
+        type: "admin",
+        title: current.name ?? "",
+        body: "REJECTED",
+        link: `/dashboard?tab=plan`,
+      });
+    }
+
     let action: AuditAction;
     if (status || status_note !== undefined) action = "business.status_change";
     else if (verification_status === "verified") action = "business.verify";
@@ -107,6 +118,10 @@ export async function PATCH(request: Request) {
       targetId: id,
       metadata,
     });
+
+    // Invalidate cached public listings so an approval/rejection is reflected
+    // immediately (the DELETE handler already revalidates these tags).
+    revalidateTag("businesses");
 
     return jsonOk();
   });

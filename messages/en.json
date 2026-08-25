@@ -1495,6 +1495,8 @@
       "listCta": "Get started"
     },
     "faqTitle": "Frequently asked questions",
+    "supportTitle": "Still need help?",
+    "supportDesc": "Our support team is here for you. Reach out by email or phone and we'll get back to you as soon as possible.",
     "faq": [
       {
         "q": "How do I contact a business?",
@@ -1510,7 +1512,7 @@
       },
       {
         "q": "How do I report an issue?",
-        "a": "Use the in-app support or email our team and we will get back to you as soon as possible."
+        "a": "Email our support team at servicecitymr@gmail.com or use the in-app support and we will get back to you as soon as possible."
       }
     ]
   },

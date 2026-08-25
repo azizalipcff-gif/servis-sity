@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { absoluteUrl, localizedLanguages } from "@/lib/seo";
-import { Search, Tag, Store } from "lucide-react";
+import { Search, Tag, Store, Mail, Phone } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -120,6 +120,28 @@ export default async function HelpPage({ params }: Props) {
             <p className="mt-2 text-sm text-muted-foreground">{item.a}</p>
           </details>
         ))}
+      </div>
+
+      <div className="mt-12 rounded-2xl border border-border p-6">
+        <h2 className="text-xl font-semibold">{t("supportTitle")}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t("supportDesc")}</p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:gap-8">
+          <a
+            href="mailto:servicecitymr@gmail.com"
+            className="inline-flex items-center gap-2 text-[15px] text-foreground/80 transition-colors hover:text-foreground"
+          >
+            <Mail className="size-4" />
+            servicecitymr@gmail.com
+          </a>
+          <a
+            href="tel:0693793458"
+            className="inline-flex items-center gap-2 text-[15px] text-foreground/80 transition-colors hover:text-foreground"
+            dir="ltr"
+          >
+            <Phone className="size-4" />
+            0693793458
+          </a>
+        </div>
       </div>
     </div>
   );

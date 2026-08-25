@@ -88,15 +88,20 @@ export async function Footer() {
           <div>
             <h3 className="eyebrow mb-4">{t("contact")}</h3>
             <a
-              href="mailto:contact@service-city.ma"
+              href="mailto:servicecitymr@gmail.com"
               className="inline-flex items-center gap-1 text-[15px] text-foreground/80 transition-colors hover:text-foreground"
             >
-              contact@service-city.ma
+              servicecitymr@gmail.com
               <ArrowUpRight className="size-4" />
             </a>
-            <p className="mt-3 text-[15px] text-foreground/80" dir="ltr">
-              +212 6 00 00 00 00
-            </p>
+            <a
+              href="tel:0693793458"
+              className="mt-3 inline-flex items-center gap-1 text-[15px] text-foreground/80 transition-colors hover:text-foreground"
+              dir="ltr"
+            >
+              0693793458
+              <ArrowUpRight className="size-4" />
+            </a>
           </div>
         </div>
 

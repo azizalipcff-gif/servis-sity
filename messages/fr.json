@@ -1495,6 +1495,8 @@
       "listCta": "Commencer"
     },
     "faqTitle": "Questions fréquentes",
+    "supportTitle": "Besoin d'aide ?",
+    "supportDesc": "Notre équipe d'assistance est à votre disposition. Contactez-nous par e-mail ou par téléphone et nous vous répondrons dès que possible.",
     "faq": [
       {
         "q": "Comment contacter une entreprise ?",
@@ -1510,7 +1512,7 @@
       },
       {
         "q": "Comment signaler un problème ?",
-        "a": "Utilisez l'assistance intégrée à l'application ou écrivez à notre équipe et nous vous répondrons dès que possible."
+        "a": "Écrivez à notre équipe d'assistance à servicecitymr@gmail.com ou utilisez l'assistance intégrée à l'application et nous vous répondrons dès que possible."
       }
     ]
   },

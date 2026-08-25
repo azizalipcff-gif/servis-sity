@@ -120,10 +120,31 @@ export async function rateLimit(
     }
   }
 
+  // Upstash is not configured. Fall back to the in-memory limiter so the
+  // request is still throttled per instance and the app keeps working — a
+  // missing *optional* dependency must not take down every mutation endpoint
+  // with a 500.
+  //
+  // Security note: the in-memory limiter does NOT aggregate hits across
+  // instances. Single-instance deployments (local, small VPS) remain fully
+  // rate-limited. Multi-instance production MUST set UPSTASH_REDIS_REST_URL /
+  // UPSTASH_REDIS_REST_TOKEN so limits are enforced globally. We warn loudly
+  // here instead of crashing, because a total outage of all writes is worse
+  // than a per-instance limit.
   if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "Rate limiter misconfigured: UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set in production. " +
-        "Without the shared Upstash Redis store, rate limiting is NOT enforced and the app must not run unprotected.",
+    if (!memWarned) {
+      memWarned = true;
+      console.warn(
+        "[rate-limit] UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN are not set. " +
+          "Falling back to an in-memory limiter: rate limits are enforced PER INSTANCE only and " +
+          "are NOT aggregated across instances. Set the Upstash env vars for shared, cross-instance limiting.",
+      );
+    }
+  } else if (!memWarned) {
+    memWarned = true;
+    console.warn(
+      "[rate-limit] Using in-memory limiter (development only). It does NOT aggregate across instances. " +
+        "Set UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN to enable the shared, cross-instance limiter.",
     );
   }
 

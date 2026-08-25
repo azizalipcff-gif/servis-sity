@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/supabase/user";
 import { parseStoredUrl } from "@/lib/supabase/storage";
 import { assertSameOrigin } from "@/lib/security/csrf";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
-import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
+import { withErrorCapture, jsonError, jsonOk, logDbError } from "@/lib/security/http";
 import { sanitizeText } from "@/lib/security/sanitize";
 import { uuidSchema } from "@/lib/validations/schemas";
 import {
@@ -178,7 +178,10 @@ export async function POST(req: NextRequest) {
       })
       .select("*")
       .single();
-    if (error || !msg) return jsonError(500, "send_failed");
+    if (error || !msg) {
+      logDbError("messenger.messages.send", error);
+      return jsonError(500, "send_failed");
+    }
     const t2 = Date.now();
 
     if (process.env.NODE_ENV !== "production") {

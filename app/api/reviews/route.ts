@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { reviewSchema } from "@/lib/validations/schemas";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { assertSameOrigin } from "@/lib/security/csrf";
-import { withErrorCapture, jsonError, jsonOk } from "@/lib/security/http";
+import { withErrorCapture, jsonError, jsonOk, logDbError } from "@/lib/security/http";
 import { revalidateTag } from "next/cache";
 
 export async function POST(request: Request) {
@@ -36,6 +36,7 @@ export async function POST(request: Request) {
       if ((error as { code?: string }).code === "23505") {
         return jsonError(409, "already_reviewed");
       }
+      logDbError("reviews.post", error);
       return jsonError(500, "insert_failed");
     }
     // The business query (rating aggregation) is cached; purge it so the updated

@@ -13,6 +13,7 @@ import {
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 
 type MobileNavProps = {
   user: { id: string } | null;
@@ -113,6 +114,14 @@ export function MobileNav({ user, cta }: MobileNavProps) {
             </Link>
           );
         })}
+
+        {/* Language switcher — the desktop bar hides it below `lg`, so it must
+            live here for mobile users to switch EN/FR/AR (Part 11/12). The
+            `mobile` variant renders a clear Globe + locale code to match the
+            rest of the bottom navigation. */}
+        <div className="flex min-w-0 flex-1 items-center justify-center">
+          <LocaleSwitcher mobile />
+        </div>
       </div>
     </nav>
   );

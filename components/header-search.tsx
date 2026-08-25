@@ -21,14 +21,14 @@ export function HeaderSearch() {
       ? "/" + segs.slice(1).join("/")
       : pathname;
 
-  // The homepage, the /search page, and the listing pages (/business,
-  // /services, /products) each own their own search input (with category,
-  // city, verified and sort filters), so hide this global bar there to avoid a
-  // redundant second search box.
+  // The /search page and the listing pages (/business, /services, /products)
+  // each own their own search input (with category, city, verified and sort
+  // filters), so hide this global bar there to avoid a redundant second search
+  // box. It stays visible everywhere else — including the homepage, where it is
+  // the primary search moved up into the navigation row.
   const HIDE_ON = ["/business", "/services", "/products"];
   if (
     pathname.endsWith("/search") ||
-    pathname === "/" ||
     HIDE_ON.includes(pathname) ||
     HIDE_ON.includes(restPath)
   )
@@ -41,7 +41,7 @@ export function HeaderSearch() {
   }
 
   return (
-    <div className="w-full max-w-2xl">
+    <div className="w-full min-w-0">
       <SearchInput
         size="md"
         value={q}

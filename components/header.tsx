@@ -8,15 +8,14 @@ import { MobileNav } from "@/components/mobile-nav";
 import { ForBusinessesLink, HeaderAuth } from "@/components/header-auth";
 import { HeaderBar } from "@/components/layout/header-bar";
 import { HeaderSearch } from "@/components/header-search";
-import { CategoryNav } from "@/components/category-nav";
-import { getCategories } from "@/lib/queries";
+import { MainNavLinks } from "@/components/main-nav-links";
+import { AllCategoriesNavButton } from "@/components/all-categories-nav-button";
 import { buildSearchUrl } from "@/lib/search/url";
 
 export async function Header() {
   const t = await getTranslations("nav");
   const user = await getCurrentUser();
   const profile = user ? await getCurrentProfile() : null;
-  const categories = await getCategories();
 
   const initials = (profile?.full_name || user?.email || "?")
     .split(/\s+/)
@@ -55,7 +54,8 @@ export async function Header() {
           </div>
         </div>
 
-        {/* Tier 2 — main bar: logo + search + actions */}
+        {/* Tier 2 — main navigation row: logo + primary links + search + all
+            categories + user controls */}
         <HeaderBar>
           <div className="container-site flex h-14 items-center gap-3 lg:h-16">
             <Link
@@ -69,8 +69,11 @@ export async function Header() {
               <BrandLogo className="h-8 w-auto" priority />
             </Link>
 
-            <div className="min-w-0 flex-1">
+            <MainNavLinks />
+
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <HeaderSearch />
+              <AllCategoriesNavButton />
             </div>
 
             <div className="flex shrink-0 items-center gap-0.5 lg:gap-1">
@@ -82,11 +85,6 @@ export async function Header() {
             </div>
           </div>
         </HeaderBar>
-
-        {/* Tier 3 — category rail */}
-        {categories.length > 0 && (
-          <CategoryNav categories={categories} />
-        )}
       </header>
 
       <MobileNav

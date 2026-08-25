@@ -2,7 +2,6 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { HomeSearch } from "@/components/home/home-search";
 import { MarketplaceTypes } from "@/components/home/marketplace-types";
-import { AllCategoriesButton } from "@/components/home/all-categories-button";
 import { FeaturedBusinesses } from "@/components/home/featured-businesses";
 import { FeaturedMarketplace } from "@/components/home/featured-marketplace";
 import { TrustBadges } from "@/components/home/trust-badges";
@@ -10,7 +9,6 @@ import { PromoBanner } from "@/components/home/promo-banner";
 import { TrustSection } from "@/components/home/trust-section";
 import {
   getBusinessCount,
-  getCategories,
   getCities,
   getFeaturedBusinesses,
   getFeaturedProducts,
@@ -60,7 +58,6 @@ export default async function HomePage({ params }: Props) {
   setRequestLocale(locale);
 
   const [
-    categories,
     businesses,
     businessCount,
     cities,
@@ -69,7 +66,6 @@ export default async function HomePage({ params }: Props) {
     productsCount,
     servicesCount,
   ] = await Promise.all([
-    getCategories(),
     getFeaturedBusinesses(),
     getBusinessCount(),
     getCities(),
@@ -100,15 +96,13 @@ export default async function HomePage({ params }: Props) {
         cityCount={cities.length}
         serviceCount={servicesCount}
         productCount={productsCount}
-        categories={categories}
       >
         <FeaturedMarketplace services={services} products={products} />
-        <AllCategoriesButton />
-        <TrustBadges />
         <MarketplaceTypes />
         <FeaturedBusinesses businesses={businesses} locale={locale as Locale} />
         <PromoBanner />
         <TrustSection businessCount={businessCount} cityCount={cities.length} />
+        <TrustBadges />
       </HomeSearch>
     </>
   );

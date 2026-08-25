@@ -62,6 +62,10 @@ export function ReviewsSection({ business }: { business: BusinessDetail }) {
         setError(t("loginRequired"));
         return;
       }
+      if (res.status === 409) {
+        setError(t("alreadyReviewed"));
+        return;
+      }
       if (!res.ok) {
         setError(t("bookingFailed"));
         return;

@@ -390,6 +390,7 @@
     "descriptionEmpty": "Pas encore de description.",
     "loginRequired": "Vous devez être connecté pour laisser un avis.",
     "reviewSubmitted": "Votre avis a bien été publié.",
+    "alreadyReviewed": "Vous avez déjà publié un avis pour cette entreprise.",
     "detail": {
       "quick": "Accès rapide",
       "save": "Enregistrer",

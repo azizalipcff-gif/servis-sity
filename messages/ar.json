@@ -390,6 +390,7 @@
     "descriptionEmpty": "لا يوجد وصف بعد.",
     "loginRequired": "يجب تسجيل الدخول لإضافة تقييم.",
     "reviewSubmitted": "تم نشر تقييمك بنجاح.",
+    "alreadyReviewed": "لقد قمت بالفعل بتقييم هذا النشاط التجاري.",
     "detail": {
       "quick": "إجراءات سريعة",
       "save": "حفظ",

@@ -390,6 +390,7 @@
     "descriptionEmpty": "No description yet.",
     "loginRequired": "You must be signed in to leave a review.",
     "reviewSubmitted": "Your review has been published.",
+    "alreadyReviewed": "You have already reviewed this business.",
     "detail": {
       "quick": "Quick actions",
       "save": "Save",

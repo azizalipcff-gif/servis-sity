@@ -127,7 +127,8 @@ const SERVICE = env.SUPABASE_SERVICE_ROLE_KEY;
     assert(!!createdReviewId, "inserted review row must be readable back");
   });
 
-  await run("review: duplicate (business,user) is rejected (23505)", async () => {
+  await run("review: duplicate (business,user) is rejected (23505) — the exact signal the API turns into HTTP 409 already_reviewed", async () => {
+    // First duplicate attempt.
     const { error } = await anon.from("reviews").insert({
       business_id: targetBiz!.id,
       user_id: revId,
@@ -135,7 +136,17 @@ const SERVICE = env.SUPABASE_SERVICE_ROLE_KEY;
     });
     assert(
       error?.code === "23505",
-      "duplicate review must be rejected with 23505, got " + (error?.code ?? "none"),
+      "duplicate review must be rejected with unique-constraint 23505, got " + (error?.code ?? "none"),
+    );
+    // Idempotent: a second duplicate attempt is still 23505 (never silently succeeds).
+    const { error: again } = await anon.from("reviews").insert({
+      business_id: targetBiz!.id,
+      user_id: revId,
+      rating: 3,
+    });
+    assert(
+      again?.code === "23505",
+      "repeat duplicate must also be rejected with 23505, got " + (again?.code ?? "none"),
     );
   });
 

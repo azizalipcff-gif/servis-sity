@@ -28,12 +28,17 @@ export const hreflangLocales: Record<string, string> = {
 export function localizedLanguages(pathname: string): Record<string, string> {
   const languages: Record<string, string> = {};
   for (const locale of routing.locales) {
-    languages[locale] = absoluteUrl(`/${locale}${pathname}`);
+    languages[hreflangLocales[locale] ?? locale] = absoluteUrl(
+      `/${locale}${pathname}`,
+    );
   }
-  languages["x-default"] = absoluteUrl(
-    `/${routing.defaultLocale}${pathname}`,
-  );
+  languages["x-default"] = absoluteUrl(`/${routing.defaultLocale}${pathname}`);
   return languages;
+}
+
+/** OG/Twitter locale tag in the `lang_TERRITORY` underscore form (e.g. `ar_MA`). */
+export function ogLocale(locale: string): string {
+  return (hreflangLocales[locale] ?? locale).replace("-", "_");
 }
 
 /** Absolute URL for images that may be stored as relative paths. */

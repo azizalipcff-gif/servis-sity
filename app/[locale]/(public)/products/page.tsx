@@ -20,6 +20,7 @@ import {
 } from "@/lib/queries";
 import { localizedName, type Locale } from "@/lib/translations";
 import { absoluteUrl, localizedLanguages } from "@/lib/seo";
+import { toJsonLd } from "@/lib/security/sanitize";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,38 @@ export default async function ProductsPage({ params, searchParams }: Props) {
     sort: state.sort,
     limit,
     offset: state.offset,
+  });
+
+  const breadcrumbJsonLd = toJsonLd({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: absoluteUrl(`/${locale}`),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: t("title"),
+        item: absoluteUrl(`/${locale}/products`),
+      },
+    ],
+  });
+
+  const itemListJsonLd = toJsonLd({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: items
+      .filter((p) => p.slug)
+      .map((p, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: p.name,
+        url: absoluteUrl(`/${locale}/product/${p.slug}`),
+      })),
   });
 
   const hasFilters = hasActiveProductFilters(state);
@@ -274,6 +307,15 @@ export default async function ProductsPage({ params, searchParams }: Props) {
           </div>
         )}
       </form>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: itemListJsonLd }}
+      />
     </div>
   );
 }

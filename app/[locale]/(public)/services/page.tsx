@@ -16,6 +16,7 @@ import {
 import { getCategories, getCategoryBySlug, getPublishedServices } from "@/lib/queries";
 import { localizedName, type Locale } from "@/lib/translations";
 import { absoluteUrl, localizedLanguages } from "@/lib/seo";
+import { toJsonLd } from "@/lib/security/sanitize";
 import { MOROCCAN_CITIES } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -72,6 +73,38 @@ export default async function ServicesPage({ params, searchParams }: Props) {
     sort: state.sort,
     limit,
     offset: state.offset,
+  });
+
+  const breadcrumbJsonLd = toJsonLd({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: absoluteUrl(`/${locale}`),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: t("title"),
+        item: absoluteUrl(`/${locale}/services`),
+      },
+    ],
+  });
+
+  const itemListJsonLd = toJsonLd({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: items
+      .filter((s) => s.id)
+      .map((s, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: s.name,
+        url: absoluteUrl(`/${locale}/service/${s.id}`),
+      })),
   });
 
   const hasFilters = hasActiveServiceFilters(state);
@@ -272,6 +305,15 @@ export default async function ServicesPage({ params, searchParams }: Props) {
           </div>
         )}
       </form>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: itemListJsonLd }}
+      />
     </div>
   );
 }

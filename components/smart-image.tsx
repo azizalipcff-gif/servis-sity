@@ -13,6 +13,7 @@ export function SmartImage({
   imgClassName,
   fill = true,
   sizes = "100vw",
+  priority = false,
 }: {
   src: string | null | undefined;
   alt: string;
@@ -21,6 +22,7 @@ export function SmartImage({
   imgClassName?: string;
   fill?: boolean;
   sizes?: string;
+  priority?: boolean;
 }) {
   const [errored, setErrored] = useState(false);
 
@@ -30,7 +32,7 @@ export function SmartImage({
   const sharedProps = {
     className: cn("object-cover", imgClassName),
     sizes,
-    loading: "lazy" as const,
+    ...(priority ? { priority: true } : { loading: "lazy" as const }),
     placeholder: "blur" as const,
     blurDataURL: IMAGE_BLUR_PLACEHOLDER,
     onError: () => setErrored(true),

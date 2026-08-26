@@ -7,7 +7,8 @@ import { EmptyState } from "@/components/empty-state";
 import { FadeIn, Stagger, StaggerItem } from "@/components/motion";
 import { getCategoryBySlug, getBusinessesByCategory } from "@/lib/queries";
 import { localizedName, type Locale } from "@/lib/translations";
-import { absoluteUrl, localizedLanguages, imageUrl } from "@/lib/seo";
+import { absoluteUrl, localizedLanguages, imageUrl, ogLocale } from "@/lib/seo";
+import { businessHref } from "@/lib/business/url";
 import { toJsonLd } from "@/lib/security/sanitize";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url,
       type: "website",
       siteName,
-      locale: locale === "ar" ? "ar_MA" : locale === "fr" ? "fr_FR" : "en_US",
+      locale: ogLocale(locale),
       images: [{ url: ogImage, width: 1200, height: 630, alt: name }],
     },
     twitter: {
@@ -87,6 +88,19 @@ export default async function CategoryPage({ params }: Props) {
     ],
   });
 
+  const itemListJsonLd = toJsonLd({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: businesses
+      .filter((b) => b.slug)
+      .map((b, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: b.name,
+        url: absoluteUrl(`/${locale}${businessHref(b)}`),
+      })),
+  });
+
   return (
     <div className="container-wide py-12">
       <FadeIn>
@@ -123,6 +137,10 @@ export default async function CategoryPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: breadcrumb }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: itemListJsonLd }}
       />
     </div>
   );

@@ -77,6 +77,7 @@ export function ProductDetailHero({ product }: { product: ProductDetail }) {
             fallback={DEFAULT_PLACEHOLDER_IMAGES.business}
             sizes="100vw"
             className="h-full w-full"
+            priority
           />
         </div>
 

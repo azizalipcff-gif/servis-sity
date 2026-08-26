@@ -85,11 +85,31 @@ export default async function HomePage({ params }: Props) {
       "The Moroccan platform connecting customers with local businesses and artisans: electrician, plumber, restaurant, barber, doctor and more.",
   });
 
+  const websiteJsonLd = toJsonLd({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Service City",
+    url: siteUrl(),
+    inLanguage: locale,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${absoluteUrl(`/${locale}/search`)}?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  });
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: organizationJsonLd }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: websiteJsonLd }}
       />
       <HomeSearch
         businessCount={businessCount}

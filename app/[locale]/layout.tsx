@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { Inter, Tajawal } from "next/font/google";
 import { routing } from "@/i18n/routing";
 import { dirForLocale } from "@/lib/translations";
-import { siteUrl, hreflangLocales } from "@/lib/seo";
+import { siteUrl, ogLocale } from "@/lib/seo";
 import { Providers } from "@/components/providers";
 import "@/app/globals.css";
 
@@ -115,7 +115,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     openGraph: {
       type: "website",
-      locale: hreflangLocales[locale] ?? locale,
+      locale: ogLocale(locale),
       siteName: t("title"),
       title: t("title"),
       description: t("description"),

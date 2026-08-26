@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { parseSearchParams } from "@/lib/search/url";
 import { getCategories } from "@/lib/queries";
 import { getSearchIndex } from "@/lib/search/index";
-import { siteUrl } from "@/lib/seo";
+import { absoluteUrl, localizedLanguages } from "@/lib/seo";
 import { SearchExplorer } from "@/components/search/search-explorer";
 
 export const dynamic = "force-dynamic";
@@ -51,14 +51,28 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
   const q = initialQ(sp);
   const title = q ? `${q} — ${meta("title")}` : `${t("title")} — ${meta("title")}`;
-
-  const canonical = new URL(`/${locale}/search`, siteUrl());
-  if (q) canonical.search = new URLSearchParams({ q }).toString();
+  const canonical = absoluteUrl(`/${locale}/search`);
 
   return {
     title,
     description: t("subtitle"),
-    alternates: { canonical: canonical.toString() },
+    alternates: {
+      canonical,
+      languages: localizedLanguages("/search"),
+    },
+    openGraph: {
+      title,
+      description: t("subtitle"),
+      url: canonical,
+      siteName: "Service City",
+      images: [{ url: absoluteUrl("/branding/service-city-logo.png") }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: t("subtitle"),
+      images: [absoluteUrl("/branding/service-city-logo.png")],
+    },
     robots: q ? { index: false, follow: true } : undefined,
   };
 }

@@ -36,6 +36,7 @@ export function BusinessHero({ business }: { business: BusinessDetail }) {
             fallback={DEFAULT_PLACEHOLDER_IMAGES.cover}
             sizes="100vw"
             className="h-full w-full"
+            priority
           />
         </div>
 

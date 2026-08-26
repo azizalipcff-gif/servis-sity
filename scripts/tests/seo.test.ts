@@ -25,7 +25,7 @@ function read(p: string): string {
 
 const seo = read("lib/seo.ts");
 const robots = read("app/robots.ts");
-const sitemap = read("app/sitemap.ts");
+const sitemap = read("app/sitemap.ts") + "\n" + read("lib/sitemap-entries.ts");
 
 await run("seo: canonical default origin is the production Vercel URL", () => {
   assert(

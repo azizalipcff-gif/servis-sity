@@ -41,3 +41,34 @@ export function imageUrl(url?: string | null): string {
   if (!url) return "";
   return /^https?:\/\//i.test(url) ? url : absoluteUrl(url);
 }
+
+/**
+ * robots.txt disallow rules.
+ *
+ * The app uses localePrefix "always", so every public/private page carries a
+ * "/<locale>/" segment — private areas are matched with a star-slash wildcard.
+ * A bare "/admin" pattern would never match "/en/mvkbazizalimvkbadmen" and would
+ * leave those pages crawlable, so the admin/dashboard/auth/profile/messenger/
+ * checkout segments are all locale-prefixed.
+ *
+ * The OAuth callback and every API route live at the root (no locale prefix),
+ * so they are blocked with a root-anchored pattern.
+ */
+export const ROBOTS_DISALLOW: string[] = [
+  "/*/mvkbazizalimvkbadmen", // admin surface (all sub-pages)
+  "/*/dashboard", // owner/business dashboard
+  "/*/login", // auth
+  "/*/register", // auth
+  "/*/forgot-password", // auth
+  "/*/update-password", // auth
+  "/*/profile", // private user profile + sub-pages
+  "/*/messenger", // private messaging
+  "/*/checkout", // transactional checkout flow
+  "/auth/", // OAuth callback (root, no locale prefix)
+  "/api/", // all API routes
+];
+
+/** Absolute URL of the generated sitemap, using the canonical origin. */
+export function sitemapUrl(): string {
+  return `${siteUrl()}/sitemap.xml`;
+}

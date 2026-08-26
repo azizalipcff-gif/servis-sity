@@ -36,7 +36,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   // Localized top-level listing pages.
-  const listingPaths = ["/business", "/products", "/services", "/pricing"];
+  const listingPaths = [
+    "/business",
+    "/products",
+    "/services",
+    "/pricing",
+    "/help",
+  ];
   for (const path of listingPaths) {
     for (const locale of routing.locales) {
       entries.push({

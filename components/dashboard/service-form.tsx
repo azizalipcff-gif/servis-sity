@@ -6,6 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import { CheckCircle2, Loader2, Pencil, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { serviceSchema } from "@/lib/validations/schemas";
+import { SERVICE_STATUSES, SERVICE_DEFAULT_STATUS } from "@/lib/business/moderation";
 import { localizedName, type Locale } from "@/lib/translations";
 import type { BusinessDetail } from "@/lib/queries";
 import type { Category } from "@/lib/supabase/database.types";
@@ -29,8 +30,6 @@ import {
 import { ImageUploadField } from "./image-upload";
 
 type ServiceRow = NonNullable<BusinessDetail["services"]>[number];
-
-const SERVICE_STATUSES = ["draft", "published", "archived"] as const;
 
 type Props = {
   businessId: string;
@@ -64,7 +63,7 @@ export function ServiceForm({
   const [status, setStatus] = useState<string>(
     (SERVICE_STATUSES as readonly string[]).includes(initial?.status ?? "")
       ? (initial?.status as string)
-      : "pending",
+      : SERVICE_DEFAULT_STATUS,
   );
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -117,7 +116,7 @@ export function ServiceForm({
         tags: parsed.data.tags ?? [],
         photo_url: parsed.data.image_url || null,
         description: description.trim() || null,
-        status: initial ? status : "pending",
+        status: initial ? status : SERVICE_DEFAULT_STATUS,
       };
 
       if (initial) {
@@ -232,7 +231,9 @@ export function ServiceForm({
                         ? tProducts("statusPublished")
                         : s === "archived"
                           ? tProducts("statusArchived")
-                          : tProducts("statusDraft")}
+                          : s === "pending_review"
+                            ? tProducts("statusPendingReview")
+                            : tProducts("statusDraft")}
                     </option>
                   ))}
                 </select>

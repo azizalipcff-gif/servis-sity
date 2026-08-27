@@ -29,12 +29,13 @@ export default async function DashboardPage({ params }: Props) {
   setRequestLocale(locale);
 
   const user = await getCurrentUser();
+  if (!user) return null;
 
   const [profile, categories, cities, business] = await Promise.all([
     getCurrentProfile(),
     getCategories(),
     getCities(),
-    getMyBusiness(user?.id ?? ""),
+    getMyBusiness(user.id),
   ]);
 
   const t = await getTranslations("dashboard");
@@ -75,7 +76,7 @@ export default async function DashboardPage({ params }: Props) {
       <Suspense fallback={null}>
         <OwnerDashboard
           business={business}
-          userId={user?.id ?? ""}
+          userId={user.id}
           analytics={analytics}
           bookings={bookings}
           servicesEditor={
@@ -92,7 +93,7 @@ export default async function DashboardPage({ params }: Props) {
               business={business}
               categories={categories}
               cities={cities}
-              userId={user?.id ?? ""}
+              userId={user.id}
               locale={locale as Locale}
             />
           }

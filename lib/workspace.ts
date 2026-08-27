@@ -86,6 +86,13 @@ export const getWorkspaceState = cache(async (): Promise<WorkspaceState> => {
     .eq("owner_id", user.id)
     .order("created_at", { ascending: true });
 
+  console.log("[PROFILE BUSINESS DEBUG]", {
+    userId: user.id,
+    returnedCount: (data ?? []).length,
+    returnedOwnerIds: (data ?? []).map((b) => (b as { owner_id?: string }).owner_id),
+    error: error?.message ?? null,
+  });
+
   // Canonical ownership derivation: only rows where owner_id === auth.uid()
   // count (defense in depth over the RLS query filter). A query error is
   // surfaced as such and never as "no business".

@@ -195,4 +195,41 @@ await run("G: create-destination hrefs in the no-business state", () => {
   assertEqual(a.addProduct.href, "/dashboard/products/new");
 });
 
+// ---------------------------------------------------------------- status-agnostic ownership
+// The owner's publishing capability must NOT depend on moderation status.
+// A pending_review (or any other valid status) business still counts.
+await run("ownership: pending_review business still counts as 'has business'", () => {
+  const s = deriveWorkspaceState({
+    userId: USER_A,
+    businesses: [{ id: "b1", owner_id: USER_A, status: "pending_review" }],
+  });
+  assertEqual(s.hasBusiness, true);
+  const a = deriveWorkspaceActions({ hasBusiness: s.hasBusiness });
+  assertEqual(a.addService.kind, "active");
+  assertEqual(a.addProduct.kind, "active");
+});
+
+await run("ownership: status is not the condition — approved/rejected/other all count", () => {
+  for (const status of ["pending_review", "approved", "rejected", "suspended"]) {
+    const s = deriveWorkspaceState({
+      userId: USER_A,
+      businesses: [{ id: "b1", owner_id: USER_A, status }],
+    });
+    assertEqual(s.hasBusiness, true);
+  }
+});
+
+await run("ownership: admin approval does not change ownership (id + owner unchanged)", () => {
+  const pending = deriveWorkspaceState({
+    userId: USER_A,
+    businesses: [{ id: "b1", owner_id: USER_A, status: "pending_review" }],
+  });
+  const approved = deriveWorkspaceState({
+    userId: USER_A,
+    businesses: [{ id: "b1", owner_id: USER_A, status: "approved" }],
+  });
+  assertEqual(pending.hasBusiness, true);
+  assertEqual(approved.hasBusiness, true);
+});
+
 await finish();

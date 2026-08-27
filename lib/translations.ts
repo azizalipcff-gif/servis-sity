@@ -38,3 +38,17 @@ export function localizedName(
   if (locale === "fr") return category.name_fr;
   return category.name_en;
 }
+
+export function localizedCityName(
+  city: {
+    name_ar: string;
+    name_fr: string;
+    name_en: string;
+  } | null,
+  locale: Locale,
+): string {
+  if (!city) return "";
+  if (locale === "ar") return city.name_ar;
+  if (locale === "fr") return city.name_fr;
+  return city.name_en;
+}

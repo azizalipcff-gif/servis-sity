@@ -16,6 +16,7 @@ import {
   formatWhatsAppNational,
 } from "@/lib/whatsapp";
 import { resolveInitialCityId, deriveCityValue } from "@/lib/business/city-relation";
+import { resolveOwnerId } from "@/lib/business/owner";
 import { deleteStoredUrl } from "@/lib/uploads";
 import type { BusinessDetail } from "@/lib/queries";
 import type { Category, City } from "@/lib/supabase/database.types";
@@ -143,6 +144,14 @@ export function BusinessForm({ business, categories, cities, userId, locale, suc
     setError(null);
     setSaved(false);
 
+    console.log("[BIZ DEBUG] handleSubmit start", {
+      hasBusiness: !!business,
+      name,
+      categoryId,
+      cityId,
+      slug,
+    });
+
     const selectedCity = cities.find((c) => c.id === cityId) ?? null;
 
     const parsed = businessSchema.safeParse({
@@ -158,6 +167,7 @@ export function BusinessForm({ business, categories, cities, userId, locale, suc
     });
 
     if (!parsed.success) {
+      console.log("[BIZ DEBUG] validation failed", parsed.error.flatten());
       setError(tCommon("error"));
       return;
     }
@@ -165,14 +175,30 @@ export function BusinessForm({ business, categories, cities, userId, locale, suc
     // The select only offers canonical cities, but guard against a tampered or
     // stale city_id: it must resolve to a real row in the cities table.
     if (!selectedCity) {
+      console.log("[BIZ DEBUG] no selectedCity", { cityId });
       setError(tCommon("error"));
       return;
     }
 
     setLoading(true);
     try {
-      const supabase = createClient();
-      const whatsappNumber = parsed.data.whatsapp || null;
+        const supabase = createClient();
+
+        // Ownership is derived from the authenticated session that performs the
+        // insert. The RLS WITH CHECK `owner_id = auth.uid()` is the source of
+        // truth, so we bind owner_id to the same session id and never to a prop
+        // or an empty string. Unauthenticated creation fails closed.
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        if (authError || !authData.user) {
+          console.log("[BIZ DEBUG] unauthenticated business creation blocked", {
+            authError: authError?.message ?? null,
+          });
+          setError(tCommon("error"));
+          return;
+        }
+        const ownerId = resolveOwnerId(authData.user.id);
+
+        const whatsappNumber = parsed.data.whatsapp || null;
       const whatsappUrl = whatsappNumber
         ? buildWhatsAppUrl({ whatsapp: whatsappNumber })
         : null;
@@ -213,13 +239,24 @@ export function BusinessForm({ business, categories, cities, userId, locale, suc
         }
         targetId = business.id;
       } else {
+        console.log("[BIZ DEBUG] INSERT attempt", {
+          owner_id: ownerId,
+          name: parsed.data.name,
+          category_id: parsed.data.category_id,
+          city_id: parsed.data.city_id,
+          slug: parsed.data.slug,
+        });
         const { data, error } = await supabase
           .from("businesses")
-          .insert({ ...payload, owner_id: userId })
+          .insert({ ...payload, owner_id: ownerId })
           .select("id")
           .maybeSingle();
+        console.log("[BIZ DEBUG] INSERT result", { data, error });
         if (error || !data) {
-          setError(tCommon("error"));
+          console.error("[BIZ DEBUG] INSERT failed", {
+            message: error?.message ?? null,
+          });
+          setError(error?.message ? error.message : tCommon("error"));
           return;
         }
         targetId = data.id;
@@ -273,7 +310,8 @@ export function BusinessForm({ business, categories, cities, userId, locale, suc
       setSaved(true);
       router.refresh();
       if (successHref) localeRouter.push(successHref);
-    } catch {
+    } catch (e) {
+      console.error("[BIZ DEBUG] exception", e);
       setError(tCommon("error"));
     } finally {
       setLoading(false);

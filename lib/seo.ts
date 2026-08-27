@@ -77,3 +77,33 @@ export const ROBOTS_DISALLOW: string[] = [
 export function sitemapUrl(): string {
   return `${siteUrl()}/sitemap.xml`;
 }
+
+/**
+ * Centralized, configurable supply thresholds for programmatic SEO pages.
+ *
+ * City landing pages are only indexable (and only included in the sitemap)
+ * when local supply clears one of these bars. This prevents doorway/thin
+ * pages from being indexed. Tune here — do not hardcode in pages.
+ */
+export const INDEX_THRESHOLDS = {
+  city: {
+    minBusinesses: 5,
+    minServices: 8,
+  },
+} as const;
+
+/** Supply summary for a single city, used by the gating logic. */
+export type CitySupply = { businesses: number; services: number };
+
+/**
+ * Decide whether a city landing page should be indexed. A city qualifies when
+ * it has enough businesses OR enough services to support a genuinely useful
+ * page. Below threshold it still renders (for users/internal links) but is
+ * `noindex` and excluded from the sitemap.
+ */
+export function isCityIndexable(supply: CitySupply): boolean {
+  return (
+    supply.businesses >= INDEX_THRESHOLDS.city.minBusinesses ||
+    supply.services >= INDEX_THRESHOLDS.city.minServices
+  );
+}

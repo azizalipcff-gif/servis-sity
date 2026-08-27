@@ -18,6 +18,7 @@ import { localizedName, type Locale } from "@/lib/translations";
 import { absoluteUrl, localizedLanguages } from "@/lib/seo";
 import { toJsonLd } from "@/lib/security/sanitize";
 import { MOROCCAN_CITIES } from "@/lib/constants";
+import { BreadcrumbNav } from "@/components/breadcrumb-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -113,7 +114,9 @@ export default async function ServicesPage({ params, searchParams }: Props) {
     "h-10 rounded-xl border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
   return (
-    <div className="container-site py-8 md:py-12">
+    <>
+      <BreadcrumbNav items={[{ label: t("title") }]} />
+      <div className="container-site py-8 md:py-12">
       <header className="flex flex-col gap-3">
         <p className="eyebrow">{t("eyebrow")}</p>
         <h1 className="text-editorial text-3xl sm:text-4xl">{t("title")}</h1>
@@ -314,6 +317,7 @@ export default async function ServicesPage({ params, searchParams }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: itemListJsonLd }}
       />
-    </div>
+      </div>
+    </>
   );
 }

@@ -10,8 +10,9 @@ import { localizedName, type Locale } from "@/lib/translations";
 import { absoluteUrl, localizedLanguages, imageUrl, ogLocale } from "@/lib/seo";
 import { businessHref } from "@/lib/business/url";
 import { toJsonLd } from "@/lib/security/sanitize";
+import { BreadcrumbNav } from "@/components/breadcrumb-nav";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ locale: string; slug: string }>;
@@ -102,7 +103,9 @@ export default async function CategoryPage({ params }: Props) {
   });
 
   return (
-    <div className="container-wide py-12">
+    <>
+      <BreadcrumbNav items={[{ label: name }]} />
+      <div className="container-wide py-12">
       <FadeIn>
         <div className="border-b border-border pb-8">
           <h1 className="text-editorial text-3xl sm:text-4xl md:text-5xl">
@@ -142,6 +145,7 @@ export default async function CategoryPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: itemListJsonLd }}
       />
-    </div>
+      </div>
+    </>
   );
 }

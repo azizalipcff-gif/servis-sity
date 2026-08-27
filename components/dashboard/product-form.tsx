@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import type { Product, Category } from "@/lib/supabase/database.types";
+import { PRODUCT_STATUSES, PRODUCT_DEFAULT_STATUS } from "@/lib/business/moderation";
 import { createClient } from "@/lib/supabase/client";
 import { uploadImage, deleteStoredUrl } from "@/lib/uploads";
 import { slugify } from "@/lib/slug";
@@ -34,7 +35,7 @@ type Props = {
   successHref?: string;
 };
 
-const STATUSES = ["draft", "published", "archived"] as const;
+const STATUSES = PRODUCT_STATUSES;
 
 export function ProductForm({
   businessId,
@@ -58,7 +59,7 @@ export function ProductForm({
     price: initial?.price?.toString() ?? "",
     compare_at_price: initial?.compare_at_price?.toString() ?? "",
     stock: initial?.stock?.toString() ?? "",
-    status: (initial?.status as Product["status"]) ?? "pending",
+    status: (initial?.status as Product["status"]) ?? PRODUCT_DEFAULT_STATUS,
     description: initial?.description ?? "",
     featured: initial?.featured ?? false,
   });
@@ -113,7 +114,7 @@ export function ProductForm({
       price: Number(form.price) || 0,
       compare_at_price: form.compare_at_price === "" ? null : Number(form.compare_at_price),
       stock: Number(form.stock) || 0,
-      status: initial ? form.status : "pending",
+      status: initial ? form.status : PRODUCT_DEFAULT_STATUS,
       featured: form.featured,
       images,
       tags: parsedTags,
@@ -159,7 +160,9 @@ export function ProductForm({
       ? t("statusPublished")
       : s === "archived"
         ? t("statusArchived")
-        : t("statusDraft");
+        : s === "pending_review"
+          ? t("statusPendingReview")
+          : t("statusDraft");
 
   return (
     <Card>

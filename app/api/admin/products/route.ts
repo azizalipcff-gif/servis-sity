@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { productModerationSchema } from "@/lib/validations/admin-schemas";
+import { buildModerationPatch } from "@/lib/moderation";
 import { writeAudit } from "@/lib/security/audit";
 import { rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { assertSameOrigin } from "@/lib/security/csrf";
@@ -16,7 +17,9 @@ export async function PATCH(request: Request) {
     if (!guard) return jsonError(401, "unauthorized");
 
     const body = await request.json().catch(() => null);
-    const parsed = productModerationSchema.safeParse(body);
+    const reqUrl = new URL(request.url);
+    const queryId = reqUrl.searchParams.get("id");
+    const parsed = productModerationSchema.safeParse({ ...(body ?? {}), id: queryId });
     if (!parsed.success) return jsonError(400, "bad_request");
 
     const { id, status, status_note } = parsed.data;
@@ -28,9 +31,7 @@ export async function PATCH(request: Request) {
       .maybeSingle();
     if (readError || !current) return jsonError(404, "not_found");
 
-    const patch: { status: string; status_note?: string | null } = { status };
-    if (status === "published") patch.status_note = null;
-    else if (status_note !== undefined) patch.status_note = status_note;
+    const patch = buildModerationPatch(status);
 
     const { error } = await guard.supabase
       .from("products")

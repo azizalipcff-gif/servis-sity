@@ -22,11 +22,16 @@ export interface SitemapService {
   updated_at?: string | null;
 }
 
+export interface SitemapCity {
+  slug?: string | null;
+}
+
 export interface BuildSitemapInput {
   categories?: SitemapCategory[] | null;
   businesses?: SitemapBusiness[] | null;
   products?: SitemapProduct[] | null;
   services?: SitemapService[] | null;
+  cities?: SitemapCity[] | null;
 }
 
 export interface BuildSitemapOptions {
@@ -62,6 +67,7 @@ export function buildSitemapEntries(
   const businesses = input.businesses ?? [];
   const products = input.products ?? [];
   const services = input.services ?? [];
+  const cities = input.cities ?? [];
   const { siteUrl, businessHref, locales } = opts;
 
   const origin = siteUrl;
@@ -153,6 +159,18 @@ export function buildSitemapEntries(
           : new Date(),
         changeFrequency: "weekly",
         priority: 0.6,
+      });
+    }
+  }
+
+  for (const city of cities) {
+    if (!isSafeSlug(city?.slug)) continue;
+    for (const locale of locales) {
+      add({
+        url: loc(`/${locale}/city/${city.slug}`),
+        lastModified: new Date(),
+        changeFrequency: "weekly",
+        priority: 0.7,
       });
     }
   }

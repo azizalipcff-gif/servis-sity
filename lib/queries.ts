@@ -1417,6 +1417,50 @@ export const getCities = unstable_cache(
   { tags: ["cities"], revalidate: 3600 },
 );
 
+/**
+ * Per-city supply counts (approved businesses, published services, published
+ * products) used to gate indexable city landing pages. One lightweight batch
+ * of three queries; tallied in JS. Cached for an hour.
+ */
+export const getCitySupplyMap = unstable_cache(
+  async (): Promise<
+    Record<string, { businesses: number; services: number; products: number }>
+  > => {
+    const supabase = createPublicClient();
+    const [biz, svc, prd] = await Promise.all([
+      supabase.from("businesses").select("city").eq("status", "approved"),
+      supabase
+        .from("services")
+        .select("businesses!services_business_id_fkey(city)")
+        .eq("status", "published"),
+      supabase
+        .from("products")
+        .select("businesses!products_business_id_fkey(city)")
+        .eq("status", "published"),
+    ]);
+
+    const map: Record<
+      string,
+      { businesses: number; services: number; products: number }
+    > = {};
+    const bump = (city: string | null | undefined, key: keyof (typeof map)[string]) => {
+      if (!city) return;
+      map[city] ??= { businesses: 0, services: 0, products: 0 };
+      map[city][key] += 1;
+    };
+
+    for (const r of (biz.data ?? []) as { city: string | null }[]) bump(r.city, "businesses");
+    for (const r of (svc.data ?? []) as { businesses: { city: string | null } | null }[])
+      bump(r.businesses?.city, "services");
+    for (const r of (prd.data ?? []) as { businesses: { city: string | null } | null }[])
+      bump(r.businesses?.city, "products");
+
+    return map;
+  },
+  ["q:city-supply-map"],
+  { tags: ["businesses", "services", "products"], revalidate: 3600 },
+);
+
 export type AdminReport = Report & {
   businesses: Pick<Business, "name" | "slug" | "status"> | null;
   profiles: Pick<Profile, "full_name"> | null;

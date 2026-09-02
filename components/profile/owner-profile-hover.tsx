@@ -67,8 +67,8 @@ export function OwnerProfileHover({ ownerId, businessName, children, className }
   }, []);
 
   return (
-    <span className={cn("relative inline-flex min-w-0", className)} onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}>
-      <span
+    <div className={cn("relative inline-flex min-w-0", className)} onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}>
+      <div
         role="button"
         tabIndex={0}
         className="inline-flex min-w-0 cursor-pointer items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
@@ -87,37 +87,23 @@ export function OwnerProfileHover({ ownerId, businessName, children, className }
         }}
       >
         {children}
-      </span>
+      </div>
 
       {open && (
-        <div
-          role="dialog"
-          aria-label="Owner profile preview"
-          className="absolute start-0 top-full z-[80] mt-2 w-[min(340px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-2xl"
-          onMouseEnter={show}
-          onMouseLeave={hide}
-        >
+        <div role="dialog" aria-label="Owner profile preview" className="absolute start-0 top-full z-[80] mt-2 w-[min(340px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-2xl" onMouseEnter={show} onMouseLeave={hide}>
           <div className="relative h-20 overflow-hidden bg-muted">
             <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--foreground),color-mix(in_oklab,var(--primary)_70%,var(--foreground)))] opacity-90" />
           </div>
-
           <div className="px-4 pb-4">
             <div className="-mt-7 flex items-end gap-3">
               <span className="relative size-14 shrink-0 overflow-hidden rounded-full border-4 border-card bg-muted shadow-lg">
-                <SmartImage
-                  src={profile?.avatar_url}
-                  alt=""
-                  fallback={DEFAULT_PLACEHOLDER_IMAGES.logo}
-                  className="size-full"
-                  imgClassName="object-cover"
-                />
+                <SmartImage src={profile?.avatar_url} alt="" fallback={DEFAULT_PLACEHOLDER_IMAGES.logo} className="size-full" imgClassName="object-cover" />
               </span>
               <div className="min-w-0 pb-0.5">
                 <p className="truncate font-semibold">{profile?.full_name || businessName || "Owner"}</p>
                 {profile?.username && <p className="truncate text-xs text-muted-foreground">@{profile.username}</p>}
               </div>
             </div>
-
             {loading && !profile ? (
               <div className="mt-4 space-y-2">
                 <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
@@ -130,19 +116,9 @@ export function OwnerProfileHover({ ownerId, businessName, children, className }
                   {profile.city && <span className="inline-flex items-center gap-2"><MapPin className="size-3.5 shrink-0 text-primary" />{profile.city}</span>}
                   {profile.experience && <span className="inline-flex items-center gap-2"><BriefcaseBusiness className="size-3.5 shrink-0 text-primary" />{profile.experience}</span>}
                   {profile.languages && <span className="inline-flex items-center gap-2"><Languages className="size-3.5 shrink-0 text-primary" />{profile.languages}</span>}
-                  {profile.website && (
-                    <a href={profile.website} target="_blank" rel="noopener noreferrer" className="inline-flex min-w-0 items-center gap-2 truncate text-primary hover:underline" onClick={(event) => event.stopPropagation()}>
-                      <Globe className="size-3.5 shrink-0" />
-                      <span className="truncate">{profile.website}</span>
-                    </a>
-                  )}
+                  {profile.website && <a href={profile.website} target="_blank" rel="noopener noreferrer" className="inline-flex min-w-0 items-center gap-2 truncate text-primary hover:underline" onClick={(event) => event.stopPropagation()}><Globe className="size-3.5 shrink-0" /><span className="truncate">{profile.website}</span></a>}
                 </div>
-                {profile.skills && (
-                  <div className="border-t border-border pt-2 text-xs text-muted-foreground">
-                    <span className="me-1 inline-flex items-center gap-1 font-medium text-foreground"><UserRound className="size-3" />Skills:</span>
-                    {profile.skills}
-                  </div>
-                )}
+                {profile.skills && <div className="border-t border-border pt-2 text-xs text-muted-foreground"><span className="me-1 inline-flex items-center gap-1 font-medium text-foreground"><UserRound className="size-3" />Skills:</span>{profile.skills}</div>}
               </div>
             ) : (
               <p className="mt-4 text-xs text-muted-foreground">Owner profile details are not publicly available.</p>
@@ -150,6 +126,6 @@ export function OwnerProfileHover({ ownerId, businessName, children, className }
           </div>
         </div>
       )}
-    </span>
+    </div>
   );
 }

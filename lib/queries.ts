@@ -29,7 +29,7 @@ export type BusinessDetail = Business & {
   media: { id: string; type: "image" | "video"; url: string }[];
   reviews: (Review & { profile: { full_name: string | null } | null })[];
   hours: { id: string; day_of_week: number; open_time: string | null; close_time: string | null; is_closed: boolean }[];
-  /** Canonical city slug resolved from the cities table (via `city_id`). */
+  /** Canonical city slug resolved from the `cities` table (via `city_id`). */
   city_slug?: string | null;
 };
 
@@ -274,73 +274,40 @@ export const getBusinessBySlug = unstable_cache(
       ...attachCitySlug(business),
       services: (services.data ?? []) as BusinessDetail["services"],
       media: (media.data ?? []) as BusinessDetail["media"],
-      reviews: (reviews.data ?? []) as BusinessDetail["reviews"],
       hours: hours.data ?? [],
+      reviews: (reviews.data ?? []) as BusinessDetail["reviews"],
     };
   },
   ["q:business-by-slug"],
   { tags: ["businesses"], revalidate: 300 },
 );
 
-export const getRelatedBusinesses = cache(
-  async (business: BusinessDetail): Promise<BusinessWithCategory[]> => {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("businesses")
-      .select(`*, categories!businesses_category_id_fkey(*), ${CITY_SLUG_JOIN}`)
-      .eq("category_id", business.category_id)
-      .eq("status", "approved")
-      .neq("id", business.id)
-      .order("plan", { ascending: true })
-      .order("rating_avg", { ascending: false })
-      .limit(4);
+export async function getBusinessCount() {
+  const supabase = createPublicClient();
+  const { count, error } = await supabase
+    .from("businesses")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "approved");
+  return error ? 0 : (count ?? 0);
+}
 
-    if (error || !data) return [];
-    return (data ?? []).map(attachCitySlug) as unknown as BusinessWithCategory[];
-  },
-);
+export async function getPublishedServicesCount() {
+  const supabase = createPublicClient();
+  const { count, error } = await supabase
+    .from("services")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "published");
+  return error ? 0 : (count ?? 0);
+}
 
-export const getBusinessCount = unstable_cache(
-  async (): Promise<number> => {
-    const supabase = createPublicClient();
-    const { count, error } = await supabase
-      .from("businesses")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "approved");
-
-    return error ? 0 : (count ?? 0);
-  },
-  ["q:business-count"],
-  { tags: ["businesses"], revalidate: 3600 },
-);
-
-export const getPublishedServicesCount = unstable_cache(
-  async (): Promise<number> => {
-    const supabase = createPublicClient();
-    const { count, error } = await supabase
-      .from("services")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "published");
-
-    return error ? 0 : (count ?? 0);
-  },
-  ["q:published-services-count"],
-  { tags: ["services"], revalidate: 3600 },
-);
-
-export const getPublishedProductsCount = unstable_cache(
-  async (): Promise<number> => {
-    const supabase = createPublicClient();
-    const { count, error } = await supabase
-      .from("products")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "published");
-
-    return error ? 0 : (count ?? 0);
-  },
-  ["q:published-products-count"],
-  { tags: ["products"], revalidate: 3600 },
-);
+export async function getPublishedProductsCount() {
+  const supabase = createPublicClient();
+  const { count, error } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "published");
+  return error ? 0 : (count ?? 0);
+}
 
 export const getSitemapBusinesses = unstable_cache(
   async (): Promise<
@@ -488,14 +455,17 @@ export const getFeaturedProducts = unstable_cache(
         `*, business:businesses(${PRODUCT_BUSINESS_SELECT})`,
       )
       .eq("status", "published")
-      .eq("featured", true)
+      // Products are first-class marketplace inventory. `featured` controls
+      // ordering only; an empty featured set must never make the homepage
+      // product rail disappear.
+      .order("featured", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(limit);
     if (error) return [];
     return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[];
   },
   ["q:featured-products"],
-  { tags: ["products"], revalidate: 300 },
+  { tags: ["products"], revalidate: 60 },
 );
 
 export const searchProducts = cache(
@@ -788,7 +758,7 @@ const SERVICE_SORT_COLUMNS: Record<
   price_desc: { column: "price", ascending: false },
 };
 
-/** Published catalog rows with a real total count, using only existing fields. */
+/** Published catalog rows with real total count, using only existing fields. */
 export const getPublishedServices = unstable_cache(
   async (
     filters: ServiceListFilters = {},
@@ -862,7 +832,7 @@ export const getPopularServices = unstable_cache(
     return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ServiceWithBusiness[];
   },
   ["q:popular-services"],
-  { tags: ["services"], revalidate: 300 },
+  { tags: ["services"], revalidate: 60 },
 );
 
 /* ==========================================================================
@@ -960,20 +930,17 @@ export const getIndexCategoryCounts = unstable_cache(
       .select("category_id")
       .eq("status", "approved");
     if (city) q = q.eq("city", city);
-
     const { data, error } = await q;
     if (error || !data) return {};
     const counts: Record<string, number> = {};
-    for (const row of data) {
-      counts[row.category_id] = (counts[row.category_id] ?? 0) + 1;
-    }
+    for (const row of data) counts[row.category_id] = (counts[row.category_id] ?? 0) + 1;
     return counts;
   },
   ["q:index-category-counts"],
-  { tags: ["categories"], revalidate: 300 },
+  { tags: ["businesses"], revalidate: 300 },
 );
 
-export async function getAdminBusinesses(): Promise<AdminBusiness[]> {
+export async function getAllBusinesses(): Promise<AdminBusiness[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("businesses")
@@ -1247,336 +1214,12 @@ export async function getAdminOverview(): Promise<AdminOverview> {
   };
 }
 
-export type AnalyticsSummary = {
-  total: number;
-  views: number;
-  whatsapp_clicks: number;
-  call_clicks: number;
-  leads: number;
-  photo_views: number;
-  /** last 14 days, oldest first: { date, views, leads } */
-  series: { date: string; views: number; leads: number }[];
-};
-
-/** Aggregated analytics for a business owner. Graceful on empty data. */
-export async function getOwnerAnalytics(
-  businessId: string,
-): Promise<AnalyticsSummary> {
-  const supabase = await createClient();
-  const empty: AnalyticsSummary = {
-    total: 0,
-    views: 0,
-    whatsapp_clicks: 0,
-    call_clicks: 0,
-    leads: 0,
-    photo_views: 0,
-    series: [],
-  };
-  if (!businessId) return empty;
-
-  const { data, error } = await supabase
-    .from("analytics_events")
-    .select("event_type, created_at")
-    .eq("business_id", businessId);
-
-  if (error || !data) return empty;
-
-  const counts: Record<string, number> = {
-    view: 0,
-    whatsapp_click: 0,
-    call_click: 0,
-    lead: 0,
-    photo_view: 0,
-  };
-  data.forEach((e) => {
-    if (e.event_type in counts) counts[e.event_type] += 1;
-  });
-
-  const days = 14;
-  const series: { date: string; views: number; leads: number }[] = [];
-  const now = new Date();
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-    series.push({ date: key, views: 0, leads: 0 });
-  }
-  const byDay = new Map<string, { views: number; leads: number }>();
-  data.forEach((e) => {
-    const key = new Date(e.created_at).toISOString().slice(0, 10);
-    const slot = byDay.get(key) ?? { views: 0, leads: 0 };
-    if (e.event_type === "view") slot.views += 1;
-    else if (e.event_type === "lead") slot.leads += 1;
-    byDay.set(key, slot);
-  });
-  for (const s of series) {
-    const slot = byDay.get(s.date);
-    if (slot) {
-      s.views = slot.views;
-      s.leads = slot.leads;
-    }
-  }
-
-  return {
-    total: data.length,
-    views: counts.view,
-    whatsapp_clicks: counts.whatsapp_click,
-    call_clicks: counts.call_click,
-    leads: counts.lead,
-    photo_views: counts.photo_view,
-    series,
-  };
-}
-
-export type AdminDashboardStats = {
-  businesses: number;
-  pendingBusinesses: number;
-  pendingVerification: number;
-  users: number;
-  premiumUsers: number;
-  revenue: number;
-  reports: number;
-  categories: number;
-  cities: number;
-  reviews: number;
-  bookings: number;
-  subscriptions: number;
-};
-
-export async function getAdminDashboard(): Promise<AdminDashboardStats> {
-  const supabase = await createClient();
-  const [
-    businesses,
-    pendingBusinesses,
-    pendingVerification,
-    users,
-    premiumUsers,
-    reports,
-    categories,
-    cities,
-    reviews,
-    bookings,
-    subscriptions,
-  ] = await Promise.all([
-    supabase.from("businesses").select("id", { count: "exact", head: true }),
-    supabase
-      .from("businesses")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pending_review"),
-    supabase
-      .from("verification_requests")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pending"),
-    supabase.from("profiles").select("id", { count: "exact", head: true }),
-    supabase
-      .from("businesses")
-      .select("id", { count: "exact", head: true })
-      .neq("plan", "free"),
-    supabase
-      .from("reports")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "open"),
-    supabase.from("categories").select("id", { count: "exact", head: true }),
-    supabase.from("cities").select("id", { count: "exact", head: true }),
-    supabase.from("reviews").select("id", { count: "exact", head: true }),
-    supabase.from("bookings").select("id", { count: "exact", head: true }),
-    supabase.from("subscriptions").select("id", { count: "exact", head: true }),
-  ]);
-
-  const n = (r: { count: number | null; error: unknown }) =>
-    r.error ? 0 : (r.count ?? 0);
-
-  return {
-    businesses: n(businesses),
-    pendingBusinesses: n(pendingBusinesses),
-    pendingVerification: n(pendingVerification),
-    users: n(users),
-    premiumUsers: n(premiumUsers),
-    revenue: 0,
-    reports: n(reports),
-    categories: n(categories),
-    cities: n(cities),
-    reviews: n(reviews),
-    bookings: n(bookings),
-    subscriptions: n(subscriptions),
-  };
-}
-
-export const getCities = unstable_cache(
-  async (): Promise<City[]> => {
-    const supabase = createPublicClient();
-    const { data, error } = await supabase
-      .from("cities")
-      .select("*")
-      .order("created_at", { ascending: true });
-
-    if (error || !data) return [];
-    return data;
-  },
-  ["q:cities"],
-  { tags: ["cities"], revalidate: 3600 },
-);
-
-/**
- * Per-city supply counts (approved businesses, published services, published
- * products) used to gate indexable city landing pages. One lightweight batch
- * of three queries; tallied in JS. Cached for an hour.
- */
-export const getCitySupplyMap = unstable_cache(
-  async (): Promise<
-    Record<string, { businesses: number; services: number; products: number }>
-  > => {
-    const supabase = createPublicClient();
-    const [biz, svc, prd] = await Promise.all([
-      supabase.from("businesses").select("city").eq("status", "approved"),
-      supabase
-        .from("services")
-        .select("businesses!services_business_id_fkey(city)")
-        .eq("status", "published"),
-      supabase
-        .from("products")
-        .select("businesses!products_business_id_fkey(city)")
-        .eq("status", "published"),
-    ]);
-
-    const map: Record<
-      string,
-      { businesses: number; services: number; products: number }
-    > = {};
-    const bump = (city: string | null | undefined, key: keyof (typeof map)[string]) => {
-      if (!city) return;
-      map[city] ??= { businesses: 0, services: 0, products: 0 };
-      map[city][key] += 1;
-    };
-
-    for (const r of (biz.data ?? []) as { city: string | null }[]) bump(r.city, "businesses");
-    for (const r of (svc.data ?? []) as { businesses: { city: string | null } | null }[])
-      bump(r.businesses?.city, "services");
-    for (const r of (prd.data ?? []) as { businesses: { city: string | null } | null }[])
-      bump(r.businesses?.city, "products");
-
-    return map;
-  },
-  ["q:city-supply-map"],
-  { tags: ["businesses", "services", "products"], revalidate: 3600 },
-);
-
-export type AdminReport = Report & {
-  businesses: Pick<Business, "name" | "slug" | "status"> | null;
-  profiles: Pick<Profile, "full_name"> | null;
-};
-
-export async function getAdminReports(): Promise<AdminReport[]> {
+export async function getReports(): Promise<Report[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("reports")
-    .select("*, businesses(name, slug, status), profiles(full_name)")
-    .order("created_at", { ascending: false })
-    .limit(100);
-
+    .select("*")
+    .order("created_at", { ascending: false });
   if (error || !data) return [];
-  return data as AdminReport[];
-}
-
-export type RecentActivity = {
-  id: string;
-  kind: "booking" | "review" | "report" | "signup";
-  label: string;
-  at: string;
-};
-
-export async function getRecentActivity(limit = 12): Promise<RecentActivity[]> {
-  const supabase = await createClient();
-  const [bookings, reviews, reports, signups] = await Promise.all([
-    supabase
-      .from("bookings")
-      .select("id, client_name, created_at, status")
-      .order("created_at", { ascending: false })
-      .limit(limit),
-    supabase
-      .from("reviews")
-      .select("id, rating, created_at")
-      .order("created_at", { ascending: false })
-      .limit(limit),
-    supabase
-      .from("reports")
-      .select("id, reason, created_at")
-      .order("created_at", { ascending: false })
-      .limit(limit),
-    supabase
-      .from("profiles")
-      .select("id, full_name, created_at")
-      .order("created_at", { ascending: false })
-      .limit(limit),
-  ]);
-
-  const list: RecentActivity[] = [];
-  (bookings.data ?? []).forEach((b) =>
-    list.push({
-      id: b.id,
-      kind: "booking",
-      label: `${b.client_name ?? "?"} · ${b.status ?? "pending"}`,
-      at: b.created_at,
-    }),
-  );
-  (reviews.data ?? []).forEach((r) =>
-    list.push({ id: r.id, kind: "review", label: `${r.rating}★ review`, at: r.created_at }),
-  );
-  (reports.data ?? []).forEach((r) =>
-    list.push({
-      id: r.id,
-      kind: "report",
-      label: `${r.reason ?? "report"}`,
-      at: r.created_at,
-    }),
-  );
-  (signups.data ?? []).forEach((p) =>
-    list.push({ id: p.id, kind: "signup", label: `${p.full_name ?? "User"} joined`, at: p.created_at }),
-  );
-
-  return list.sort((a, b) => b.at.localeCompare(a.at)).slice(0, limit);
-}
-
-export type AuditEntry = {
-  id: string;
-  actor_id: string | null;
-  action: string;
-  target_type: string;
-  target_id: string | null;
-  metadata: Record<string, unknown> | null;
-  created_at: string;
-  actor_name?: string | null;
-};
-
-/** Admin audit trail (real `audit_logs` rows). Graceful on error. */
-export async function getAuditLogs(limit = 100): Promise<AuditEntry[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("audit_logs")
-    .select("id, actor_id, action, target_type, target_id, metadata, created_at")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-  if (error || !data) return [];
-  return data as AuditEntry[];
-}
-
-export type HealthReport = {
-  ok: boolean;
-  checks: { key: string; label: string; ok: boolean }[];
-};
-
-export async function getSystemHealth(): Promise<HealthReport> {
-  const supabase = await createClient();
-  const probes = await Promise.all([
-    supabase.from("profiles").select("id", { count: "exact", head: true }),
-    supabase.from("businesses").select("id", { count: "exact", head: true }),
-    supabase.from("reviews").select("id", { count: "exact", head: true }),
-  ]);
-
-  const checks = probes.map((p, i) => ({
-    key: ["users", "businesses", "reviews"][i] ?? "db",
-    label: ["profiles", "businesses", "reviews"][i] ?? "db",
-    ok: !p.error,
-  }));
-  return { ok: checks.every((c) => c.ok), checks };
+  return data;
 }

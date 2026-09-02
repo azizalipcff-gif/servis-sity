@@ -35,22 +35,22 @@
   --card-foreground: #f4f1ea;
   --popover: #1d2228;
   --popover-foreground: #f4f1ea;
+  --muted: #262b32;
+  --muted-foreground: #a2a9b3;
+  --border: #30363e;
+  --input: #3a4149;
+  --ring: #f08842;
   --primary: #f08842;
   --primary-foreground: #ffffff;
   --secondary: #2c3e50;
   --secondary-foreground: #ffffff;
-  --muted: #262b32;
-  --muted-foreground: #a2a9b3;
   --accent: #f39c12;
   --accent-foreground: #20242c;
   --destructive: #e26a62;
   --destructive-foreground: #ffffff;
   --success: #3aa86e;
-  --success-foreground: #ffffff;
   --warning: #f08842;
-  --border: #30363e;
-  --input: #3a4149;
-  --ring: #f08842;
+  --success-foreground: #ffffff;
   --whatsapp: #128c7e;
   --gold: #f4b45a;
 }
@@ -86,286 +86,69 @@
   --radius-xl: calc(var(--radius) + 8px);
   --radius-2xl: calc(var(--radius) + 12px);
   --radius-3xl: calc(var(--radius) + 20px);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
-    "Noto Kufi Arabic", "Tajawal", sans-serif;
-  --font-display: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
-    "Noto Kufi Arabic", "Tajawal", sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Noto Kufi Arabic", "Tajawal", sans-serif;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Noto Kufi Arabic", "Tajawal", sans-serif;
 }
 
-/* Arabic locale: prefer the loaded Tajawal webfont */
 html[lang="ar"] {
-  --font-sans: var(--font-tajawal), var(--font-inter), "Noto Kufi Arabic",
-    "Tajawal", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    sans-serif;
-  --font-display: var(--font-tajawal), var(--font-inter), "Noto Kufi Arabic",
-    "Tajawal", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    sans-serif;
+  --font-sans: var(--font-tajawal), var(--font-inter), "Noto Kufi Arabic", "Tajawal", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-tajawal), var(--font-inter), "Noto Kufi Arabic", "Tajawal", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Arabic glyphs connect — avoid negative tracking that cramps headings */
 [dir="rtl"] .tracking-tight,
 [dir="rtl"] .tracking-tighter,
 [dir="rtl"] .tracking-wide,
 [dir="rtl"] .tracking-wider,
 [dir="rtl"] .tracking-widest,
-[dir="rtl"] .uppercase {
-  letter-spacing: 0;
-}
+[dir="rtl"] .uppercase { letter-spacing: 0; }
 
-/* Arabic headings — taller line-height & no negative tracking so ascenders/diacritics never clip */
-[dir="rtl"] .text-editorial {
-  line-height: 1.3;
-  letter-spacing: 0;
-}
-
-/* Base heading rule applies -0.01em tracking; drop it for Arabic so letters stay connected */
+[dir="rtl"] .text-editorial { line-height: 1.3; letter-spacing: 0; }
 [dir="rtl"] h1,
 [dir="rtl"] h2,
 [dir="rtl"] h3,
-[dir="rtl"] h4 {
-  letter-spacing: 0;
-}
+[dir="rtl"] h4 { letter-spacing: 0; }
 
 @layer base {
-  * {
-    border-color: var(--border);
-    outline-color: color-mix(in oklab, var(--ring) 45%, transparent);
-  }
-
-  html {
-    scroll-behavior: smooth;
-  }
-
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  }
-
-  ::selection {
-    background-color: color-mix(in oklab, var(--primary) 22%, transparent);
-  }
-
-  /* Keyboard-first focus indicator that stays out of the way for mouse users */
-  :focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-  }
-
-  /* Headings — confident, tight, editorial */
-  h1,
-  h2,
-  h3,
-  h4 {
-    font-family: var(--font-display);
-    letter-spacing: -0.01em;
-  }
-
-  /* Respect reduced-motion preferences */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
-  }
+  * { border-color: var(--border); outline-color: color-mix(in oklab, var(--ring) 45%, transparent); }
+  html { scroll-behavior: smooth; }
+  body { background-color: var(--background); color: var(--foreground); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; font-feature-settings: "cv02", "cv03", "cv04", "cv11"; }
+  ::selection { background-color: color-mix(in oklab, var(--primary) 22%, transparent); }
+  h1,h2,h3,h4 { font-family: var(--font-display); letter-spacing: -0.01em; }
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
 }
 
 @layer utilities {
-  .container-site {
-    width: 100%;
-    margin-inline: auto;
-    padding-inline: 1.25rem;
-    max-width: 80rem;
-  }
+  .container-site { width: 100%; margin-inline: auto; padding-inline: 1.25rem; max-width: 80rem; }
+  .container-wide { width: 100%; margin-inline: auto; padding-inline: 1.25rem; max-width: 90rem; }
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 999px; }
+  .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+  .text-editorial { text-wrap: balance; font-family: var(--font-display); line-height: 1.12; letter-spacing: -0.025em; font-weight: 700; }
+  .eyebrow { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted-foreground); }
+  .input-field { height: 2.5rem; width: 100%; border-radius: var(--radius-xl); border: 1px solid var(--input); background-color: var(--card); padding-inline: 0.875rem; font-size: 0.875rem; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+  .input-field:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 15%, transparent); }
+  .select-field { height: 2.5rem; width: 100%; border-radius: var(--radius-xl); border: 1px solid var(--input); background-color: var(--card); padding-inline: 0.875rem; font-size: 0.875rem; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+  .select-field:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 15%, transparent); }
+  .shadow-soft { box-shadow: 0 1px 2px rgb(26 28 26 / 0.04), 0 6px 20px rgb(26 28 26 / 0.05); }
+  .shadow-lift { box-shadow: 0 2px 4px rgb(26 28 26 / 0.04), 0 18px 44px rgb(26 28 26 / 0.09); }
+  .rule { height: 1px; width: 100%; background-color: var(--border); }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem; }
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
+  .skeleton { position: relative; overflow: hidden; background-color: color-mix(in oklab, var(--muted) 60%, var(--card)); }
+  .skeleton::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background-image: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.45), transparent); animation: shimmer 1.5s infinite; }
+  .rail { display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; padding-bottom: 0.5rem; scrollbar-width: none; }
+  .rail::-webkit-scrollbar { display: none; }
+  .rail > * { scroll-snap-align: start; flex-shrink: 0; }
+  .fade-edge { -webkit-mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%); mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%); }
+}
 
-  .container-wide {
-    width: 100%;
-    margin-inline: auto;
-    padding-inline: 1.25rem;
-    max-width: 90rem;
-  }
-
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: var(--border);
-    border-radius: 999px;
-  }
-
-  .scrollbar-none {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .scrollbar-none::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Utility text styles */
-  .text-editorial {
-    text-wrap: balance;
-    font-family: var(--font-display);
-    line-height: 1.12;
-    letter-spacing: -0.025em;
-    font-weight: 700;
-  }
-
-  .eyebrow {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    color: var(--muted-foreground);
-  }
-
-  .input-field {
-    height: 2.5rem;
-    width: 100%;
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--input);
-    background-color: var(--card);
-    padding-inline: 0.875rem;
-    font-size: 0.875rem;
-    outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-
-  .input-field:focus {
-    border-color: var(--ring);
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 15%, transparent);
-  }
-
-  .select-field {
-    height: 2.5rem;
-    width: 100%;
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--input);
-    background-color: var(--card);
-    padding-inline: 0.875rem;
-    font-size: 0.875rem;
-    outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-
-  .select-field:focus {
-    border-color: var(--ring);
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 15%, transparent);
-  }
-
-  /* Restrained elevation — editorial, not glossy */
-  .shadow-soft {
-    box-shadow:
-      0 1px 2px rgb(26 28 26 / 0.04),
-      0 6px 20px rgb(26 28 26 / 0.05);
-  }
-
-  .shadow-lift {
-    box-shadow:
-      0 2px 4px rgb(26 28 26 / 0.04),
-      0 18px 44px rgb(26 28 26 / 0.09);
-  }
-
-  /* Divider rule */
-  .rule {
-    height: 1px;
-    width: 100%;
-    background-color: var(--border);
-  }
-
-  /* Compact eyebrow divider used in editorial sections */
-  .section-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 1.5rem;
-  }
-
-  @keyframes shimmer {
-    100% {
-      transform: translateX(100%);
-    }
-  }
-
-  .skeleton {
-    position: relative;
-    overflow: hidden;
-    background-color: color-mix(in oklab, var(--muted) 60%, var(--card));
-  }
-
-  .skeleton::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    transform: translateX(-100%);
-    background-image: linear-gradient(
-      90deg,
-      transparent,
-      rgb(255 255 255 / 0.45),
-      transparent
-    );
-    animation: shimmer 1.5s infinite;
-  }
-
-  /* Horizontal scroll rail (desktop-adjacent on mobile) */
-  .rail {
-    display: flex;
-    gap: 1rem;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 0.5rem;
-    scrollbar-width: none;
-  }
-
-  .rail::-webkit-scrollbar {
-    display: none;
-  }
-
-  .rail > * {
-    scroll-snap-align: start;
-    flex-shrink: 0;
-  }
-
-  .fade-edge {
-    -webkit-mask-image: linear-gradient(
-      to right,
-      transparent 0,
-      black 24px,
-      black calc(100% - 24px),
-      transparent 100%
-    );
-    mask-image: linear-gradient(
-      to right,
-      transparent 0,
-      black 24px,
-      black calc(100% - 24px),
-      transparent 100%
-    );
-  }
+/* Marketplace result grids: 2 → 3 → 4 → 5 → 6 columns, without horizontal clipping. */
+@media (min-width: 1280px) {
+  [class~="grid-cols-2"][class~="sm:grid-cols-3"][class~="lg:grid-cols-4"] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (min-width: 1536px) {
+  [class~="grid-cols-2"][class~="sm:grid-cols-3"][class~="lg:grid-cols-4"] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }

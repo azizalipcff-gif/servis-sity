@@ -1,12 +1,12 @@
 import { cache } from "react";
 import {
   getCategories,
-  getCities,
   getIndexBusinesses,
   getIndexCategoryCounts,
   getIndexProducts,
   getIndexServices,
 } from "@/lib/queries";
+import { getCities } from "@/lib/home-queries";
 import type { BusinessWithCategory } from "@/lib/queries";
 import type { ProductWithBusiness, ServiceWithBusiness } from "@/lib/queries";
 import { normalizeToken } from "@/lib/search-quality/normalize";
@@ -78,101 +78,30 @@ export const getSearchIndex = cache(
       getIndexServices({ city: canonicalCity ?? undefined, limit: 6 }),
       getIndexProducts({ city: canonicalCity ?? undefined, limit: 6 }),
       getIndexBusinesses({ city: canonicalCity ?? undefined, limit: 6, sort: "newest" }),
-      getIndexBusinesses({ city: canonicalCity ?? undefined, limit: 4, sort: "rating" }),
+      getIndexBusinesses({ city: canonicalCity ?? undefined, limit: 6, sort: "rating" }),
       getIndexCategoryCounts(canonicalCity ?? undefined),
       getCategories(),
     ]);
 
-    const categoryRows: SearchIndexCategory[] = categories
-      .map((c) => ({
-        slug: c.slug,
-        name_ar: c.name_ar,
-        name_fr: c.name_fr,
-        name_en: c.name_en,
-        icon: c.icon,
-        count: counts[c.id] ?? 0,
-      }))
-      .filter((c) => c.count > 0)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 12);
+    const categoryRows = categories.map((category) => ({
+      slug: category.slug,
+      name_ar: category.name_ar,
+      name_fr: category.name_fr,
+      name_en: category.name_en,
+      icon: category.icon ?? null,
+      count: counts[category.id] ?? 0,
+    }));
 
     return {
       city: canonicalCity,
       citySlug: resolved?.slug ?? null,
       scope: canonicalCity ? "city" : "global",
-      popularBusinesses: popularBusinesses.map(fromBusiness),
-      popularServices: popularServices.map(fromService),
-      popularProducts: popularProducts.map(fromProduct),
-      trending: trending.map(fromBusiness),
-      highlyRated: highlyRated.map(fromBusiness),
+      popularBusinesses: popularBusinesses.map(stripPrivateBusiness),
+      popularServices: popularServices.map((item) => stripPrivateBusiness(item)),
+      popularProducts: popularProducts.map((item) => stripPrivateBusiness(item)),
+      trending: trending.map(stripPrivateBusiness),
+      highlyRated: highlyRated.map(stripPrivateBusiness),
       categories: categoryRows,
     };
   },
 );
-
-/**
- * Rows already carry the joined `categories` (full Category) and `city_slug`.
- * The raw row is the full `businesses` record, so private columns
- * (`owner_id`, `status_note`, `embedding`, `searchable_text`, `ean`) must be
- * stripped before this travels to the client as part of the search landing
- * feed (Part 4 / Part 12).
- */
-function fromBusiness(b: BusinessWithCategory): SearchItem {
-  return {
-    kind: "business",
-    ...stripPrivateBusiness(b as unknown as Record<string, unknown>),
-  } as unknown as SearchItem;
-}
-
-function fromService(s: ServiceWithBusiness): SearchItem {
-  return {
-    kind: "service",
-    id: s.id,
-    name: s.name,
-    slug: null,
-    price: s.price,
-    old_price: s.old_price,
-    duration_minutes: s.duration_minutes,
-    photo_url: s.photo_url,
-    description: s.description,
-    updated_at: s.updated_at,
-    categories: null,
-    business: toSeller(s.business),
-    sellerName: s.business?.name ?? "",
-  };
-}
-
-function fromProduct(p: ProductWithBusiness): SearchItem {
-  return {
-    kind: "product",
-    id: p.id,
-    slug: p.slug,
-    name: p.name,
-    price: p.price,
-    compare_at_price: p.compare_at_price,
-    stock: p.stock,
-    images: p.images ?? [],
-    description: p.description,
-    created_at: p.created_at,
-    updated_at: p.updated_at,
-    categories: null,
-    business: toSeller(p.business),
-    sellerName: p.business?.name ?? "",
-  };
-}
-
-type SellerRow = ServiceWithBusiness["business"] | ProductWithBusiness["business"];
-
-function toSeller(b: SellerRow): SearchSeller {
-  return {
-    name: b?.name ?? "",
-    slug: b?.slug ?? null,
-    logo_url: b?.logo_url ?? null,
-    verified: b?.verified ?? false,
-    city: b?.city ?? null,
-    city_slug: b?.city_slug ?? null,
-    rating_avg: b?.rating_avg ?? 0,
-    reviews_count: b?.reviews_count ?? 0,
-    plan: b?.plan ?? "free",
-  };
-}

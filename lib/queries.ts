@@ -513,6 +513,7 @@ export type ProductBusiness = Pick<
   | "rating_avg"
   | "reviews_count"
   | "plan"
+  | "status"
 > & {
   /** Canonical city slug resolved from the cities table (via `city_id`). */
   city_slug?: string | null;

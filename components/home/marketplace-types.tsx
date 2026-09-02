@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 
 const TYPES = [
-  { href: "/business", icon: Store, key: "businesses" },
+  { href: "/businesses", icon: Store, key: "businesses" },
   { href: "/services", icon: Wrench, key: "services" },
   { href: "/products", icon: Package, key: "products" },
 ] as const;

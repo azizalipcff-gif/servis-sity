@@ -28,7 +28,7 @@ export function HeaderSearch() {
       ? "/" + segs.slice(1).join("/")
       : pathname;
 
-  const HIDE_ON = ["/business", "/services", "/products"];
+  const HIDE_ON = ["/businesses", "/services", "/products"];
   if (
     pathname.endsWith("/search") ||
     HIDE_ON.includes(pathname) ||

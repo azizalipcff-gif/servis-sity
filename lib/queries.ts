@@ -293,19 +293,35 @@ export async function getBusinessCount() {
 
 export async function getPublishedServicesCount() {
   const supabase = createPublicClient();
+  const { data: approvedBusinesses, error: businessError } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("status", "approved");
+  const businessIds = (approvedBusinesses ?? []).map((business) => business.id);
+  if (businessError || businessIds.length === 0) return 0;
+
   const { count, error } = await supabase
     .from("services")
     .select("id", { count: "exact", head: true })
-    .eq("status", "published");
+    .eq("status", "published")
+    .in("business_id", businessIds);
   return error ? 0 : (count ?? 0);
 }
 
 export async function getPublishedProductsCount() {
   const supabase = createPublicClient();
+  const { data: approvedBusinesses, error: businessError } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("status", "approved");
+  const businessIds = (approvedBusinesses ?? []).map((business) => business.id);
+  if (businessError || businessIds.length === 0) return 0;
+
   const { count, error } = await supabase
     .from("products")
     .select("id", { count: "exact", head: true })
-    .eq("status", "published");
+    .eq("status", "published")
+    .in("business_id", businessIds);
   return error ? 0 : (count ?? 0);
 }
 

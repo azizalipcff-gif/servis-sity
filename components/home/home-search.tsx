@@ -67,7 +67,7 @@ export function HomeSearch({
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outlinePrimary" className="px-7">
-                <Link href="/business">
+                <Link href="/businesses">
                   <Building2 className="size-4" />
                   {t("ctaBusinesses")}
                 </Link>
@@ -84,7 +84,7 @@ export function HomeSearch({
               {stats.map((stat) => (
                 <div key={stat.label}>
                   <dd className="text-editorial text-3xl text-primary sm:text-4xl">
-                    {new Intl.NumberFormat(numberLocale).format(stat.value)}+
+                    {new Intl.NumberFormat(numberLocale).format(stat.value)}
                   </dd>
                   <dt className="mt-1.5 text-[13px] font-medium text-muted-foreground">
                     {stat.label}

@@ -658,7 +658,7 @@ export type ServiceListFilters = {
   offset?: number;
 };
 
-const SERVICE_BUSINESS_SELECT = `${PRODUCT_BUSINESS_SELECT}, category_id`;
+const SERVICE_BUSINESS_SELECT = `${PRODUCT_BUSINESS_SELECT}, category_id, status`;
 
 /** Single published service by id, with its provider business (and category resolved separately). */
 export const getServiceById = unstable_cache(
@@ -825,11 +825,14 @@ export const getPopularServices = unstable_cache(
       .from("services")
       .select(`*, business:businesses(${SERVICE_BUSINESS_SELECT})`)
       .eq("status", "published")
+      .eq("business.status", "approved")
       .order("featured", { ascending: false })
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (error || !data) return [];
-    return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ServiceWithBusiness[];
+    return ((data ?? [])
+      .filter((row) => (row as { business?: { status?: string | null } | null }).business?.status === "approved")
+      .map(attachSellerCitySlug)) as ServiceWithBusiness[];
   },
   ["q:popular-services"],
   { tags: ["services"], revalidate: 60 },

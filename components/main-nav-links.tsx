@@ -16,7 +16,7 @@ export function MainNavLinks() {
   const pathname = usePathname();
 
   return (
-    <nav className="hidden items-center gap-1 lg:flex" aria-label="Main">
+    <nav className="hidden items-center gap-1 xl:flex" aria-label="Main">
       {LINKS.map(({ href, labelKey, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (

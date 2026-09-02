@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpRight, BadgeCheck, Home, MapPin, Sparkles, Star, Store } from "lucide-react";
+import { ArrowUpRight, Home, MapPin, Sparkles, Star, Store } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { SmartImage } from "@/components/smart-image";
@@ -22,12 +22,11 @@ export function BusinessHero({ business }: { business: BusinessDetail }) {
   }, [business.id]);
 
   const browseHref = business.categories
-    ? `/business?category=${business.categories.slug}`
-    : "/business";
+    ? `/businesses?category=${business.categories.slug}`
+    : "/businesses";
 
   return (
     <>
-      {/* Cinematic hero — the very first visual element below the navbar */}
       <section className="relative h-[300px] overflow-hidden bg-muted sm:h-[400px] lg:h-[460px]">
         <div className="absolute inset-0">
           <SmartImage
@@ -39,11 +38,7 @@ export function BusinessHero({ business }: { business: BusinessDetail }) {
             priority
           />
         </div>
-
-        {/* Bottom 60% contrast gradient */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-
-        {/* Top floating actions — back, entity-type chip, View all */}
         <div className="absolute inset-x-4 top-4 z-20 flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
             <Link
@@ -71,7 +66,6 @@ export function BusinessHero({ business }: { business: BusinessDetail }) {
           </div>
         </div>
 
-        {/* Identity anchored bottom-start */}
         <div className="absolute inset-x-0 bottom-0 z-10">
           <div className="container-site">
             <motion.div
@@ -95,25 +89,14 @@ export function BusinessHero({ business }: { business: BusinessDetail }) {
                   <h1 className="min-w-0 break-words text-2xl font-bold leading-tight text-white md:text-4xl">
                     {business.name}
                   </h1>
-
-                  {business.verified && (
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-white/40 backdrop-blur">
-                      <BadgeCheck className="size-3.5" />
-                      {t("verified")}
-                    </span>
-                  )}
-
                   {(business.plan === "premium" || business.plan === "pro") && (
                     <span className="inline-flex items-center gap-1 rounded-lg bg-gold px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-black shadow-sm">
                       <Sparkles className="size-3.5" />
-                      {business.plan === "premium"
-                        ? bCard("premium")
-                        : "Pro"}
+                      {business.plan === "premium" ? bCard("premium") : "Pro"}
                     </span>
                   )}
                 </div>
 
-                {/* Sub-bar: Category • City • Rating */}
                 <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-white/90">
                   {business.categories && (
                     <span className="inline-flex items-center gap-1.5 font-medium text-white">
@@ -126,19 +109,13 @@ export function BusinessHero({ business }: { business: BusinessDetail }) {
                       {business.city}
                     </span>
                   )}
-                  <span className="inline-flex items-center gap-1.5">
-                    <Star className="size-4 fill-gold text-gold" />
-                    <span className="font-semibold text-white">
-                      {business.rating_avg > 0
-                        ? business.rating_avg.toFixed(1)
-                        : "—"}
+                  {business.reviews_count > 0 && business.rating_avg > 0 && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Star className="size-4 fill-gold text-gold" />
+                      <span className="font-semibold text-white">{business.rating_avg.toFixed(1)}</span>
+                      <span className="text-white/80">({business.reviews_count})</span>
                     </span>
-                    <span className="text-white/80">
-                      {business.reviews_count > 0
-                        ? `(${business.reviews_count})`
-                        : t("noReviews")}
-                    </span>
-                  </span>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -146,7 +123,6 @@ export function BusinessHero({ business }: { business: BusinessDetail }) {
         </div>
       </section>
 
-      {/* Action bar — directly below the hero */}
       <div className="border-b border-border bg-background">
         <div className="container-site py-3">
           <QuickActions business={business} locale={locale} />

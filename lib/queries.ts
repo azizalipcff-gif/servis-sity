@@ -304,6 +304,17 @@ export async function getBusinessCount() {
   return error ? 0 : (count ?? 0);
 }
 
+export async function getPublishedCityCount() {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("businesses")
+    .select("city_id")
+    .eq("status", "approved")
+    .not("city_id", "is", null);
+  if (error || !data) return 0;
+  return new Set(data.map((row) => row.city_id).filter(Boolean)).size;
+}
+
 export async function getPublishedServicesCount() {
   const supabase = createPublicClient();
   const { data: approvedBusinesses, error: businessError } = await supabase

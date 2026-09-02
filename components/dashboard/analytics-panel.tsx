@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
-import type { AnalyticsSummary } from "@/lib/queries";
+import type { AnalyticsSummary } from "@/lib/admin-queries";
 
 export function AnalyticsPanel({
   analytics,
@@ -50,9 +50,7 @@ export function AnalyticsPanel({
       <div className="rounded-3xl border bg-card p-5">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">{t("views")}</h3>
-          <span className="text-xs text-muted-foreground">
-            {t("last14")}
-          </span>
+          <span className="text-xs text-muted-foreground">{t("last14")}</span>
         </div>
         <div className="mt-4 flex h-40 items-end gap-1.5">
           {analytics.series.length === 0 && (

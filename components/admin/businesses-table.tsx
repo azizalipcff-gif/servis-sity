@@ -2,40 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import {
-  Banknote,
-  BadgeCheck,
-  Eye,
-  Loader2,
-  ShieldCheck,
-  Store,
-  Trash2,
-  XCircle,
-} from "lucide-react";
+import { Banknote, BadgeCheck, Eye, Loader2, ShieldCheck, Store, Trash2, XCircle } from "lucide-react";
 import { localizedName, type Locale } from "@/lib/translations";
-import type { AdminBusiness } from "@/lib/queries";
-import type {
-  BusinessStatus,
-  PlanType,
-  VerificationStatus,
-} from "@/lib/supabase/database.types";
+import type { AdminBusiness } from "@/lib/admin-queries";
+import type { BusinessStatus, PlanType, VerificationStatus } from "@/lib/supabase/database.types";
 import { Link } from "@/i18n/navigation";
 import { businessHref } from "@/lib/business/url";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BusinessPreviewDrawer } from "@/components/admin/business-preview-drawer";
 
-type Props = {
-  businesses: AdminBusiness[];
-  locale: Locale;
-};
-
-const STATUSES: BusinessStatus[] = [
-  "approved",
-  "pending_review",
-  "rejected",
-  "suspended",
-];
+type Props = { businesses: AdminBusiness[]; locale: Locale };
+const STATUSES: BusinessStatus[] = ["approved", "pending_review", "rejected", "suspended"];
 const PLANS: PlanType[] = ["free", "premium", "pro"];
 
 export function BusinessesTable({ businesses, locale }: Props) {
@@ -45,332 +23,22 @@ export function BusinessesTable({ businesses, locale }: Props) {
   const [status, setStatus] = useState<"all" | BusinessStatus>("all");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ id: string; action?: "reject" } | null>(null);
-  const [deleteStatus, setDeleteStatus] = useState<
-    { type: "success" | "error"; message: string } | null
-  >(null);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return rows.filter((b) => {
-      if (status !== "all" && b.status !== status) return false;
-      if (!q) return true;
-      return [b.name, b.city, b.profiles?.full_name].some((v) =>
-        v?.toLowerCase().includes(q),
-      );
-    });
-  }, [rows, query, status]);
-
-  async function api(path: string, method: string, body?: unknown) {
-    const res = await fetch(path, {
-      method,
-      headers: body ? { "Content-Type": "application/json" } : undefined,
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    return res.ok;
-  }
-
-  function update(id: string, patch: Partial<AdminBusiness>) {
-    setRows((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
-  }
-
-  async function runWith(loadingId: string, fn: () => Promise<boolean>) {
-    setBusyId(loadingId);
-    try {
-      return await fn();
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  function applyStatus(b: AdminBusiness, newStatus: BusinessStatus) {
-    void runWith(b.id, () =>
-      api("/api/admin/businesses", "PATCH", { id: b.id, status: newStatus }).then((ok) => {
-        if (ok) update(b.id, { status: newStatus });
-        return ok;
-      }),
-    );
-  }
-  function setPlan(b: AdminBusiness, plan: PlanType) {
-    void runWith(b.id, () =>
-      api("/api/admin/businesses", "PATCH", { id: b.id, plan }).then((ok) => {
-        if (ok) update(b.id, { plan });
-        return ok;
-      }),
-    );
-  }
-  function setVerification(b: AdminBusiness, verification_status: VerificationStatus) {
-    void runWith(b.id, () =>
-      api("/api/admin/businesses", "PATCH", {
-        id: b.id,
-        verification_status,
-      }).then((ok) => {
-        if (ok) update(b.id, { verification_status, verified: verification_status === "verified" });
-        return ok;
-      }),
-    );
-  }
-  function remove(b: AdminBusiness) {
-    if (!confirm(t("confirmDelete"))) return;
-    setDeleteStatus(null);
-    void runWith(b.id, async () => {
-      const res = await fetch(`/api/admin/businesses?id=${b.id}`, { method: "DELETE" });
-      if (res.ok) {
-        setRows((prev) => prev.filter((x) => x.id !== b.id));
-        setDeleteStatus({ type: "success", message: t("deleteSuccess") });
-        return true;
-      }
-      let code = "delete_failed";
-      try {
-        const data = await res.json();
-        if (data?.error) code = data.error;
-      } catch {
-        /* ignore unparsable error bodies */
-      }
-      const message =
-        code === "delete_blocked_dependents"
-          ? t("deleteBlocked")
-          : code === "unauthorized" || code === "csrf_rejected"
-            ? t("notAdmin")
-            : t("deleteFailed");
-      setDeleteStatus({ type: "error", message });
-      return false;
-    });
-  }
-
-  const statusBadge = (s: BusinessStatus) => {
-    const map: Record<BusinessStatus, "default" | "success" | "warning" | "destructive"> = {
-      approved: "success",
-      pending_review: "warning",
-      rejected: "destructive",
-      suspended: "destructive",
-    };
-    return <Badge variant={map[s]}>{t(s)}</Badge>;
-  };
-
-  const dateFmt = (v: string) =>
-    new Intl.DateTimeFormat(locale === "ar" ? "ar-MA" : locale, {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(v));
-
-  function PreviewButton({ b, label }: { b: AdminBusiness; label: string }) {
-    return (
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => setPreview({ id: b.id })}
-        title={label}
-      >
-        <Eye className="size-4" />
-        <span className="hidden sm:inline">{label}</span>
-      </Button>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      {deleteStatus && (
-        <div
-          role="alert"
-          className={
-            "rounded-lg border px-3 py-2 text-sm " +
-            (deleteStatus.type === "success"
-              ? "border-success/40 bg-success/10 text-success"
-              : "border-destructive/40 bg-destructive/10 text-destructive")
-          }
-        >
-          {deleteStatus.message}
-        </div>
-      )}
-      <div className="flex flex-wrap items-center gap-3">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t("searchPlaceholder")}
-          className="h-10 min-w-0 flex-1 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring sm:max-w-xs"
-        />
-        <div className="flex flex-wrap gap-2">
-          {(["all", ...STATUSES] as const).map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatus(s)}
-              className={
-                "rounded-full px-3 py-1.5 text-sm font-medium transition-colors " +
-                (status === s
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground/75 hover:bg-muted/70")
-              }
-            >
-              {s === "all" ? t("all") : t(s)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {filtered.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed bg-card/50 py-14 text-center">
-          <p className="text-sm text-muted-foreground">{t("empty")}</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-3xl border bg-card">
-          <table className="w-full min-w-[980px] text-sm">
-            <thead className="border-b bg-muted/50">
-              <tr>
-                <th className="px-4 py-3 text-start font-medium">{t("name")}</th>
-                <th className="px-4 py-3 text-start font-medium">{t("category")}</th>
-                <th className="px-4 py-3 text-start font-medium">{t("city")}</th>
-                <th className="px-4 py-3 text-start font-medium">{t("owner")}</th>
-                <th className="px-4 py-3 text-start font-medium">{t("status")}</th>
-                <th className="px-4 py-3 text-start font-medium">{t("created")}</th>
-                <th className="px-4 py-3 text-end font-medium">{t("actions")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {filtered.map((b) => (
-                <tr key={b.id}>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="relative size-10 shrink-0 overflow-hidden rounded-lg border bg-muted">
-                        {b.logo_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={b.logo_url}
-                            alt={b.name}
-                            className="size-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="grid size-full place-items-center text-muted-foreground">
-                            <Store className="size-5" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="max-w-[220px] truncate font-medium">{b.name}</p>
-                        {b.slug && (
-                          <p className="max-w-[220px] truncate text-xs text-muted-foreground" dir="ltr">
-                            /{b.slug}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    {b.categories ? localizedName(b.categories, locale) : "—"}
-                  </td>
-                  <td className="px-4 py-3">{b.city ?? "—"}</td>
-                  <td className="px-4 py-3">{b.profiles?.full_name ?? "—"}</td>
-                  <td className="px-4 py-3">{statusBadge(b.status)}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
-                    {dateFmt(b.created_at)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap items-center justify-end gap-1">
-                      <PreviewButton b={b} label={t("preview")} />
-
-                      {b.status !== "approved" && (
-                        <Button
-                          size="sm"
-                          variant="default"
-                          disabled={busyId === b.id}
-                          onClick={() => applyStatus(b, "approved")}
-                          className="text-xs"
-                        >
-                          {busyId === b.id ? (
-                            <Loader2 className="size-4 animate-spin" />
-                          ) : (
-                            <BadgeCheck className="size-4" />
-                          )}
-                          <span className="hidden lg:inline">{t("approve")}</span>
-                        </Button>
-                      )}
-                      {b.status !== "rejected" && (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          disabled={busyId === b.id}
-                          onClick={() => setPreview({ id: b.id, action: "reject" })}
-                          className="text-xs"
-                        >
-                          <XCircle className="size-4" />
-                          <span className="hidden lg:inline">{t("reject")}</span>
-                        </Button>
-                      )}
-
-                      <select
-                        value={b.plan}
-                        disabled={busyId === b.id}
-                        onChange={(e) => setPlan(b, e.target.value as PlanType)}
-                        className="h-8 rounded-md border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-                        title={t("plan")}
-                      >
-                        {PLANS.map((p) => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </select>
-
-                      {b.verification_status === "verified" ? (
-                        <span
-                          className="inline-flex items-center gap-1 text-xs font-medium text-success"
-                          title={t("markVerified")}
-                        >
-                          <BadgeCheck className="size-4" />
-                        </span>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          disabled={busyId === b.id}
-                          onClick={() => setVerification(b, "verified")}
-                          title={t("verify")}
-                        >
-                          <ShieldCheck className="size-4" />
-                        </Button>
-                      )}
-
-                      <Link
-                        href={businessHref(b)}
-                        target="_blank"
-                        className="inline-flex size-9 items-center justify-center rounded-md hover:bg-muted"
-                        title={t("viewPage")}
-                      >
-                        <Banknote className="size-4" />
-                        <span className="sr-only">{t("viewPage")}</span>
-                      </Link>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        disabled={busyId === b.id}
-                        onClick={() => remove(b)}
-                        className="text-destructive hover:text-destructive"
-                        title={t("delete")}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {preview && (
-        <BusinessPreviewDrawer
-          key={preview.id}
-          open
-          businessId={preview.id}
-          fallbackName={rows.find((r) => r.id === preview.id)?.name ?? ""}
-          locale={locale}
-          initialAction={preview.action}
-          onClose={() => setPreview(null)}
-          onModerated={(id, newStatus) => update(id, { status: newStatus })}
-        />
-      )}
-    </div>
-  );
+  const [deleteStatus, setDeleteStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const filtered = useMemo(() => { const q = query.trim().toLowerCase(); return rows.filter((b) => { if (status !== "all" && b.status !== status) return false; if (!q) return true; return [b.name, b.city, b.profiles?.full_name].some((v) => v?.toLowerCase().includes(q)); }); }, [rows, query, status]);
+  async function api(path: string, method: string, body?: unknown) { const res = await fetch(path, { method, headers: body ? { "Content-Type": "application/json" } : undefined, body: body ? JSON.stringify(body) : undefined }); return res.ok; }
+  function update(id: string, patch: Partial<AdminBusiness>) { setRows((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b))); }
+  async function runWith(loadingId: string, fn: () => Promise<boolean>) { setBusyId(loadingId); try { return await fn(); } finally { setBusyId(null); } }
+  function applyStatus(b: AdminBusiness, newStatus: BusinessStatus) { void runWith(b.id, () => api("/api/admin/businesses", "PATCH", { id: b.id, status: newStatus }).then((ok) => { if (ok) update(b.id, { status: newStatus }); return ok; })); }
+  function setPlan(b: AdminBusiness, plan: PlanType) { void runWith(b.id, () => api("/api/admin/businesses", "PATCH", { id: b.id, plan }).then((ok) => { if (ok) update(b.id, { plan }); return ok; })); }
+  function setVerification(b: AdminBusiness, verification_status: VerificationStatus) { void runWith(b.id, () => api("/api/admin/businesses", "PATCH", { id: b.id, verification_status }).then((ok) => { if (ok) update(b.id, { verification_status, verified: verification_status === "verified" }); return ok; })); }
+  function remove(b: AdminBusiness) { if (!confirm(t("confirmDelete"))) return; setDeleteStatus(null); void runWith(b.id, async () => { const res = await fetch(`/api/admin/businesses?id=${b.id}`, { method: "DELETE" }); if (res.ok) { setRows((prev) => prev.filter((x) => x.id !== b.id)); setDeleteStatus({ type: "success", message: t("deleteSuccess") }); return true; } let code = "delete_failed"; try { const data = await res.json(); if (data?.error) code = data.error; } catch {} const message = code === "delete_blocked_dependents" ? t("deleteBlocked") : code === "unauthorized" || code === "csrf_rejected" ? t("notAdmin") : t("deleteFailed"); setDeleteStatus({ type: "error", message }); return false; }); }
+  const statusBadge = (s: BusinessStatus) => { const map: Record<BusinessStatus, "default" | "success" | "warning" | "destructive"> = { approved: "success", pending_review: "warning", rejected: "destructive", suspended: "destructive" }; return <Badge variant={map[s]}>{t(s)}</Badge>; };
+  const dateFmt = (v: string) => new Intl.DateTimeFormat(locale === "ar" ? "ar-MA" : locale, { day: "numeric", month: "short", year: "numeric" }).format(new Date(v));
+  function PreviewButton({ b, label }: { b: AdminBusiness; label: string }) { return <Button size="sm" variant="outline" onClick={() => setPreview({ id: b.id })} title={label}><Eye className="size-4" /><span className="hidden sm:inline">{label}</span></Button>; }
+  return <div className="space-y-4">
+    {deleteStatus && <div role="alert" className={"rounded-lg border px-3 py-2 text-sm " + (deleteStatus.type === "success" ? "border-success/40 bg-success/10 text-success" : "border-destructive/40 bg-destructive/10 text-destructive")}>{deleteStatus.message}</div>}
+    <div className="flex flex-wrap items-center gap-3"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("searchPlaceholder")} className="h-10 min-w-0 flex-1 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring sm:max-w-xs" /><div className="flex flex-wrap gap-2">{(["all", ...STATUSES] as const).map((s) => <button key={s} onClick={() => setStatus(s)} className={"rounded-full px-3 py-1.5 text-sm font-medium transition-colors " + (status === s ? "bg-primary text-primary-foreground" : "bg-muted text-foreground/75 hover:bg-muted/70")}>{s === "all" ? t("all") : t(s)}</button>)}</div></div>
+    {filtered.length === 0 ? <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed bg-card/50 py-14 text-center"><p className="text-sm text-muted-foreground">{t("empty")}</p></div> : <div className="overflow-x-auto rounded-3xl border bg-card"><table className="w-full min-w-[980px] text-sm"><thead className="border-b bg-muted/50"><tr>{["name","category","city","owner","status","created","actions"].map((h) => <th key={h} className={"px-4 py-3 font-medium " + (h === "actions" ? "text-end" : "text-start")}>{t(h)}</th>)}</tr></thead><tbody className="divide-y">{filtered.map((b) => <tr key={b.id}><td className="px-4 py-3"><div className="flex items-center gap-3"><div className="relative size-10 shrink-0 overflow-hidden rounded-lg border bg-muted">{b.logo_url ? <img src={b.logo_url} alt={b.name} className="size-full object-cover" loading="lazy" /> : <div className="grid size-full place-items-center text-muted-foreground"><Store className="size-5" /></div>}</div><div className="min-w-0"><p className="max-w-[220px] truncate font-medium">{b.name}</p>{b.slug && <p className="max-w-[220px] truncate text-xs text-muted-foreground" dir="ltr">/{b.slug}</p>}</div></div></td><td className="px-4 py-3">{b.categories ? localizedName(b.categories, locale) : "—"}</td><td className="px-4 py-3">{b.city ?? "—"}</td><td className="px-4 py-3">{b.profiles?.full_name ?? "—"}</td><td className="px-4 py-3">{statusBadge(b.status)}</td><td className="px-4 py-3 whitespace-nowrap text-muted-foreground">{dateFmt(b.created_at)}</td><td className="px-4 py-3"><div className="flex flex-wrap items-center justify-end gap-1"><PreviewButton b={b} label={t("preview")} />{b.status !== "approved" && <Button size="sm" variant="default" disabled={busyId === b.id} onClick={() => applyStatus(b, "approved")}><BadgeCheck className="size-4" /></Button>}{b.status !== "rejected" && <Button size="sm" variant="destructive" disabled={busyId === b.id} onClick={() => setPreview({ id: b.id, action: "reject" })}><XCircle className="size-4" /></Button>}<select value={b.plan} disabled={busyId === b.id} onChange={(e) => setPlan(b, e.target.value as PlanType)} className="h-8 rounded-md border border-input bg-background px-2 text-xs"><option value="free">free</option><option value="premium">premium</option><option value="pro">pro</option></select>{b.verification_status === "verified" ? <span className="inline-flex items-center gap-1 text-xs font-medium text-success"><BadgeCheck className="size-4" /></span> : <Button size="sm" variant="ghost" disabled={busyId === b.id} onClick={() => setVerification(b, "verified")} title={t("verify")}><ShieldCheck className="size-4" /></Button>}<Link href={businessHref(b)} target="_blank" className="inline-flex size-9 items-center justify-center rounded-md hover:bg-muted" title={t("viewPage")}><Banknote className="size-4" /></Link><Button size="sm" variant="ghost" disabled={busyId === b.id} onClick={() => remove(b)} className="text-destructive hover:text-destructive" title={t("delete")}><Trash2 className="size-4" /></Button></div></td></tr>)}</tbody></table></div>}
+    {preview && <BusinessPreviewDrawer key={preview.id} open businessId={preview.id} fallbackName={rows.find((r) => r.id === preview.id)?.name ?? ""} locale={locale} initialAction={preview.action} onClose={() => setPreview(null)} onModerated={(id, newStatus) => update(id, { status: newStatus })} />}
+  </div>;
 }

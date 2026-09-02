@@ -624,11 +624,16 @@ export const getPublishedProducts = unstable_cache(
     const sort = PRODUCT_SORT_COLUMNS[filters.sort ?? "newest"];
     q = q.order(sort.column, { ascending: sort.ascending });
 
-    const { data, error, count } = await q.range(offset, offset + limit - 1);
+    const { data, error } = await q.range(offset, offset + limit - 1);
     if (error || !data) return { items: [], total: 0 };
+    const approved = (data ?? []).filter((row) =>
+      (row as { business?: { status?: string | null } | null }).business?.status === "approved",
+    );
     return {
-      items: ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[],
-      total: count ?? 0,
+      items: approved.map(attachSellerCitySlug) as ProductWithBusiness[],
+      // The join cannot safely provide an exact approved-provider count without
+      // a second query, so expose the visible result count rather than a false total.
+      total: approved.length,
     };
   },
   ["q:published-products"],

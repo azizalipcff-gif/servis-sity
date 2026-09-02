@@ -462,7 +462,9 @@ export const getFeaturedProducts = unstable_cache(
       .order("created_at", { ascending: false })
       .limit(limit);
     if (error) return [];
-    return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[];
+    return ((data ?? [])
+      .filter((row) => (row as { business?: { status?: string | null } | null }).business?.status === "approved")
+      .map(attachSellerCitySlug)) as ProductWithBusiness[];
   },
   ["q:featured-products"],
   { tags: ["products"], revalidate: 60 },

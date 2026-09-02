@@ -209,7 +209,7 @@ export const getPublishedBusinesses = unstable_cache(
       q = q.or(`name.ilike.%${filters.query}%,description.ilike.%${filters.query}%`);
     if (filters.categoryId) q = q.eq("category_id", filters.categoryId);
     if (filters.city) q = q.eq("city", filters.city);
-    if (filters.verifiedOnly) q = q.eq("verified", true);
+    // `verified` is an administrative state, not a discovery-quality filter.\n    // Keep the filter only when the UI explicitly requests it.\n    if (filters.verifiedOnly) q = q.eq("verified", true);
 
     const sort = BUSINESS_SORT_COLUMNS[filters.sort ?? "newest"];
     q = q.order(sort.column, { ascending: sort.ascending });

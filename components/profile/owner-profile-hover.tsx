@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { BriefcaseBusiness, Globe, Languages, MapPin, UserRound } from "lucide-react";
 import { SmartImage } from "@/components/smart-image";
 import { DEFAULT_PLACEHOLDER_IMAGES } from "@/lib/constants";
@@ -22,7 +22,7 @@ type OwnerProfile = {
 type Props = {
   ownerId: string | null | undefined;
   businessName?: string | null;
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 };
 
@@ -37,9 +37,7 @@ export function OwnerProfileHover({ ownerId, businessName, children, className }
     if (!ownerId || loaded.current || loading) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/public/owner-profile/${ownerId}`, {
-        cache: "force-cache",
-      });
+      const response = await fetch(`/api/public/owner-profile/${ownerId}`, { cache: "force-cache" });
       if (!response.ok) return;
       const data = (await response.json()) as OwnerProfile;
       setProfile(data);
@@ -69,25 +67,27 @@ export function OwnerProfileHover({ ownerId, businessName, children, className }
   }, []);
 
   return (
-    <span
-      className={cn("relative inline-flex min-w-0", className)}
-      onMouseEnter={show}
-      onMouseLeave={hide}
-      onFocus={show}
-      onBlur={hide}
-    >
-      <button
-        type="button"
-        className="inline-flex min-w-0 items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+    <span className={cn("relative inline-flex min-w-0", className)} onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}>
+      <span
+        role="button"
+        tabIndex={0}
+        className="inline-flex min-w-0 cursor-pointer items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
         aria-label={businessName ? `View ${businessName} owner profile` : "View owner profile"}
         aria-expanded={open}
         onClick={() => {
           setOpen((value) => !value);
           if (!open) void loadProfile();
         }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setOpen((value) => !value);
+            if (!open) void loadProfile();
+          }
+        }}
       >
         {children}
-      </button>
+      </span>
 
       {open && (
         <div
@@ -107,18 +107,14 @@ export function OwnerProfileHover({ ownerId, businessName, children, className }
                 <SmartImage
                   src={profile?.avatar_url}
                   alt=""
-                  fallback={DEFAULT_PLACEHOLDER_IMAGES.avatar}
+                  fallback={DEFAULT_PLACEHOLDER_IMAGES.logo}
                   className="size-full"
                   imgClassName="object-cover"
                 />
               </span>
               <div className="min-w-0 pb-0.5">
-                <p className="truncate font-semibold">
-                  {profile?.full_name || businessName || "Owner"}
-                </p>
-                {profile?.username && (
-                  <p className="truncate text-xs text-muted-foreground">@{profile.username}</p>
-                )}
+                <p className="truncate font-semibold">{profile?.full_name || businessName || "Owner"}</p>
+                {profile?.username && <p className="truncate text-xs text-muted-foreground">@{profile.username}</p>}
               </div>
             </div>
 
@@ -129,36 +125,13 @@ export function OwnerProfileHover({ ownerId, businessName, children, className }
               </div>
             ) : profile ? (
               <div className="mt-3 space-y-2 text-sm">
-                {profile.bio && (
-                  <p className="line-clamp-3 leading-relaxed text-muted-foreground">{profile.bio}</p>
-                )}
+                {profile.bio && <p className="line-clamp-3 leading-relaxed text-muted-foreground">{profile.bio}</p>}
                 <div className="grid gap-1.5 text-xs text-muted-foreground">
-                  {profile.city && (
-                    <span className="inline-flex items-center gap-2">
-                      <MapPin className="size-3.5 shrink-0 text-primary" />
-                      {profile.city}
-                    </span>
-                  )}
-                  {profile.experience && (
-                    <span className="inline-flex items-center gap-2">
-                      <BriefcaseBusiness className="size-3.5 shrink-0 text-primary" />
-                      {profile.experience}
-                    </span>
-                  )}
-                  {profile.languages && (
-                    <span className="inline-flex items-center gap-2">
-                      <Languages className="size-3.5 shrink-0 text-primary" />
-                      {profile.languages}
-                    </span>
-                  )}
+                  {profile.city && <span className="inline-flex items-center gap-2"><MapPin className="size-3.5 shrink-0 text-primary" />{profile.city}</span>}
+                  {profile.experience && <span className="inline-flex items-center gap-2"><BriefcaseBusiness className="size-3.5 shrink-0 text-primary" />{profile.experience}</span>}
+                  {profile.languages && <span className="inline-flex items-center gap-2"><Languages className="size-3.5 shrink-0 text-primary" />{profile.languages}</span>}
                   {profile.website && (
-                    <a
-                      href={profile.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-w-0 items-center gap-2 truncate text-primary hover:underline"
-                      onClick={(event) => event.stopPropagation()}
-                    >
+                    <a href={profile.website} target="_blank" rel="noopener noreferrer" className="inline-flex min-w-0 items-center gap-2 truncate text-primary hover:underline" onClick={(event) => event.stopPropagation()}>
                       <Globe className="size-3.5 shrink-0" />
                       <span className="truncate">{profile.website}</span>
                     </a>
@@ -166,17 +139,13 @@ export function OwnerProfileHover({ ownerId, businessName, children, className }
                 </div>
                 {profile.skills && (
                   <div className="border-t border-border pt-2 text-xs text-muted-foreground">
-                    <span className="mr-1 inline-flex items-center gap-1 font-medium text-foreground">
-                      <UserRound className="size-3" /> Skills:
-                    </span>
+                    <span className="me-1 inline-flex items-center gap-1 font-medium text-foreground"><UserRound className="size-3" />Skills:</span>
                     {profile.skills}
                   </div>
                 )}
               </div>
             ) : (
-              <p className="mt-4 text-xs text-muted-foreground">
-                Owner profile details are not publicly available.
-              </p>
+              <p className="mt-4 text-xs text-muted-foreground">Owner profile details are not publicly available.</p>
             )}
           </div>
         </div>

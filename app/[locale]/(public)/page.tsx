@@ -20,8 +20,6 @@ import type { Locale } from "@/lib/translations";
 import { siteUrl, absoluteUrl, localizedLanguages } from "@/lib/seo";
 import { toJsonLd } from "@/lib/security/sanitize";
 
-// Keep the public homepage fast while ensuring marketplace counts and rails
-// refresh frequently. Admin mutations also invalidate the corresponding tags.
 export const revalidate = 60;
 
 type Props = {
@@ -36,6 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: { absolute: t("title") },
     description: t("description"),
+    applicationName: "Servis Sity",
     alternates: {
       canonical: absoluteUrl(`/${locale}`),
       languages: localizedLanguages(""),
@@ -44,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: t("title"),
       description: t("description"),
       url: absoluteUrl(`/${locale}`),
-      siteName: "Service City",
+      siteName: "Servis Sity",
       images: [{ url: absoluteUrl("/branding/service-city-logo.png") }],
     },
   };
@@ -75,17 +74,17 @@ export default async function HomePage({ params }: Props) {
   const organizationJsonLd = toJsonLd({
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Service City",
+    name: "Servis Sity",
     url: siteUrl(),
     logo: `${siteUrl()}/branding/service-city-logo.png`,
     description:
-      "Arabic-first marketplace foundation for discovering local businesses, services and products.",
+      "Moroccan marketplace for discovering local businesses, services and products.",
   });
 
   const websiteJsonLd = toJsonLd({
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Service City",
+    name: "Servis Sity",
     url: siteUrl(),
     inLanguage: locale,
     potentialAction: {

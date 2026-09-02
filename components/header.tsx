@@ -28,7 +28,6 @@ export async function Header() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full bg-background">
-        {/* Tier 1 — utility bar */}
         <div className="hidden border-b border-border bg-secondary/60 lg:block">
           <div className="container-site flex h-9 items-center justify-between gap-4 text-[13px]">
             <div className="flex items-center gap-5">
@@ -54,26 +53,30 @@ export async function Header() {
           </div>
         </div>
 
-        {/* Tier 2 — main navigation row: logo + primary links + search + all
-            categories + user controls */}
         <HeaderBar>
-          <div className="container-site flex h-14 items-center gap-3 lg:h-16">
-            <Link
-              href="/"
-              className="flex shrink-0 items-center lg:hidden"
-              aria-label={t("home")}
-            >
-              <BrandLogo className="h-7 w-auto" priority />
-            </Link>
-            <Link href="/" className="hidden shrink-0 items-center lg:flex">
-              <BrandLogo className="h-8 w-auto" priority />
-            </Link>
+          <div className="container-site flex min-h-14 flex-wrap items-center gap-2 py-2 lg:min-h-16 lg:flex-nowrap lg:gap-3 lg:py-0">
+            <div className="flex min-w-0 flex-1 items-center gap-2 lg:contents">
+              <Link
+                href="/"
+                className="flex shrink-0 items-center lg:hidden"
+                aria-label={t("home")}
+              >
+                <BrandLogo className="h-7 w-auto" priority />
+              </Link>
+              <Link href="/" className="hidden shrink-0 items-center lg:flex">
+                <BrandLogo className="h-8 w-auto" priority />
+              </Link>
 
-            <MainNavLinks />
+              <MainNavLinks />
+            </div>
 
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              <HeaderSearch />
-              <AllCategoriesNavButton />
+            <div className="order-3 basis-full min-w-0 lg:order-none lg:flex-1 lg:basis-auto lg:min-w-[320px] xl:min-w-[420px]">
+              <div className="flex min-w-0 items-center gap-2">
+                <HeaderSearch />
+                <div className="hidden shrink-0 xl:block">
+                  <AllCategoriesNavButton />
+                </div>
+              </div>
             </div>
 
             <div className="flex shrink-0 items-center gap-0.5 lg:gap-1">

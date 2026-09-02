@@ -1,7 +1,8 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { getCurrentUser } from "@/lib/supabase/user";
-import { getCategories, getCities, getMyBusiness } from "@/lib/queries";
+import { getCategories, getMyBusiness } from "@/lib/queries";
+import { getCities } from "@/lib/home-queries";
 import { BusinessForm } from "@/components/dashboard/business-form";
 import { EntityPageHeader } from "@/components/dashboard/entity-page-header";
 import type { Locale } from "@/lib/translations";

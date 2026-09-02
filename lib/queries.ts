@@ -208,7 +208,20 @@ export const getPublishedBusinesses = unstable_cache(
     if (filters.query)
       q = q.or(`name.ilike.%${filters.query}%,description.ilike.%${filters.query}%`);
     if (filters.categoryId) q = q.eq("category_id", filters.categoryId);
-    if (filters.city) q = q.eq("city", filters.city);
+    if (filters.city) {
+      // Canonical city filtering uses cities.slug -> city_id. Keep the legacy
+      // text column as a fallback for older listings that predate city_id.
+      const { data: cityRow } = await supabase
+        .from("cities")
+        .select("id")
+        .eq("slug", filters.city)
+        .maybeSingle();
+      if (cityRow?.id) {
+        q = q.or(`city_id.eq.${cityRow.id},city.eq.${filters.city}`);
+      } else {
+        q = q.eq("city", filters.city);
+      }
+    }
     // `verified` is an administrative state, not a discovery-quality filter.\n    // Keep the filter only when the UI explicitly requests it.\n    if (filters.verifiedOnly) q = q.eq("verified", true);
 
     const sort = BUSINESS_SORT_COLUMNS[filters.sort ?? "newest"];

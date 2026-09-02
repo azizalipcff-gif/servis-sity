@@ -6,26 +6,28 @@ import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { SearchInput } from "@/components/search/search-input";
 
+const SEARCH_TYPES = [
+  { value: "all", key: "typeAll" },
+  { value: "business", key: "typeBusiness" },
+  { value: "service", key: "typeService" },
+  { value: "product", key: "typeProduct" },
+] as const;
+
 export function HeaderSearch() {
   const t = useTranslations("nav");
   const tH = useTranslations("hero");
+  const tS = useTranslations("search");
   const router = useRouter();
   const pathname = usePathname();
   const [q, setQ] = useState("");
+  const [type, setType] = useState("all");
 
-  // next-intl's usePathname may or may not include the locale prefix depending
-  // on wiring, so strip a leading locale segment before comparing.
   const segs = pathname.split("/").filter(Boolean);
   const restPath =
     segs.length > 0 && (routing.locales as readonly string[]).includes(segs[0])
       ? "/" + segs.slice(1).join("/")
       : pathname;
 
-  // The /search page and the listing pages (/business, /services, /products)
-  // each own their own search input (with category, city, verified and sort
-  // filters), so hide this global bar there to avoid a redundant second search
-  // box. It stays visible everywhere else — including the homepage, where it is
-  // the primary search moved up into the navigation row.
   const HIDE_ON = ["/business", "/services", "/products"];
   if (
     pathname.endsWith("/search") ||
@@ -36,20 +38,42 @@ export function HeaderSearch() {
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
+    const params = new URLSearchParams();
     const trimmed = q.trim();
-    router.push(trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : "/search");
+    if (trimmed) params.set("q", trimmed);
+    if (type !== "all") params.set("type", type);
+    const query = params.toString();
+    router.push(query ? `/search?${query}` : "/search");
   }
 
   return (
-    <div className="w-full min-w-0">
-      <SearchInput
-        size="md"
-        value={q}
-        onChange={setQ}
-        onSubmit={submit}
-        placeholder={tH("marketSearchPlaceholder")}
-        buttonLabel={t("search")}
-      />
+    <div className="flex w-full min-w-0 items-center gap-2">
+      <label className="sr-only" htmlFor="header-search-type">
+        {tS("typeAll")}
+      </label>
+      <select
+        id="header-search-type"
+        value={type}
+        onChange={(e) => setType(e.target.value)}
+        className="h-10 shrink-0 rounded-xl border border-border bg-background px-2.5 text-sm font-medium text-foreground outline-none transition focus:ring-2 focus:ring-primary/30 sm:px-3"
+        aria-label={tS("typeAll")}
+      >
+        {SEARCH_TYPES.map((item) => (
+          <option key={item.value} value={item.value}>
+            {tS(item.key)}
+          </option>
+        ))}
+      </select>
+      <div className="min-w-0 flex-1">
+        <SearchInput
+          size="md"
+          value={q}
+          onChange={setQ}
+          onSubmit={submit}
+          placeholder={tH("marketSearchPlaceholder")}
+          buttonLabel={t("search")}
+        />
+      </div>
     </div>
   );
 }

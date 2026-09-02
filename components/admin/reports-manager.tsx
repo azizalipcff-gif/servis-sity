@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Clock, FlaskConical, ShieldCheck } from "lucide-react";
-import type { AdminReport } from "@/lib/queries";
+import type { AdminReport } from "@/lib/admin-queries";
 import type { ReportStatus } from "@/lib/supabase/database.types";
 import type { Locale } from "@/lib/translations";
 import { Link } from "@/i18n/navigation";
@@ -46,7 +46,7 @@ export function ReportsManager({ reports, locale }: Props) {
     }
   }
 
-const badge = (s: ReportStatus) => {
+  const badge = (s: ReportStatus) => {
     const map: Record<ReportStatus, "warning" | "default" | "success"> = {
       open: "warning",
       reviewed: "default",

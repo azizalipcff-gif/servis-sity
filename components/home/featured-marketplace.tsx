@@ -40,7 +40,6 @@ export async function FeaturedMarketplace({
   return (
     <section className="container-wide py-8">
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-12">
-        {/* Featured services */}
         <div>
           <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
             <div>
@@ -60,7 +59,7 @@ export async function FeaturedMarketplace({
 
           {visServices.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-border px-6 py-10 text-center text-sm text-muted-foreground">
-              {t("comingSoon")}
+              {t("noServices")}
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-x-4 gap-y-6">
@@ -75,7 +74,6 @@ export async function FeaturedMarketplace({
           )}
         </div>
 
-        {/* Featured products */}
         <div>
           <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
             <div>
@@ -95,7 +93,7 @@ export async function FeaturedMarketplace({
 
           {visProducts.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-border px-6 py-10 text-center text-sm text-muted-foreground">
-              {t("comingSoon")}
+              {t("empty")}
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-x-4 gap-y-6">

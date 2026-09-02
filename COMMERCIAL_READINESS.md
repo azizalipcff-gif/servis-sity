@@ -70,6 +70,8 @@ Recommended demo dataset:
 - At least one pending/rejected moderation example
 - Free and Pro plan examples if billing UI is shown
 
+**Current status:** the connected Supabase demo environment now contains the verified dataset counts for 12 businesses, 30 services, 15 products, 15 reviews, 3 sample conversations, business hours for all 12 demo businesses, multiple Moroccan cities, plan examples, featured businesses, and pending/rejected moderation examples. See `DEMO_DATA.md`.
+
 All demo names, images and reviews must be owned, generated, licensed, or clearly labeled as demo material.
 
 ## 5. Sales positioning

@@ -4,25 +4,17 @@ import { siteUrl, isCityIndexable } from "@/lib/seo";
 import { businessHref } from "@/lib/business/url";
 import {
   getCategories,
-  getCities,
-  getCitySupplyMap,
   getSitemapBusinesses,
   getSitemapProducts,
   getSitemapServices,
 } from "@/lib/queries";
+import { getCities, getCitySupplyMap } from "@/lib/home-queries";
 import { buildSitemapEntries } from "@/lib/sitemap-entries";
 
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [
-    categories,
-    businesses,
-    products,
-    services,
-    cities,
-    supply,
-  ] = await Promise.all([
+  const [categories, businesses, products, services, cities, supply] = await Promise.all([
     getCategories(),
     getSitemapBusinesses(),
     getSitemapProducts(),

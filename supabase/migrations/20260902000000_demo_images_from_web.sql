@@ -83,11 +83,13 @@ FROM public.businesses b
 WHERE p.business_id = b.id
   AND b.slug LIKE 'demo-%';
 
--- Safety net for any future demo rows: every demo item gets a real photo rather than a blank block.
+-- Guarantee that any demo product added later still gets a real photo.
 UPDATE public.products p
-SET images = ARRAY[p.business_id::text] -- replaced immediately below using the business cover
+SET images = ARRAY[b.cover_url]
 FROM public.businesses b
-WHERE false;
+WHERE p.business_id = b.id
+  AND b.slug LIKE 'demo-%'
+  AND (p.images IS NULL OR array_length(p.images, 1) IS NULL OR array_length(p.images, 1) = 0);
 
 ALTER TABLE public.businesses ENABLE TRIGGER protect_business_admin_fields_trigger;
 

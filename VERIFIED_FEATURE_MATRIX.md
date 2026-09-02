@@ -2,11 +2,11 @@
 
 | Feature | Status | How tested | Notes |
 |---|---|---|---|
-| Production build | Verified | Vercel deployment logs | Build completed after TypeScript fixes |
-| Homepage counters | Verified | Live deployment inspection | Counts come from approved/published records |
-| Marketplace type selector | Verified | Code and deployed change | All / businesses / services / products |
-| Business discovery | Verified | Query inspection | Public query restricts to approved |
-| Service discovery | Verified | Query inspection | Detail query restricts to published |
+| Production build | Verified | Vercel production deployment | Latest audited deployment reached READY |
+| Homepage counters | Incomplete | Code/query audit | Requires recorded live browser verification |
+| Marketplace type selector | Incomplete | Code audit | Requires recorded live interaction test |
+| Business discovery | Incomplete | Query inspection | Public query restricts to approved; E2E pending |
+| Service discovery | Incomplete | Query inspection | Published services now filtered to approved providers; E2E pending |
 | Product flow | Incomplete | Code inspection | Needs end-to-end verification |
 | Business profile | Incomplete | Code inspection | Browser QA pending |
 | Authentication | Incomplete | Tests exist | Live role journey pending |

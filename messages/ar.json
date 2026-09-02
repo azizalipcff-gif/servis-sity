@@ -151,15 +151,15 @@
     "reviews": "{count, plural, one {# تقييم} other {# تقييم}}",
     "noReviews": "لا توجد تقييمات بعد",
     "viewAll": "عرض الكل",
-    "empty": "لا توجد أعمال مسجلة حتى الآن. كن أول صاحب عمل يسجّل نشاطه!",
+    "empty": "لا توجد أنشطة منشورة حالياً.",
     "emptyTitle": "لا توجد أعمال بعد",
     "registerCta": "سجّل نشاطك التجاري",
     "popularProducts": "منتجات شائعة",
     "popularServices": "خدمات شائعة",
-    "noServices": "لا توجد خدمات بعد. عد لاحقًا.",
+    "noServices": "لا توجد خدمات منشورة حالياً.",
     "featuredServices": "خدمات مميزة",
     "featuredProducts": "منتجات مميزة",
-    "comingSoon": "قريبًا"
+    "comingSoon": "لا توجد عناصر منشورة حالياً."
   },
   "trust": {
     "title": "مصممة لاكتشاف الخدمات المحلية",

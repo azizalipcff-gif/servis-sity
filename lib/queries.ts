@@ -535,7 +535,7 @@ export type ProductListFilters = {
   offset?: number;
 };
 
-const PRODUCT_BUSINESS_SELECT = `id, name, slug, logo_url, cover_url, city, city_id, verified, whatsapp, whatsapp_url, whatsapp_enabled, phone, owner_id, rating_avg, reviews_count, plan, ${CITY_SLUG_JOIN}`;
+const PRODUCT_BUSINESS_SELECT = `id, name, slug, logo_url, cover_url, city, city_id, verified, whatsapp, whatsapp_url, whatsapp_enabled, phone, owner_id, rating_avg, reviews_count, plan, status, ${CITY_SLUG_JOIN}`;
 
 /** Single published product by slug, with its seller (and category resolved separately). */
 export const getProductBySlug = unstable_cache(

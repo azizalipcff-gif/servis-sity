@@ -79,7 +79,7 @@ export default async function HomePage({ params }: Props) {
     url: siteUrl(),
     logo: `${siteUrl()}/branding/service-city-logo.png`,
     description:
-      "The Moroccan platform connecting customers with local businesses and artisans: electrician, plumber, restaurant, barber, doctor and more.",
+      "Arabic-first marketplace foundation for discovering local businesses, services and products.",
   });
 
   const websiteJsonLd = toJsonLd({

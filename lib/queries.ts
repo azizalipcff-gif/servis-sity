@@ -774,27 +774,16 @@ export const getPublishedServices = unstable_cache(
     const limit = filters.limit ?? 24;
     const offset = filters.offset ?? 0;
 
-    // Category / city live on the provider business → resolve business ids first.
-    let businessIds: string[] | null = null;
-    if (filters.categoryId) {
-      const { data: biz } = await supabase
-        .from("businesses")
-        .select("id")
-        .eq("category_id", filters.categoryId)
-        .eq("status", "approved");
-      businessIds = (biz ?? []).map((b) => b.id);
-    }
-    if (filters.city) {
-      const { data: biz } = await supabase
-        .from("businesses")
-        .select("id")
-        .eq("city", filters.city)
-        .eq("status", "approved");
-      const cityIds = (biz ?? []).map((b) => b.id);
-      businessIds = businessIds
-        ? businessIds.filter((id) => cityIds.includes(id))
-        : cityIds;
-    }
+    // Services are public only when both the service and its provider are published.
+    // Resolve approved provider ids first; this also prevents orphaned service leaks.
+    let providers = supabase
+      .from("businesses")
+      .select("id")
+      .eq("status", "approved");
+    if (filters.categoryId) providers = providers.eq("category_id", filters.categoryId);
+    if (filters.city) providers = providers.eq("city", filters.city);
+    const { data: approvedBusinesses } = await providers;
+    const businessIds = (approvedBusinesses ?? []).map((b) => b.id);
     if (businessIds && businessIds.length === 0) {
       return { items: [], total: 0 };
     }

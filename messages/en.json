@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Servis Sity — Discover local services and businesses",
-    "description": "A platform for discovering local businesses, services and products in a simple, organized way.",
+    "title": "Servis Sity — Discover Local Services",
+    "description": "Discover local businesses, services and products by city and category.",
     "search": "Search",
     "searchResults": "Search results for \"{q}\"",
     "searchDescription": "Search published local businesses and services by city and category."
@@ -111,7 +111,7 @@
   "hero": {
     "badge": "Local services and businesses discovery platform",
     "title": "Discover local businesses and services easily",
-    "subtitle": "Search by city or category and view the information available.",
+    "subtitle": "Search local businesses, services and products by city or category.",
     "searchPlaceholder": "What service are you looking for?",
     "cityPlaceholder": "City",
     "searchButton": "Search",
@@ -125,10 +125,10 @@
     "ctaServices": "Explore services",
     "ctaBusinesses": "Explore businesses",
     "ctaProducts": "Browse products",
-    "statBusinesses": "Businesses",
+    "statBusinesses": "Sample businesses",
     "statCities": "Cities",
-    "statServices": "Services",
-    "statProducts": "Products"
+    "statServices": "Sample services",
+    "statProducts": "Sample products"
   },
   "categories": {
     "eyebrow": "Categories",
@@ -183,9 +183,9 @@
       "products": "Products"
     },
     "desc": {
-      "businesses": "Restaurants, salons, clinics, workshops and verified local businesses.",
-      "services": "Book a trusted professional's service in minutes.",
-      "products": "Buy products from local sellers, delivered to your door."
+      "businesses": "Restaurants, salons, clinics, workshops and other local businesses.",
+      "services": "Discover services offered by local businesses.",
+      "products": "Browse products offered by local businesses."
     }
   },
   "businessCard": {
@@ -195,7 +195,7 @@
     "favorite": "Save to favorites",
     "share": "Share",
     "shareText": "Check out {businessName} on Service City!",
-    "verified": "Verified",
+    "verified": "Status",
     "premium": "Premium",
     "reviews": "{count, plural, one {# review} other {# reviews}}",
     "noReviews": "No reviews yet",
@@ -235,9 +235,9 @@
   },
   "search": {
     "title": "Search results",
-    "subtitle": "Find the best verified local businesses for your needs.",
+    "subtitle": "Search local businesses, services and products by keyword, city or category.",
     "heroTitle": "Find a service in your city",
-    "heroSubtitle": "Describe what you need — we'll match you with local businesses people already trust.",
+    "heroSubtitle": "Describe what you need and explore matching local listings.",
     "aiHeading": "Tell us what you need.",
     "aiExample": "e.g. · repair my washing machine in Berkane today · plumber open now in Casablanca",
     "filters": "Filters",
@@ -261,7 +261,7 @@
     "sort_premium": "Premium first",
     "sort_recently_active": "Recently active",
     "results": "{count, plural, one {# result} other {# results}}",
-    "noResults": "No businesses match your search",
+    "noResults": "No matching results found. Try another keyword, category or city.",
     "noResultsHint": "Try a different keyword, city or category.",
     "emptyHint": "Explore trending categories or search for a service to get started.",
     "resetFilters": "Reset filters",
@@ -321,7 +321,7 @@
   "promo": {
     "eyebrow": "For businesses",
     "title": "Let people find your services",
-    "subtitle": "List your business on Service City and reach thousands of customers in Casablanca and across Morocco.",
+    "subtitle": "Make it easier for local customers to discover your services.",
     "cta": "Add your business"
   },
   "popularCategories": {
@@ -335,7 +335,7 @@
   },
   "category": {
     "title": "{name}",
-    "subtitle": "Best {name} in Morocco",
+    "subtitle": "Discover {name} listings in Morocco",
     "empty": "No businesses in this category yet",
     "emptyTitle": "No businesses yet",
     "home": "Home"
@@ -382,7 +382,7 @@
     "averageRating": "Average rating",
     "related": "Similar businesses",
     "category": "Category",
-    "verified": "Verified",
+    "verified": "Listing status",
     "memberSince": "Member since {date}",
     "servicesEmpty": "This business hasn't published any services yet",
     "contactTitle": "Direct contact",
@@ -412,7 +412,7 @@
       "highest": "Highest rated",
       "lowest": "Lowest rated",
       "ownerReply": "Response from the business",
-      "verifiedReview": "Verified review",
+      "verifiedReview": "Demo review",
       "avgResponse": "Usually responds within about {time}",
       "getDirections": "Get directions",
       "viewOnMap": "View on map",
@@ -421,7 +421,7 @@
       "website": "Website",
       "todayLabel": "Today",
       "countReviews": "{count} reviews",
-      "unverified": "Not verified yet",
+      "unverified": "Listing status not verified",
       "within24h": "Within 24 hours",
       "closed": "Hours",
       "admin": "Owner dashboard"
@@ -438,15 +438,15 @@
     "loginTitle": "Welcome back",
     "registerTitle": "List your business",
     "loginSubtitle": "Sign in to manage your account and grow your business.",
-    "registerSubtitle": "Create a professional page in 5 minutes and start receiving clients.",
+    "registerSubtitle": "Create a business page and submit it for review.",
     "brandTagline": "Moroccan services marketplace",
-    "brandTitle": "Where Morocco finds its best local services.",
-    "brandSubtitle": "Join thousands of verified artisans and businesses across 20+ cities, and turn curious visitors into loyal customers.",
-    "featureVerified": "Verified business profiles you can trust",
+    "brandTitle": "A foundation for discovering local services.",
+    "brandSubtitle": "A customizable marketplace foundation for local businesses and cities.",
+    "featureVerified": "Business profiles with clear listing statuses",
     "featureFast": "Instant WhatsApp & booking contact",
     "featurePremium": "Premium visibility in search results",
-    "statCities": "Moroccan cities",
-    "statLocal": "local businesses",
+    "statCities": "available cities",
+    "statLocal": "sample listings",
     "footerNote": "Protected by bank-grade security. Your data stays yours.",
     "email": "Email",
     "password": "Password",

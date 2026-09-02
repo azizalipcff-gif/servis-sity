@@ -11,6 +11,12 @@ export async function TrustSection({
   const t = await getTranslations("trust");
   const locale = await getLocale();
   const numberLocale = locale === "ar" ? "ar-MA" : locale;
+  const demoNotice =
+    locale === "ar"
+      ? "بعض القوائم والتقييمات والمنتجات المعروضة هنا بيانات تجريبية."
+      : locale === "fr"
+        ? "Certaines annonces, avis et produits affichés ici sont des données de démonstration."
+        : "Some listings, reviews and products shown here are sample data.";
 
   const stats = [
     { label: t("businesses", { count: businessCount }), value: businessCount },
@@ -22,7 +28,7 @@ export async function TrustSection({
       <FadeIn>
         <div className="mb-4 text-center">
           <h2 id="trust-section-title" className="text-lg font-semibold">{t("title")}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">{t("demoNotice")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{demoNotice}</p>
         </div>
         <div className="grid grid-cols-1 divide-y divide-border border-y border-border sm:grid-cols-2 sm:divide-x sm:divide-y-0">
           {stats.map((stat, i) => (

@@ -18,6 +18,7 @@ import {
 } from "@/lib/queries";
 import type { Locale } from "@/lib/translations";
 import { siteUrl, absoluteUrl, localizedLanguages } from "@/lib/seo";
+import { SEO_BRAND, SEO_LOGO_PATH } from "@/lib/seo-brand";
 import { toJsonLd } from "@/lib/security/sanitize";
 
 export const revalidate = 60;
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: { absolute: t("title") },
     description: t("description"),
-    applicationName: "Servis Sity",
+    applicationName: SEO_BRAND,
     alternates: {
       canonical: absoluteUrl(`/${locale}`),
       languages: localizedLanguages(""),
@@ -43,8 +44,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: t("title"),
       description: t("description"),
       url: absoluteUrl(`/${locale}`),
-      siteName: "Servis Sity",
-      images: [{ url: absoluteUrl("/branding/service-city-logo.png") }],
+      siteName: SEO_BRAND,
+      images: [{ url: absoluteUrl(SEO_LOGO_PATH) }],
     },
   };
 }
@@ -74,9 +75,9 @@ export default async function HomePage({ params }: Props) {
   const organizationJsonLd = toJsonLd({
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Servis Sity",
+    name: SEO_BRAND,
     url: siteUrl(),
-    logo: `${siteUrl()}/branding/service-city-logo.png`,
+    logo: `${siteUrl()}${SEO_LOGO_PATH}`,
     description:
       "Moroccan marketplace for discovering local businesses, services and products.",
   });
@@ -84,7 +85,7 @@ export default async function HomePage({ params }: Props) {
   const websiteJsonLd = toJsonLd({
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Servis Sity",
+    name: SEO_BRAND,
     url: siteUrl(),
     inLanguage: locale,
     potentialAction: {

@@ -4,12 +4,12 @@ import { Suspense } from "react";
 import { getCurrentUser, getCurrentProfile } from "@/lib/supabase/user";
 import {
   getCategories,
-  getCities,
   getMyBusiness,
-  getOwnerAnalytics,
   getBookingsForOwner,
   getProductsForBusiness,
 } from "@/lib/queries";
+import { getCities } from "@/lib/home-queries";
+import { getOwnerAnalytics } from "@/lib/admin-queries";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/lib/translations";
 import { Button } from "@/components/ui/button";
@@ -79,15 +79,8 @@ export default async function DashboardPage({ params }: Props) {
           userId={user.id}
           analytics={analytics}
           bookings={bookings}
-          servicesEditor={
-            <ServicesManager business={business} />
-          }
-          productsEditor={
-            <ProductsManager
-              businessId={business.id}
-              initial={products}
-            />
-          }
+          servicesEditor={<ServicesManager business={business} />}
+          productsEditor={<ProductsManager businessId={business.id} initial={products} />}
           businessEditor={
             <BusinessForm
               business={business}

@@ -23,6 +23,7 @@ import { businessCitySlug, businessPath } from "@/lib/business/url";
 import { getBusinessBySlug, getProductsForBusiness, type BusinessDetail } from "@/lib/queries";
 import { getRelatedBusinesses } from "@/lib/business-queries";
 import { localizedName, type Locale } from "@/lib/translations";
+import { SEO_BRAND } from "@/lib/seo-brand";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ locale: string; city: string; slug: string }> };
@@ -33,11 +34,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!business) return { title: "Not found", description: "Business not found" };
   const category = business.categories ? localizedName(business.categories, locale as Locale) : business.city ?? "Pro";
   const canonicalCity = businessCitySlug(business);
-  const description = business.description ? business.description.slice(0, 155) : `${category} in ${business.city ?? "Morocco"} — ${business.rating_avg.toFixed(1)} stars.`;
-  const title = `${business.name} — ${category} in ${business.city ?? "Morocco"}`;
+  const description = business.description ? business.description.slice(0, 155) : `${category} in ${business.city ?? "Morocco"} — ${business.rating_avg.toFixed(1)} stars on ${SEO_BRAND}.`;
+  const title = `${business.name} — ${category} in ${business.city ?? "Morocco"} | ${SEO_BRAND}`;
   const url = absoluteUrl(businessPath(locale, business));
   const ogImage = imageUrl(business.cover_url) || imageUrl(business.logo_url) || absoluteUrl("/branding/service-city-logo.png");
-  return { title, description, alternates: { canonical: url, languages: localizedLanguages(`/businesses/${canonicalCity}/${slug}`) }, openGraph: { title: `${business.name} · Service City`, description, type: "website", url, siteName: "Service City", images: [{ url: ogImage, width: 1200, height: 630, alt: business.name }] }, twitter: { card: "summary_large_image", title: business.name, description, images: [ogImage] } };
+  return { title, description, alternates: { canonical: url, languages: localizedLanguages(`/businesses/${canonicalCity}/${slug}`) }, openGraph: { title, description, type: "website", url, siteName: SEO_BRAND, images: [{ url: ogImage, width: 1200, height: 630, alt: business.name }] }, twitter: { card: "summary_large_image", title, description, images: [ogImage] } };
 }
 
 export default async function BusinessPage({ params }: Props) {

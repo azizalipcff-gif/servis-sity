@@ -17,10 +17,22 @@ export async function TrustSection({
       : locale === "fr"
         ? "Certaines annonces, avis et produits affichés ici sont des données de démonstration."
         : "Some listings, reviews and products shown here are sample data.";
+  const businessLabel =
+    locale === "ar"
+      ? `${businessCount} أنشطة تجريبية`
+      : locale === "fr"
+        ? `${businessCount} activités de démonstration`
+        : `${businessCount} sample businesses`;
+  const cityLabel =
+    locale === "ar"
+      ? `${cityCount} مدن ممثلة`
+      : locale === "fr"
+        ? `${cityCount} villes représentées`
+        : `${cityCount} cities represented`;
 
   const stats = [
-    { label: t("businesses", { count: businessCount }), value: businessCount },
-    { label: t("cities", { count: cityCount }), value: cityCount },
+    { label: businessLabel, value: businessCount },
+    { label: cityLabel, value: cityCount },
   ];
 
   return (

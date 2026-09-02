@@ -25,14 +25,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!category) return {};
 
   const name = localizedName(category, locale as Locale);
-  const siteName = "Service City";
+  const siteName = "Servis Sity";
   const url = absoluteUrl(`/${locale}/category/${slug}`);
   const ogImage = imageUrl(category.image_url) || absoluteUrl("/branding/service-city-logo.png");
 
-  const title = category.seo_title || name;
+  const title = category.seo_title || `${name} — Servis Sity`;
   const description =
     category.seo_description ||
-    `${name} — find trusted professionals, compare prices and book online.`;
+    `${name} au Maroc — trouvez des professionnels, entreprises et services locaux, comparez les offres et contactez facilement les prestataires sur Servis Sity.`;
 
   return {
     title,
@@ -106,45 +106,45 @@ export default async function CategoryPage({ params }: Props) {
     <>
       <BreadcrumbNav items={[{ label: name }]} />
       <div className="container-wide py-12">
-      <FadeIn>
-        <div className="border-b border-border pb-8">
-          <h1 className="text-editorial text-3xl sm:text-4xl md:text-5xl">
-            {name}
-          </h1>
-          <p className="mt-3 text-lg text-muted-foreground">
-            {t("subtitle", { name })}
-          </p>
-        </div>
-      </FadeIn>
-
-      {businesses.length === 0 ? (
-        <FadeIn delay={0.1}>
-          <div className="mt-10">
-            <EmptyState
-              icon={<LayoutGrid className="size-7" />}
-              title={t("emptyTitle")}
-              description={t("empty")}
-            />
+        <FadeIn>
+          <div className="border-b border-border pb-8">
+            <h1 className="text-editorial text-3xl sm:text-4xl md:text-5xl">
+              {name}
+            </h1>
+            <p className="mt-3 text-lg text-muted-foreground">
+              {t("subtitle", { name })}
+            </p>
           </div>
         </FadeIn>
-      ) : (
-        <Stagger className="mt-10 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {businesses.map((business) => (
-            <StaggerItem key={business.id} className="h-full">
-              <BusinessCard business={business} />
-            </StaggerItem>
-          ))}
-        </Stagger>
-      )}
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: breadcrumb }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: itemListJsonLd }}
-      />
+        {businesses.length === 0 ? (
+          <FadeIn delay={0.1}>
+            <div className="mt-10">
+              <EmptyState
+                icon={<LayoutGrid className="size-7" />}
+                title={t("emptyTitle")}
+                description={t("empty")}
+              />
+            </div>
+          </FadeIn>
+        ) : (
+          <Stagger className="mt-10 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {businesses.map((business) => (
+              <StaggerItem key={business.id} className="h-full">
+                <BusinessCard business={business} />
+              </StaggerItem>
+            ))}
+          </Stagger>
+        )}
+
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: breadcrumb }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: itemListJsonLd }}
+        />
       </div>
     </>
   );

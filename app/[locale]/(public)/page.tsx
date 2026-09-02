@@ -9,13 +9,13 @@ import { PromoBanner } from "@/components/home/promo-banner";
 import { TrustSection } from "@/components/home/trust-section";
 import {
   getBusinessCount,
+  getPublishedCityCount,
   getFeaturedBusinesses,
   getFeaturedProducts,
   getPopularServices,
   getPublishedProductsCount,
   getPublishedServicesCount,
 } from "@/lib/queries";
-import { getCities } from "@/lib/home-queries";
 import type { Locale } from "@/lib/translations";
 import { siteUrl, absoluteUrl, localizedLanguages } from "@/lib/seo";
 import { toJsonLd } from "@/lib/security/sanitize";
@@ -57,7 +57,7 @@ export default async function HomePage({ params }: Props) {
   const [
     businesses,
     businessCount,
-    cities,
+    cityCount,
     products,
     services,
     productsCount,
@@ -65,7 +65,7 @@ export default async function HomePage({ params }: Props) {
   ] = await Promise.all([
     getFeaturedBusinesses(),
     getBusinessCount(),
-    getCities(),
+    getPublishedCityCount(),
     getFeaturedProducts(8),
     getPopularServices(8),
     getPublishedProductsCount(),
@@ -110,7 +110,7 @@ export default async function HomePage({ params }: Props) {
       />
       <HomeSearch
         businessCount={businessCount}
-        cityCount={cities.length}
+        cityCount={cityCount}
         serviceCount={servicesCount}
         productCount={productsCount}
       >
@@ -118,7 +118,7 @@ export default async function HomePage({ params }: Props) {
         <MarketplaceTypes />
         <FeaturedBusinesses businesses={businesses} locale={locale as Locale} />
         <PromoBanner />
-        <TrustSection businessCount={businessCount} cityCount={cities.length} />
+        <TrustSection businessCount={businessCount} cityCount={cityCount} />
         <TrustBadges />
       </HomeSearch>
     </>

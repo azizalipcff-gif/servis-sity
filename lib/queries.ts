@@ -801,7 +801,7 @@ export const getPublishedServices = unstable_cache(
       .select("id")
       .eq("status", "approved");
     if (filters.categoryId) providers = providers.eq("category_id", filters.categoryId);
-    if (filters.city) providers = providers.eq("city", filters.city);
+    if (filters.city) providers = providers.or(`city.eq.${filters.city},city_id.eq.${filters.city}`);
     const { data: approvedBusinesses } = await providers;
     const businessIds = (approvedBusinesses ?? []).map((b) => b.id);
     if (businessIds && businessIds.length === 0) {

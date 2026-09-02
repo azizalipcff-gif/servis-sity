@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import type { ServiceDetail } from "@/lib/queries";
 import { buildWhatsAppUrl, isWhatsAppEnabled } from "@/lib/whatsapp";
 import { trackLead } from "@/lib/analytics/client";
+import { OwnerProfileHover } from "@/components/profile/owner-profile-hover";
 
 export function ServiceDetailHero({ service }: { service: ServiceDetail }) {
   const t = useTranslations("business");
@@ -101,12 +102,12 @@ export function ServiceDetailHero({ service }: { service: ServiceDetail }) {
 
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-white/90">
                   {biz && (
-                    <span className="inline-flex min-w-0 items-center gap-1.5 font-medium text-white">
-                      <span className="line-clamp-1">{biz.name}</span>
-                      {biz.verified && (
-                        <BadgeCheck className="size-4 shrink-0" />
-                      )}
-                    </span>
+                    <OwnerProfileHover ownerId={biz.owner_id} businessName={biz.name}>
+                      <span className="inline-flex min-w-0 items-center gap-1.5 font-medium text-white hover:underline">
+                        <span className="line-clamp-1">{biz.name}</span>
+                        {biz.verified && <BadgeCheck className="size-4 shrink-0" />}
+                      </span>
+                    </OwnerProfileHover>
                   )}
                   {biz?.city && (
                     <span className="inline-flex items-center gap-1.5">
@@ -134,32 +135,20 @@ export function ServiceDetailHero({ service }: { service: ServiceDetail }) {
               <div className="shrink-0 rounded-xl border border-white/30 bg-black/30 px-3 py-2 text-end shadow-lg backdrop-blur md:px-4 md:py-2.5">
                 {service.price != null ? (
                   <div className="flex flex-col items-end">
-                    {service.old_price != null &&
-                      service.old_price > service.price && (
-                        <s className="text-xs text-white/80">
-                          {formatPrice(service.old_price, locale)}
-                        </s>
-                      )}
+                    {service.old_price != null && service.old_price > service.price && (
+                      <s className="text-xs text-white/80">{formatPrice(service.old_price, locale)}</s>
+                    )}
                     <p className="flex items-center gap-2 text-xl font-bold tabular-nums tracking-tight text-white md:text-2xl">
                       {formatPrice(service.price, locale)}
-                      {service.old_price != null &&
-                        service.old_price > service.price && (
-                          <span className="rounded-md bg-gold px-1.5 py-0.5 text-xs font-bold leading-none text-black">
-                            −
-                            {Math.round(
-                              ((service.old_price - service.price) /
-                                service.old_price) *
-                                100,
-                            )}
-                            %
-                          </span>
-                        )}
+                      {service.old_price != null && service.old_price > service.price && (
+                        <span className="rounded-md bg-gold px-1.5 py-0.5 text-xs font-bold leading-none text-black">
+                          −{Math.round(((service.old_price - service.price) / service.old_price) * 100)}%
+                        </span>
+                      )}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-sm font-semibold text-white">
-                    {ts("priceOnRequest")}
-                  </p>
+                  <p className="text-sm font-semibold text-white">{ts("priceOnRequest")}</p>
                 )}
               </div>
             </motion.div>
@@ -167,7 +156,6 @@ export function ServiceDetailHero({ service }: { service: ServiceDetail }) {
         </div>
       </section>
 
-      {/* Action bar — directly below the hero */}
       <div className="border-b border-border bg-background">
         <div className="container-site flex items-center gap-2 overflow-x-auto whitespace-nowrap py-3 scrollbar-none">
           <Button
@@ -176,22 +164,13 @@ export function ServiceDetailHero({ service }: { service: ServiceDetail }) {
             disabled={chatBusy || isOwner}
             onClick={() => void startChat()}
           >
-            {chatBusy ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <MessageSquare className="size-4" />
-            )}
+            {chatBusy ? <Loader2 className="size-4 animate-spin" /> : <MessageSquare className="size-4" />}
             {t("chat")}
           </Button>
 
           {whatsappEnabled && whatsappLink && (
             <Button asChild variant="outline" className="h-11 shrink-0">
-              <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => biz?.id && trackLead(biz.id, "whatsapp")}
-              >
+              <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={() => biz?.id && trackLead(biz.id, "whatsapp")}>
                 <MessageCircle className="size-4" />
                 {t("whatsapp")}
               </a>
@@ -200,10 +179,7 @@ export function ServiceDetailHero({ service }: { service: ServiceDetail }) {
 
           {biz?.phone && (
             <Button asChild variant="outline" className="h-11 shrink-0">
-              <a
-                href={`tel:${biz.phone}`}
-                onClick={() => trackLead(biz.id, "call")}
-              >
+              <a href={`tel:${biz.phone}`} onClick={() => trackLead(biz.id, "call")}>
                 <Phone className="size-4" />
                 {t("call")}
               </a>
@@ -219,26 +195,12 @@ export function ServiceDetailHero({ service }: { service: ServiceDetail }) {
             </Button>
           )}
 
-          <Button
-            variant="outline"
-            type="button"
-            className="h-11 shrink-0"
-            aria-pressed={saved}
-            disabled={favBusy}
-            onClick={toggle}
-          >
-            <Bookmark
-              className={cn("size-4", saved && "fill-primary text-primary")}
-            />
+          <Button variant="outline" type="button" className="h-11 shrink-0" aria-pressed={saved} disabled={favBusy} onClick={toggle}>
+            <Bookmark className={cn("size-4", saved && "fill-primary text-primary")} />
             {saved ? ts("saved") : ts("save")}
           </Button>
 
-          <Button
-            variant="ghost"
-            type="button"
-            className="h-11 shrink-0"
-            onClick={onShare}
-          >
+          <Button variant="ghost" type="button" className="h-11 shrink-0" onClick={onShare}>
             <Share className="size-4" />
             {t("detail.share")}
           </Button>

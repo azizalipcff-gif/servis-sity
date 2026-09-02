@@ -10,6 +10,7 @@ import { DEFAULT_PLACEHOLDER_IMAGES } from "@/lib/constants";
 import { localizedName, type Locale } from "@/lib/translations";
 import type { BusinessDetail } from "@/lib/queries";
 import { trackBusinessView } from "@/lib/analytics/client";
+import { OwnerProfileHover } from "@/components/profile/owner-profile-hover";
 import { QuickActions } from "./quick-actions";
 
 export function BusinessHero({ business }: { business: BusinessDetail }) {
@@ -86,9 +87,11 @@ export function BusinessHero({ business }: { business: BusinessDetail }) {
 
               <div className="min-w-0 flex-1 pb-1 text-white">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                  <h1 className="min-w-0 break-words text-2xl font-bold leading-tight text-white md:text-4xl">
-                    {business.name}
-                  </h1>
+                  <OwnerProfileHover ownerId={business.owner_id} businessName={business.name}>
+                    <h1 className="min-w-0 break-words text-left text-2xl font-bold leading-tight text-white transition-opacity group-hover:opacity-90 md:text-4xl">
+                      {business.name}
+                    </h1>
+                  </OwnerProfileHover>
                   {(business.plan === "premium" || business.plan === "pro") && (
                     <span className="inline-flex items-center gap-1 rounded-lg bg-gold px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-black shadow-sm">
                       <Sparkles className="size-3.5" />

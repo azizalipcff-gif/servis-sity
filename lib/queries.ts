@@ -552,6 +552,7 @@ export const getProductBySlug = unstable_cache(
     if (error || !data) return null;
 
     const base = attachSellerCitySlug(data) as ProductWithBusiness;
+    if (base.business?.status !== "approved") return null;
     let categories: ProductDetail["categories"] = null;
     if (base.category_id) {
       const { data: cat } = await supabase
@@ -585,7 +586,9 @@ export const getSimilarProducts = unstable_cache(
       .order("views", { ascending: false })
       .limit(limit);
     if (error || !data) return [];
-    return ((data ?? []) as unknown[]).map(attachSellerCitySlug) as ProductWithBusiness[];
+    return ((data ?? [])
+      .filter((row) => (row as { business?: { status?: string | null } | null }).business?.status === "approved")
+      .map(attachSellerCitySlug)) as ProductWithBusiness[];
   },
   ["q:similar-products"],
   { tags: ["products"], revalidate: 300 },

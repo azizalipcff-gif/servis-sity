@@ -19,7 +19,7 @@ export function BrandLogo({
   return (
     <Image
       src={src}
-      alt="Service City Logo"
+      alt="Servis Sity logo"
       width={300}
       height={200}
       priority={priority}

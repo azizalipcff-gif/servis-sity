@@ -13,6 +13,9 @@ export async function GET(_request: Request, { params }: Props) {
   }
 
   const supabase = createServiceClient();
+  if (!supabase) {
+    return NextResponse.json({ error: "Owner profile service unavailable" }, { status: 503 });
+  }
 
   const { data: business, error: businessError } = await supabase
     .from("businesses")
@@ -55,10 +58,6 @@ export async function GET(_request: Request, { params }: Props) {
       experience: profile.experience,
       created_at: profile.created_at,
     },
-    {
-      headers: {
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-      },
-    },
+    { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } },
   );
 }

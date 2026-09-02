@@ -90,6 +90,14 @@ The repository is distributed as proprietary software unless a separate written 
 
 Third-party dependencies and assets remain subject to their respective licenses and terms. Before a commercial transfer, perform an asset/dependency inventory and confirm the applicable rights for fonts, images, icons, templates, snippets and external services.
 
+## Commercial sale package
+
+The buyer-facing commercial package and recommended terms are documented in:
+
+- `COMMERCIAL_SALES_PACKAGE.md` — offer, scope, licensing options, pricing recommendation, support and handover terms.
+- `BUYER_HANDOVER_CHECKLIST.md` — operational checklist for source, Supabase, Vercel, SEO and functional handover.
+- `SALES_OUTREACH_MESSAGE.md` — ready-to-send buyer introduction.
+
 ## Verification language
 
 Project reports distinguish between:

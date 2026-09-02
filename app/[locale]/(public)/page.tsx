@@ -9,23 +9,20 @@ import { PromoBanner } from "@/components/home/promo-banner";
 import { TrustSection } from "@/components/home/trust-section";
 import {
   getBusinessCount,
-  getCities,
   getFeaturedBusinesses,
   getFeaturedProducts,
   getPopularServices,
   getPublishedProductsCount,
   getPublishedServicesCount,
 } from "@/lib/queries";
+import { getCities } from "@/lib/home-queries";
 import type { Locale } from "@/lib/translations";
 import { siteUrl, absoluteUrl, localizedLanguages } from "@/lib/seo";
 import { toJsonLd } from "@/lib/security/sanitize";
 
-// The homepage is fully public (categories, cities, featured, counts) and all
-// of its data is already cached via `unstable_cache`. Rendering it dynamically
-// on every request forced a server round-trip (TTFB) that delayed both LCP and
-// TTI. Generating it statically with ISR keeps the HTML on the CDN and lets the
-// hero paint immediately; data refreshes every 5 minutes.
-export const revalidate = 300;
+// Keep the public homepage fast while ensuring marketplace counts and rails
+// refresh frequently. Admin mutations also invalidate the corresponding tags.
+export const revalidate = 60;
 
 type Props = {
   params: Promise<{ locale: string }>;

@@ -17,7 +17,7 @@ export async function FeaturedBusinesses({ businesses, locale }: { businesses: B
   const renderedRest = rest.slice(0, 6);
 
   return (
-    <section className="container-site py-10 md:py-14">
+    <section id="businesses" className="container-site scroll-mt-24 py-10 md:py-14">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
         <div>
           <p className="eyebrow">{t("eyebrow")}</p>

@@ -1,19 +1,13 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { HomeSearch } from "@/components/home/home-search";
+import { MarketplaceTypes } from "@/components/home/marketplace-types";
 import { FeaturedBusinesses } from "@/components/home/featured-businesses";
 import { FeaturedMarketplace } from "@/components/home/featured-marketplace";
-import { TrustBadges } from "@/components/home/trust-badges";
-import { PromoBanner } from "@/components/home/promo-banner";
-import { TrustSection } from "@/components/home/trust-section";
 import {
-  getBusinessCount,
-  getPublishedCityCount,
   getFeaturedBusinesses,
   getFeaturedProducts,
   getPopularServices,
-  getPublishedProductsCount,
-  getPublishedServicesCount,
 } from "@/lib/queries";
 import type { Locale } from "@/lib/translations";
 import { siteUrl, absoluteUrl, localizedLanguages } from "@/lib/seo";
@@ -53,22 +47,10 @@ export default async function HomePage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const [
-    businesses,
-    businessCount,
-    cityCount,
-    products,
-    services,
-    productsCount,
-    servicesCount,
-  ] = await Promise.all([
+  const [businesses, products, services] = await Promise.all([
     getFeaturedBusinesses(),
-    getBusinessCount(),
-    getPublishedCityCount(),
     getFeaturedProducts(8),
     getPopularServices(8),
-    getPublishedProductsCount(),
-    getPublishedServicesCount(),
   ]);
 
   const organizationJsonLd = toJsonLd({
@@ -107,17 +89,10 @@ export default async function HomePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: websiteJsonLd }}
       />
-      <HomeSearch
-        businessCount={businessCount}
-        cityCount={cityCount}
-        serviceCount={servicesCount}
-        productCount={productsCount}
-      >
+      <HomeSearch>
+        <MarketplaceTypes />
         <FeaturedMarketplace services={services} products={products} />
         <FeaturedBusinesses businesses={businesses} locale={locale as Locale} />
-        <PromoBanner />
-        <TrustSection businessCount={businessCount} cityCount={cityCount} />
-        <TrustBadges />
       </HomeSearch>
     </>
   );

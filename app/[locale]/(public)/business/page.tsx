@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Building2, RotateCcw, Search } from "lucide-react";
+import { Building2, RotateCcw } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { BusinessCard } from "@/components/business-card";
 import { CatalogPagination } from "@/components/catalog-pagination";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { buildBusinessesUrl, BUSINESS_LIMIT_DEFAULT, hasActiveBusinessFilters, parseBusinessesParams, type BusinessSort } from "@/lib/business/filters";
 import { getCategories, getCategoryBySlug, getPublishedBusinesses } from "@/lib/queries";
@@ -40,7 +39,6 @@ export default async function BusinessesPage({ params, searchParams }: Props) {
   return (<><BreadcrumbNav items={[{ label: t("title") }]} /><div className="container-site py-8 md:py-12">
     <header className="flex flex-col gap-3"><p className="eyebrow">{t("eyebrow")}</p><h1 className="text-editorial text-3xl sm:text-4xl">{t("title")}</h1><p className="max-w-2xl text-[15px] leading-relaxed text-muted-foreground">{t("subtitle")}</p></header>
     <form method="get" className="mt-6 space-y-4">
-      <div className="relative"><Search aria-hidden className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input id="businesses-search" name="q" defaultValue={state.q} placeholder={t("searchPlaceholder")} className="h-11 ps-9 pe-4 rounded-2xl" aria-label={t("searchPlaceholder")} /></div>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-3 rounded-2xl border border-border bg-card p-3.5 shadow-sm">
         <div className="flex flex-wrap items-center gap-1.5"><button type="submit" name="category" value="" className={cn("rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors", !state.category ? "border-transparent bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground")}>{t("allCategories")}</button>{categories.map((c) => <button key={c.id} type="submit" name="category" value={c.slug} className={cn("rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors", state.category === c.slug ? "border-transparent bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground")}>{localizedName(c, locale as Locale)}</button>)}</div>
         <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5"><select name="city" defaultValue={state.city} aria-label={t("city")} className={cn(inputBase, "w-auto min-w-36 appearance-none bg-background pe-3")}><option value="">{t("allCities")}</option>{MOROCCAN_CITIES.map((city) => <option key={city} value={city}>{city}</option>)}</select><label className="inline-flex h-10 items-center gap-2 rounded-xl border border-input bg-background px-3 text-sm shadow-sm"><input name="verified" type="checkbox" value="1" defaultChecked={state.verified} className="size-4 accent-primary" /><span className="font-medium">{t("verified")}</span></label><Button type="submit" size="sm" className="h-9">{t("apply")}</Button></div>

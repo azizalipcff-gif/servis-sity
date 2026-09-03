@@ -13,6 +13,8 @@ const SEARCH_TYPES = [
   { value: "product", key: "typeProduct" },
 ] as const;
 
+type SearchType = (typeof SEARCH_TYPES)[number]["value"];
+
 export function HeaderSearch() {
   const t = useTranslations("nav");
   const tH = useTranslations("hero");
@@ -20,7 +22,7 @@ export function HeaderSearch() {
   const router = useRouter();
   const pathname = usePathname();
   const [q, setQ] = useState("");
-  const [type, setType] = useState("all");
+  const [type, setType] = useState<SearchType>("all");
 
   const segs = pathname.split("/").filter(Boolean);
   const restPath =
@@ -36,14 +38,19 @@ export function HeaderSearch() {
   )
     return null;
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
+  function navigateWithType(nextType: SearchType) {
+    setType(nextType);
     const params = new URLSearchParams();
     const trimmed = q.trim();
     if (trimmed) params.set("q", trimmed);
-    if (type !== "all") params.set("type", type);
+    if (nextType !== "all") params.set("type", nextType);
     const query = params.toString();
     router.push(query ? `/search?${query}` : "/search");
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    navigateWithType(type);
   }
 
   return (
@@ -54,7 +61,7 @@ export function HeaderSearch() {
       <select
         id="header-search-type"
         value={type}
-        onChange={(e) => setType(e.target.value)}
+        onChange={(e) => navigateWithType(e.target.value as SearchType)}
         className="h-10 shrink-0 rounded-xl border border-border bg-background px-2.5 text-sm font-medium text-foreground outline-none transition focus:ring-2 focus:ring-primary/30 sm:px-3"
         aria-label={tS("typeAll")}
       >

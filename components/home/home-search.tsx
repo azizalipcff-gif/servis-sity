@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Building2, Search, ShoppingBag, Wrench } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -52,18 +52,6 @@ export function HomeSearch({ children }: Props) {
                 <ArrowRight className="size-4 rtl:rotate-180" />
               </Button>
             </form>
-
-            <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-              <Button asChild size="sm" variant="outlinePrimary">
-                <a href="#marketplace-types"><Wrench className="size-4" />{t("ctaServices")}</a>
-              </Button>
-              <Button asChild size="sm" variant="outlinePrimary">
-                <a href="#marketplace-types"><Building2 className="size-4" />{t("ctaBusinesses")}</a>
-              </Button>
-              <Button asChild size="sm" variant="outlinePrimary">
-                <a href="#marketplace-types"><ShoppingBag className="size-4" />{t("ctaProducts")}</a>
-              </Button>
-            </div>
           </div>
         </div>
       </section>

@@ -1,6 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
-import { HomeSearch } from "@/components/home/home-search";
 import { FeaturedBusinesses } from "@/components/home/featured-businesses";
 import { FeaturedMarketplace } from "@/components/home/featured-marketplace";
 import {
@@ -88,10 +87,8 @@ export default async function HomePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: websiteJsonLd }}
       />
-      <HomeSearch>
-        <FeaturedMarketplace services={services} products={products} />
-        <FeaturedBusinesses businesses={businesses} locale={locale as Locale} />
-      </HomeSearch>
+      <FeaturedMarketplace services={services} products={products} />
+      <FeaturedBusinesses businesses={businesses} locale={locale as Locale} />
     </>
   );
 }

@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useLocale } from "next-intl";
-import type { SearchResponse } from "@/lib/search/types";
+import type { SearchResponse, SearchResultType } from "@/lib/search/types";
 
 export type SearchQueryState = {
   q: string;
+  type: SearchResultType;
   city: string;
   category: string;
 };
@@ -22,30 +23,24 @@ function useDebouncedValue<T>(value: T, delay = 350): T {
 
 export function useSearch(initial: Partial<SearchQueryState>) {
   const locale = useLocale();
-
   const [q, setQ] = useState(initial.q ?? "");
+  const [type, setType] = useState<SearchResultType>(initial.type ?? "all");
   const debouncedQ = useDebouncedValue(q, 350);
   const city = initial.city ?? "";
   const category = initial.category ?? "";
   const [pending, setPending] = useState(false);
+  const isLanding = debouncedQ === "" && city === "" && category === "" && type === "all";
+  const queryKey = ["search", locale, debouncedQ, type, city, category] as const;
 
-  // Empty text + no deep-link scope => show the simple landing instead of
-  // fetching anything. The missing request is the whole point.
-  const isLanding = debouncedQ === "" && city === "" && category === "";
-
-  const queryKey = ["search", locale, debouncedQ, city, category] as const;
-
-  const buildQuery = useCallback(
-    (offset: number) => {
-      const sp = new URLSearchParams();
-      if (debouncedQ) sp.set("q", debouncedQ);
-      if (city) sp.set("city", city);
-      if (category) sp.set("category", category);
-      sp.set("offset", String(offset));
-      return sp.toString();
-    },
-    [debouncedQ, city, category],
-  );
+  const buildQuery = useCallback((offset: number) => {
+    const sp = new URLSearchParams();
+    if (debouncedQ) sp.set("q", debouncedQ);
+    if (type !== "all") sp.set("type", type);
+    if (city) sp.set("city", city);
+    if (category) sp.set("category", category);
+    sp.set("offset", String(offset));
+    return sp.toString();
+  }, [debouncedQ, type, city, category]);
 
   const query = useInfiniteQuery({
     queryKey,
@@ -60,53 +55,33 @@ export function useSearch(initial: Partial<SearchQueryState>) {
       }
     },
     initialPageParam: 0,
-    getNextPageParam: (last) =>
-      last.hasMore ? last.offset + last.limit : undefined,
+    getNextPageParam: (last) => last.hasMore ? last.offset + last.limit : undefined,
     staleTime: 30_000,
     enabled: !isLanding,
-    // A first request can fail while the dev server lazily compiles the route
-    // graph right after a refactor (Turbopack). The server is fine immediately
-    // after, so persist past that single transient failure automatically.
     retry: 2,
   });
 
-  // Keep the URL in sync with the committed query (shareable + back button).
-  // Written via history.replaceState so typing never triggers a server round
-  // trip or re-mount.
   useEffect(() => {
     const sp = new URLSearchParams();
     if (debouncedQ) sp.set("q", debouncedQ);
+    if (type !== "all") sp.set("type", type);
     if (city) sp.set("city", city);
     if (category) sp.set("category", category);
     const qstring = sp.toString();
     const url = `/${locale}/search${qstring ? `?${qstring}` : ""}`;
-    if (`${window.location.pathname}${window.location.search}` !== url) {
-      window.history.replaceState(null, "", url);
-    }
-  }, [debouncedQ, city, category, locale]);
+    if (`${window.location.pathname}${window.location.search}` !== url) window.history.replaceState(null, "", url);
+  }, [debouncedQ, type, city, category, locale]);
 
-  const items = useMemo(
-    () => query.data?.pages.flatMap((p) => p.items) ?? [],
-    [query.data],
-  );
+  const items = useMemo(() => query.data?.pages.flatMap((p) => p.items) ?? [], [query.data]);
   const total = query.data?.pages[0]?.total ?? 0;
   const isError = query.isError || Boolean(query.data?.pages[0]?.error);
-
   const reset = useCallback(() => setQ(""), []);
 
   return {
-    q,
-    setQ,
-    reset,
-    items,
-    total,
-    isLanding,
+    q, setQ, type, setType, reset, items, total, isLanding,
     isLoading: query.isLoading || query.isFetching,
-    isPending: pending,
-    isError,
-    hasMore: query.hasNextPage,
-    loadMore: query.fetchNextPage,
-    refetch: query.refetch,
+    isPending: pending, isError, hasMore: query.hasNextPage,
+    loadMore: query.fetchNextPage, refetch: query.refetch,
     isFetchingNextPage: query.isFetchingNextPage,
   };
 }

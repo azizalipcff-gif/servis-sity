@@ -34,14 +34,8 @@ export function HomeSearch({
   return (
     <>
       <section className="relative overflow-hidden bg-gradient-to-b from-secondary/70 via-background to-background">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -start-40 -top-40 size-[34rem] rounded-full bg-primary/10 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-52 -end-40 size-[38rem] rounded-full bg-accent/10 blur-3xl"
-        />
+        <div aria-hidden className="pointer-events-none absolute -start-40 -top-40 size-[34rem] rounded-full bg-primary/10 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-52 -end-40 size-[38rem] rounded-full bg-accent/10 blur-3xl" />
 
         <div className="container-site relative py-12 sm:py-16 lg:py-20">
           <div className="max-w-3xl">
@@ -50,45 +44,38 @@ export function HomeSearch({
               {t("eyebrow")}
             </span>
 
-            <h1 className="mt-6 text-editorial text-4xl sm:text-5xl lg:text-[3.4rem] xl:text-6xl">
-              {t("title")}
-            </h1>
-
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              {t("subtitle")}
-            </p>
+            <h1 className="mt-6 text-editorial text-4xl sm:text-5xl lg:text-[3.4rem] xl:text-6xl">{t("title")}</h1>
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">{t("subtitle")}</p>
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="px-7">
-                <Link href="/services">
-                  <Wrench className="size-4" />
-                  {t("ctaServices")}
-                  <ArrowRight className="size-4 rtl:rotate-180" />
-                </Link>
+                <Link href="/services"><Wrench className="size-4" />{t("ctaServices")}<ArrowRight className="size-4 rtl:rotate-180" /></Link>
               </Button>
               <Button asChild size="lg" variant="outlinePrimary" className="px-7">
-                <Link href="/businesses">
-                  <Building2 className="size-4" />
-                  {t("ctaBusinesses")}
-                </Link>
+                <Link href="/business"><Building2 className="size-4" />{t("ctaBusinesses")}</Link>
               </Button>
               <Button asChild size="lg" variant="outlinePrimary" className="px-7">
-                <Link href="/products">
-                  <ShoppingBag className="size-4" />
-                  {t("ctaProducts")}
-                </Link>
+                <Link href="/products"><ShoppingBag className="size-4" />{t("ctaProducts")}</Link>
               </Button>
             </div>
+
+            <nav aria-label="Marketplace type" className="mt-7 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card/80 p-2 shadow-sm backdrop-blur">
+              <a href="#services" className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors hover:bg-primary/10 hover:text-primary">
+                <Wrench className="size-4" />{t("ctaServices")}
+              </a>
+              <a href="#businesses" className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors hover:bg-primary/10 hover:text-primary">
+                <Building2 className="size-4" />{t("ctaBusinesses")}
+              </a>
+              <a href="#products" className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors hover:bg-primary/10 hover:text-primary">
+                <ShoppingBag className="size-4" />{t("ctaProducts")}
+              </a>
+            </nav>
 
             <dl className="mt-10 grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4">
               {stats.map((stat) => (
                 <div key={stat.label}>
-                  <dd className="text-editorial text-3xl text-primary sm:text-4xl">
-                    {new Intl.NumberFormat(numberLocale).format(stat.value)}
-                  </dd>
-                  <dt className="mt-1.5 text-[13px] font-medium text-muted-foreground">
-                    {stat.label}
-                  </dt>
+                  <dd className="text-editorial text-3xl text-primary sm:text-4xl">{new Intl.NumberFormat(numberLocale).format(stat.value)}</dd>
+                  <dt className="mt-1.5 text-[13px] font-medium text-muted-foreground">{stat.label}</dt>
                 </div>
               ))}
             </dl>

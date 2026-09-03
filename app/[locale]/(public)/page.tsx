@@ -1,7 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { HomeSearch } from "@/components/home/home-search";
-import { MarketplaceTypes } from "@/components/home/marketplace-types";
 import { FeaturedBusinesses } from "@/components/home/featured-businesses";
 import { FeaturedMarketplace } from "@/components/home/featured-marketplace";
 import { TrustBadges } from "@/components/home/trust-badges";
@@ -115,7 +114,6 @@ export default async function HomePage({ params }: Props) {
         productCount={productsCount}
       >
         <FeaturedMarketplace services={services} products={products} />
-        <MarketplaceTypes />
         <FeaturedBusinesses businesses={businesses} locale={locale as Locale} />
         <PromoBanner />
         <TrustSection businessCount={businessCount} cityCount={cityCount} />

@@ -22,8 +22,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
     getCategories(),
   ]);
 
-  // Empty text + no deep-link scope => serve the simple landing feeds.
-  const needsIndex = !initial.q && !initial.city && !initial.category;
+  const needsIndex = !initial.q && !initial.city && !initial.category && initial.type === "all";
   const index = needsIndex ? await getSearchIndex(null) : null;
 
   return (
@@ -33,6 +32,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
         index={index}
         initial={{
           q: initial.q,
+          type: initial.type,
           city: initial.city,
           category: initial.category,
         }}
@@ -56,15 +56,12 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   return {
     title,
     description: t("subtitle"),
-    alternates: {
-      canonical,
-      languages: localizedLanguages("/search"),
-    },
+    alternates: { canonical, languages: localizedLanguages("/search") },
     openGraph: {
       title,
       description: t("subtitle"),
       url: canonical,
-      siteName: "Service City",
+      siteName: "Servis Sity",
       images: [{ url: absoluteUrl("/branding/service-city-logo.png") }],
     },
     twitter: {

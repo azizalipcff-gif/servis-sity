@@ -13,6 +13,7 @@ import { toJsonLd } from "@/lib/security/sanitize";
 
 export const revalidate = 60;
 
+const PAGE_SIZE = 24;
 const ITEMS_PER_TYPE = 8;
 
 type Props = {
@@ -24,7 +25,7 @@ function getOffset(searchParams: Record<string, string | string[] | undefined>) 
   const raw = Array.isArray(searchParams.offset) ? searchParams.offset[0] : searchParams.offset;
   const parsed = Number.parseInt(raw ?? "0", 10);
   return Number.isFinite(parsed) && parsed >= 0
-    ? Math.floor(parsed / ITEMS_PER_TYPE) * ITEMS_PER_TYPE
+    ? Math.floor(parsed / PAGE_SIZE) * PAGE_SIZE
     : 0;
 }
 
@@ -56,17 +57,19 @@ export default async function HomePage({ params, searchParams }: Props) {
   setRequestLocale(locale);
 
   const offset = getOffset(await searchParams);
+  const typeOffset = (offset / PAGE_SIZE) * ITEMS_PER_TYPE;
+
   const [businesses, products, services] = await Promise.all([
-    getPublishedBusinesses({ limit: ITEMS_PER_TYPE, offset }),
-    getPublishedProducts({ limit: ITEMS_PER_TYPE, offset }),
-    getPublishedServices({ limit: ITEMS_PER_TYPE, offset }),
+    getPublishedBusinesses({ limit: ITEMS_PER_TYPE, offset: typeOffset }),
+    getPublishedProducts({ limit: ITEMS_PER_TYPE, offset: typeOffset }),
+    getPublishedServices({ limit: ITEMS_PER_TYPE, offset: typeOffset }),
   ]);
 
   const totalPages = Math.max(
     1,
     Math.ceil(Math.max(businesses.total, products.total, services.total) / ITEMS_PER_TYPE),
   );
-  const currentPage = Math.min(totalPages, Math.floor(offset / ITEMS_PER_TYPE) + 1);
+  const currentPage = Math.min(totalPages, Math.floor(offset / PAGE_SIZE) + 1);
 
   const mixedItems = [] as Array<
     | { type: "service"; item: (typeof services.items)[number] }
@@ -121,7 +124,7 @@ export default async function HomePage({ params, searchParams }: Props) {
         currentPage={currentPage}
         totalPages={totalPages}
         hrefForPage={(page) =>
-          page === 1 ? "/" : `/?offset=${(page - 1) * ITEMS_PER_TYPE}`
+          page === 1 ? "/" : `/?offset=${(page - 1) * PAGE_SIZE}`
         }
         label="Marketplace pages"
       />

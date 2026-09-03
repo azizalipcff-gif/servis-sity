@@ -8,23 +8,16 @@ import { SearchIndex } from "@/components/search/search-index";
 import { useSearch } from "@/components/search/use-search";
 import type { SearchIndexData } from "@/lib/search/index";
 import type { Category } from "@/lib/supabase/database.types";
+import type { SearchResultType } from "@/lib/search/types";
 
 type Initial = {
   q?: string;
+  type?: SearchResultType;
   city?: string;
   category?: string;
 };
 
-/**
- * The whole search surface: one text input, one results grid, and a simple
- * landing when nothing is typed. No filters, no map, no AI parse — the query
- * either matches on its own or the user sees related categories.
- */
-export function SearchExplorer({
-  initial,
-  categories,
-  index,
-}: {
+export function SearchExplorer({ initial, categories, index }: {
   initial: Initial;
   categories: Category[];
   index: SearchIndexData | null;
@@ -32,13 +25,11 @@ export function SearchExplorer({
   const t = useTranslations("search");
   const nav = useTranslations("nav");
   const search = useSearch(initial);
-
-  // Results are live as you type; the form just ensures Enter works too.
   const submit = (e: FormEvent<HTMLFormElement>) => e.preventDefault();
 
   const hasQuery = search.isLanding
     ? false
-    : Boolean(search.q) || Boolean(initial.city) || Boolean(initial.category);
+    : Boolean(search.q) || search.type !== "all" || Boolean(initial.city) || Boolean(initial.category);
 
   return (
     <div className="container-site">
@@ -48,19 +39,32 @@ export function SearchExplorer({
       </div>
 
       <div className="max-w-3xl py-6">
-        <SearchInput
-          value={search.q}
-          onChange={search.setQ}
-          onSubmit={submit}
-          placeholder={t("searchPlaceholder")}
-          buttonLabel={nav("search")}
-        />
+        <form onSubmit={submit} className="flex items-center gap-2">
+          <select
+            value={search.type}
+            onChange={(e) => search.setType(e.target.value as SearchResultType)}
+            className="h-10 shrink-0 rounded-xl border border-border bg-background px-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/30"
+            aria-label={t("typeAll")}
+          >
+            <option value="all">{t("typeAll")}</option>
+            <option value="business">{t("typeBusiness")}</option>
+            <option value="service">{t("typeService")}</option>
+            <option value="product">{t("typeProduct")}</option>
+          </select>
+          <div className="min-w-0 flex-1">
+            <SearchInput
+              value={search.q}
+              onChange={search.setQ}
+              onSubmit={submit}
+              placeholder={t("searchPlaceholder")}
+              buttonLabel={nav("search")}
+            />
+          </div>
+        </form>
       </div>
 
       {search.isLanding && index ? (
-        <div className="pb-16">
-          <SearchIndex data={index} />
-        </div>
+        <div className="pb-16"><SearchIndex data={index} /></div>
       ) : (
         <ResultsView
           items={search.items}

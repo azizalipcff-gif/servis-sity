@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { PackageSearch, RotateCcw, Search } from "lucide-react";
+import { PackageSearch, RotateCcw } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { ProductCard } from "@/components/products/product-card";
 import { CatalogPagination } from "@/components/catalog-pagination";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
   buildProductsUrl,
@@ -123,12 +122,7 @@ export default async function ProductsPage({ params, searchParams }: Props) {
         </header>
 
         <form method="get" className="mt-6 space-y-4">
-          <div className="relative">
-            <Search aria-hidden className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input id="products-search" name="q" defaultValue={state.q} placeholder={t("searchPlaceholder")} className="h-11 ps-9 pe-4 rounded-2xl" aria-label={t("searchPlaceholder")} />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-3 rounded-2xl border border-border bg-card p-3.5 shadow-sm">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-3 rounded-2xl border border-border bg-card p-3.5">
             <div className="flex flex-wrap items-center gap-1.5">
               <button type="submit" name="category" value="" className={cn("rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors", !state.category ? "border-transparent bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground")}>{t("allCategories")}</button>
               {categories.map((c) => (

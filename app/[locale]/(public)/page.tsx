@@ -23,7 +23,9 @@ type Props = {
 function getOffset(searchParams: Record<string, string | string[] | undefined>) {
   const raw = Array.isArray(searchParams.offset) ? searchParams.offset[0] : searchParams.offset;
   const parsed = Number.parseInt(raw ?? "0", 10);
-  return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed / ITEMS_PER_TYPE) * ITEMS_PER_TYPE : 0;
+  return Number.isFinite(parsed) && parsed >= 0
+    ? Math.floor(parsed / ITEMS_PER_TYPE) * ITEMS_PER_TYPE
+    : 0;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -66,11 +68,17 @@ export default async function HomePage({ params, searchParams }: Props) {
   );
   const currentPage = Math.min(totalPages, Math.floor(offset / ITEMS_PER_TYPE) + 1);
 
-  const mixedItems = [
-    ...services.items.map((item) => ({ type: "service" as const, item })),
-    ...products.items.map((item) => ({ type: "product" as const, item })),
-    ...businesses.items.map((item) => ({ type: "business" as const, item })),
-  ];
+  const mixedItems = [] as Array<
+    | { type: "service"; item: (typeof services.items)[number] }
+    | { type: "product"; item: (typeof products.items)[number] }
+    | { type: "business"; item: (typeof businesses.items)[number] }
+  >;
+  const maxItems = Math.max(services.items.length, products.items.length, businesses.items.length);
+  for (let index = 0; index < maxItems; index++) {
+    if (services.items[index]) mixedItems.push({ type: "service", item: services.items[index] });
+    if (products.items[index]) mixedItems.push({ type: "product", item: products.items[index] });
+    if (businesses.items[index]) mixedItems.push({ type: "business", item: businesses.items[index] });
+  }
 
   const organizationJsonLd = toJsonLd({
     "@context": "https://schema.org",
@@ -112,7 +120,9 @@ export default async function HomePage({ params, searchParams }: Props) {
       <CatalogPagination
         currentPage={currentPage}
         totalPages={totalPages}
-        hrefForPage={(page) => page === 1 ? "/" : `/?offset=${(page - 1) * ITEMS_PER_TYPE}`}
+        hrefForPage={(page) =>
+          page === 1 ? "/" : `/?offset=${(page - 1) * ITEMS_PER_TYPE}`
+        }
         label="Marketplace pages"
       />
     </>

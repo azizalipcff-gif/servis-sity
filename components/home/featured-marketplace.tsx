@@ -38,72 +38,47 @@ export async function FeaturedMarketplace({
   const visProducts = products.slice(0, 4);
 
   return (
-    <section className="container-wide py-8">
+    <section className="container-wide py-8" aria-label="Marketplace">
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-12">
-        <div>
+        <div id="services" className="scroll-mt-24">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
             <div>
               <p className="eyebrow">{t("eyebrow")}</p>
-              <h2 className="mt-1 text-editorial text-2xl sm:text-3xl">
-                {t("featuredServices")}
-              </h2>
+              <h2 className="mt-1 text-editorial text-2xl sm:text-3xl">{t("featuredServices")}</h2>
             </div>
-            <Link
-              href="/services"
-              className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
-            >
-              {t("viewAll")}
-              <ArrowUpRight className="size-4 rtl:rotate-180" />
+            <Link href="/services" className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline">
+              {t("viewAll")}<ArrowUpRight className="size-4 rtl:rotate-180" />
             </Link>
           </div>
 
           {visServices.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-border px-6 py-10 text-center text-sm text-muted-foreground">
-              {t("noServices")}
-            </p>
+            <p className="rounded-2xl border border-dashed border-border px-6 py-10 text-center text-sm text-muted-foreground">{t("noServices")}</p>
           ) : (
             <div className="grid grid-cols-2 gap-x-4 gap-y-6">
               {visServices.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  seller={sellerFrom(service.business)}
-                />
+                <ServiceCard key={service.id} service={service} seller={sellerFrom(service.business)} />
               ))}
             </div>
           )}
         </div>
 
-        <div>
+        <div id="products" className="scroll-mt-24">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
             <div>
               <p className="eyebrow">{t("eyebrow")}</p>
-              <h2 className="mt-1 text-editorial text-2xl sm:text-3xl">
-                {t("featuredProducts")}
-              </h2>
+              <h2 className="mt-1 text-editorial text-2xl sm:text-3xl">{t("featuredProducts")}</h2>
             </div>
-            <Link
-              href="/products"
-              className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
-            >
-              {t("viewAll")}
-              <ArrowUpRight className="size-4 rtl:rotate-180" />
+            <Link href="/products" className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline">
+              {t("viewAll")}<ArrowUpRight className="size-4 rtl:rotate-180" />
             </Link>
           </div>
 
           {visProducts.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-border px-6 py-10 text-center text-sm text-muted-foreground">
-              {t("empty")}
-            </p>
+            <p className="rounded-2xl border border-dashed border-border px-6 py-10 text-center text-sm text-muted-foreground">{t("empty")}</p>
           ) : (
             <div className="grid grid-cols-2 gap-x-4 gap-y-6">
               {visProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  seller={sellerFrom(product.business)}
-                  showSeller={false}
-                />
+                <ProductCard key={product.id} product={product} seller={sellerFrom(product.business)} showSeller={false} />
               ))}
             </div>
           )}
